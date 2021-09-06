@@ -34,7 +34,7 @@ export const settings = {
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
-            duration: 60,
+            duration: 10,
             interTrialInterval: 2,
             allowConsecutive: false,
             start: false

@@ -1,3 +1,5 @@
+import {BarChart} from '../../../libraries/js/src/plugins/interfaces/BarChart'
+
 class Manager{
 
     static id = String(Math.floor(Math.random()*1000000))
@@ -156,7 +158,8 @@ class Manager{
                     })
 
                     console.log(this.props.lastAtlas)
-
+                    let chart = new BarChart(label, session);
+                    chart.init()
                     console.log(alphaMeans)
 
                     this.props.start.style.display = 'flex'
@@ -175,6 +178,8 @@ class Manager{
                             this.props.start.insertAdjacentElement('beforeend', div)
                         }
                     }
+
+
 
                     this.props.experiment.style.display = 'none'
                 }
