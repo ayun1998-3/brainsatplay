@@ -158,9 +158,9 @@ class Manager{
                     })
 
                     console.log(this.props.lastAtlas)
-                    let chart = new BarChart(label, session);
-                    chart.init()
-                    console.log(alphaMeans)
+                    // let chart = new BarChart(label, session);
+                    // chart.init()
+                    // console.log(alphaMeans)
 
                     this.props.start.style.display = 'flex'
                     this.props.start.innerHTML = ''
