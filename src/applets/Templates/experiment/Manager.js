@@ -1,5 +1,3 @@
-import {BarChart} from '../../../libraries/js/src/plugins/interfaces/BarChart'
-
 class Manager{
 
     static id = String(Math.floor(Math.random()*1000000))
@@ -169,12 +167,15 @@ class Manager{
                         div.style.padding = '20px'
                         div.style.textAlign = 'left'
 
-                        if (condition != ''){
-                            div.innerHTML += `<i style="font-size: 80%">Alpha Power</i>`
+                        let chart = document.createElement('div')
+
+                        if (condition != ''){ //end screen, check for not '' condition
+                            div.innerHTML += `<i style="font-size: 80%">Alpha</i>`
                             div.innerHTML += `<h2 style="margin: 0px">${condition}</h2>`
                             for (let tag in alphaMeans[condition]){
                                 div.innerHTML += `<p style="font-size: 80%">${tag}: ${alphaMeans[condition][tag].toFixed(4)}</p>`
                             }
+                            // chart.innerHTML += `<></>`
                             this.props.start.insertAdjacentElement('beforeend', div)
                         }
                     }

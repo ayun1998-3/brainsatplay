@@ -28,6 +28,9 @@ class Results{
             click: {},
             performance: {}
         }
+
+        this.states = [null]
+
     }
 
     init = () => {
