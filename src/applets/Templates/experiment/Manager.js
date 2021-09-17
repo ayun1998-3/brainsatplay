@@ -114,7 +114,7 @@ class Manager{
                 input: {type: 'string'},
                 output: {type: null},
                 onUpdate: (user) => {
-
+                    console.log(user)
                     if (user.data != null){ 
 
                         console.error(user.data)
@@ -129,9 +129,9 @@ class Manager{
             done: {
                 edit: false,
                 input: {type: undefined},
-                output: {type: null},
+                output: {type: Object},
                 onUpdate: (user) => {
-
+                    console.log(this.ports.element.output)
                     let alphaMeans = {}
                         Object.keys(this.props.states).forEach(key => {
                         
@@ -183,6 +183,7 @@ class Manager{
 
 
                     this.props.experiment.style.display = 'none'
+                    return alphaMeans
                 }
             },
 
@@ -194,6 +195,15 @@ class Manager{
                         this.props.experiment.style.display = ''
                         return user
                     }
+                }
+            },
+
+            testport: {
+                edit: false,
+                input: {type: undefined},
+                output: {type: null},
+                onUpdate: (user) => {
+                    console.log(user)
                 }
             }
         }

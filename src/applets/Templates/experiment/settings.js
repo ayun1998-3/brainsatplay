@@ -1,7 +1,7 @@
 
 import * as brainsatplay from '../../../libraries/js/brainsatplay'
 import {Manager} from './Manager'
-import {Results} from './Results'
+// import {Results} from './Results'
 import audioCue from './audioCue.mp3'
 import {BarChart} from '../../../libraries/js/src/plugins/interfaces/BarChart'
 
@@ -44,7 +44,7 @@ export const settings = {
         {id: 'audioCue', class: brainsatplay.plugins.audio.Audio, params: {file: audioCue}},
         {id: 'data', class: brainsatplay.plugins.utilities.DataManager},
         // {id: 'spacebar', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
-        {id: 'results', class: Results},
+        // {id: 'results', class: Results},
 
         // UI
         {id:'ui', class: brainsatplay.plugins.interfaces.UI, params: {
@@ -70,7 +70,9 @@ export const settings = {
           }
           `
         }
-      }
+      },
+
+        {id:'barchart', class: BarChart}
       ],
 
       edges: [
@@ -154,14 +156,24 @@ export const settings = {
         // },
 
         {
-          source: 'scheduler:done', 
-          target: 'manager:done'
+          source: 'manager:done', 
+          target: 'manager:testport'
         },
 
+
+        //austen...
+        // manager: done might not work?
         { 
-          source: 'scheduler:done',
-          target: 'results:default'
+          source: 'manager: done',
+          target: 'barchart: data'
         },
+
+        // {
+        //   source: 'barchart:element',
+        //   target: ''
+        // }
+
+
         // Show Results
         // {
         //   source: 'scheduler:done', 
