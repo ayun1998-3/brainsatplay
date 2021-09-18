@@ -263,7 +263,13 @@ export class GraphManager{
 
     updateParams(node,params) {
         
-        for (let param in params) node.ports[param].data = params[param]
+        for (let param in params) {
+            if (param in node.ports) node.ports[param].data = params[param]
+            else {
+                console.error(`A port for '${param}' does not exist on the ${node.label} node.`)
+                console.log(node, param)
+            }
+        }
     }
 
     shallowCopy(input){
@@ -358,15 +364,18 @@ export class GraphManager{
                     result = node.ports['default'].onUpdate(inputCopy)
                 }
 
-                // Handle Promises
-                if (!!result && typeof result.then === 'function'){
-                    result.then((r) =>{
-                        this.checkToPass(node,port,r)
-                    })
-                } else {
-                    this.checkToPass(node,port,result)
-                }
-            }
+                // Pass Results Appropriately
+                if (!result){
+                        // if (
+                        //     node.ports[port].data === undefined 
+                        //     || ((typeof node.ports[port].data === typeof inputCopy.data) && 'object' !== typeof node.ports[port].data)
+                        //     || (('object' === typeof node.ports[port].data === typeof inputCopy.data && 'constructor' in node.ports[port].data && 'constructor' in inputCopy.data) && (node.ports[port].data.contructor.name === inputCopy.data.contructor.name))
+                        // ) {
+                        //     node.ports[port].data = inputCopy.data // Set input as output
+                        // }
+                } else if (!!result && typeof result.then === 'function') result.then((r) =>{this.setPort(node,port,r)}) // Handle Promises
+                    else this.setPort(node,port,result) // Pass output forward to next nodes
+                } 
         } catch (e) { console.log(e)}
 
         // Calculate Latency
@@ -380,7 +389,12 @@ export class GraphManager{
         return node.ports[port]
     }
 
-    checkToPass(node,port,result){
+    setState = (state, result) => {
+        Object.assign(state, result)
+    }
+
+    setPort(node,port,result){
+
         if (result){
             let allEqual = true
             let forced = false
@@ -390,14 +404,11 @@ export class GraphManager{
 
             // result.forEach((o,i) => {
 
-            let setState = (state, result) => {
-                Object.assign(state, result)
-            }
 
                 // Check if Forced Update
                 if (result.forceUpdate) {
                     forced = true
-                    setState(node.ports[port],result)
+                    this.setState(node.ports[port],result)
                 }
 
                 // Otherwise Check If Current State === Previous State
@@ -416,11 +427,11 @@ export class GraphManager{
                             let thisEqual = case1 === case2
 
                             if (!thisEqual){
-                                setState(node.ports[port],result)
+                                this.setState(node.ports[port],result)
                                 allEqual = false
                             }
                     } else {
-                        setState(node.ports[port],result)
+                        this.setState(node.ports[port],result)
                         allEqual = false
                     }
             }
@@ -431,7 +442,7 @@ export class GraphManager{
                 let label = this.getLabel(node,port)
                 updateObj[label] = {trigger:true}
                 if (stringify) updateObj[label].value = JSON.parse(JSON.stringifyFast(node.ports[port])) // Do not send huge objects
-                node.stateUpdates.manager.setState(updateObj, false)
+                node.stateUpdates.manager.setState(updateObj);
             }
         }
     }
@@ -469,7 +480,6 @@ export class GraphManager{
         this.applets[id] = {nodes, edges, name,streams, outputs,subscriptions, controls, analysis}
 
         // Create Nodes
-
         let setupCallbacks = []
         if (graph){
             if (Array.isArray(graph.nodes)){
@@ -522,7 +532,7 @@ export class GraphManager{
         // node.states[port] = [{}]
 
         // Force Default Outputs to Next Node (FIX)
-        let defaultVal = node.ports[port].default
+        let defaultVal = node.ports[port].data
         // if (defaultVal !== undefined) {
         //     let user = {data: defaultVal}
         //     if (node.ports[port].meta != null) user.meta = node.ports[port].meta
@@ -543,14 +553,14 @@ export class GraphManager{
             controlDict.target = {
                 state: node.ports,
                 port: 'default'
-            } // FIX
+            } // CHECK
             controls.push(controlDict)
         }
 
 
         if (node.ports[port].analysis == null) node.ports[port].analysis = []
 
-        if (node.ports[port].onUpdate == null){ // Default Port Function: FIX
+        if (node.ports[port].onUpdate == null){ // Default Port Function: CHECK
             node.ports[port].onUpdate = (user) => {
                 node.ports[port].data = user.data
                 return user
@@ -769,7 +779,7 @@ export class GraphManager{
                 this.runSafe(target, targetPort, input, true)
             }
 
-            if (sendOutput && (brainstormTarget || isElement)) sendFunction() // If new connection must pass (1) an element, or (2) anything to the Brainstorm
+            if (sendOutput && (brainstormTarget || isElement || target.constructor.name)) sendFunction() // If new connection must pass (1) an element, or (2) anything to the Brainstorm
             else if (
                 (!brainstormSource) && 
                 (brainstormTarget || ((forceSend || hasData) && !lastStateSent))) return sendFunction // Else if there is data on initialization
