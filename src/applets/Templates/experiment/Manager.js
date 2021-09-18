@@ -114,7 +114,7 @@ class Manager{
                 input: {type: 'string'},
                 output: {type: null},
                 onUpdate: (user) => {
-                    console.log(user)
+                    // console.log(user)
                     if (user.data != null){ 
 
                         console.error(user.data)
@@ -131,7 +131,7 @@ class Manager{
                 input: {type: undefined},
                 output: {type: Object},
                 onUpdate: (user) => {
-                    console.log(this.ports.element.output)
+                    // console.log(this.ports.element.output)
                     let alphaMeans = {}
                         Object.keys(this.props.states).forEach(key => {
                         

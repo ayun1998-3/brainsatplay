@@ -155,18 +155,13 @@ export const settings = {
         //   target: 'data:csv'
         // },
 
-        {
-          source: 'manager:done', 
-          target: 'manager:testport'
-        },
-
 
         //austen...
         // manager: done might not work?
-        { 
-          source: 'manager: done',
-          target: 'barchart: data'
-        },
+        // { 
+        //   source: 'manager: done',
+        //   target: 'barchart: data'
+        // },
 
         // {
         //   source: 'barchart:element',
