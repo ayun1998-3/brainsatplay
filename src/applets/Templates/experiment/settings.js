@@ -35,11 +35,13 @@ export const settings = {
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
-            duration: 10,
+            duration: 5,
             interTrialInterval: 2,
             allowConsecutive: false,
             start: false
           }},
+
+        {id:'barchart', class: BarChart},
 
         {id: 'audioCue', class: brainsatplay.plugins.audio.Audio, params: {file: audioCue}},
         {id: 'data', class: brainsatplay.plugins.utilities.DataManager},
@@ -69,10 +71,9 @@ export const settings = {
             justify-content: center;
           }
           `
-        }
-      },
+          }
+        },
 
-        {id:'barchart', class: BarChart}
       ],
 
       edges: [
@@ -155,19 +156,35 @@ export const settings = {
         //   target: 'data:csv'
         // },
 
+        {
+          source: 'scheduler:done', 
+          target: 'manager:done'
+        },
+        
+        { 
+          source: 'manager:done',
+          target: 'barchart:data'
+        },
 
-        //austen...
-        // manager: done might not work?
-        // { 
-        //   source: 'manager: done',
-        //   target: 'barchart: data'
+        // {
+        //   source: 'manager:done',
+        //   target: 'barchart:test'
         // },
 
         // {
-        //   source: 'barchart:element',
-        //   target: ''
-        // }
+        //   source: 'manager:testport',
+        //   target: 'barchart:data'
+        // },
 
+        // { //these work
+        //   source: 'barchart:element',
+        //   target: 'manager:testport'
+        // },
+
+        // {
+        //   source: 'scheduler:done',
+        //   target: 'barchart:test'
+        // },
 
         // Show Results
         // {

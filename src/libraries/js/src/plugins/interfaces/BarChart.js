@@ -24,7 +24,7 @@ export class BarChart{
                 input: {type: Object},
                 output: {type: null},
                 onUpdate: (user) => {
-                    console.log(user)
+                    // console.log(user)
                     console.log("this happened")
                     if (Array.isArray(user.data)) if (user.data.length > 15) this.props.helper.showvalues = false
                     this.props.helper.setData(user.data)
@@ -36,6 +36,15 @@ export class BarChart{
                 data: this.props.canvas,
                 input: {type: null},
                 output: {type: Element}
+            },
+
+            test: {
+                edit: false,
+                input: {type: undefined},
+                output: {type: null},
+                onUpdate: (user) => {
+                    console.log("test success")
+                }
             }
         }
     }

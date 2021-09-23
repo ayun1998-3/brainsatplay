@@ -130,6 +130,7 @@ class Manager{
                 edit: false,
                 input: {type: undefined},
                 output: {type: Object},
+                data: {},
                 onUpdate: (user) => {
                     // console.log(this.ports.element.output)
                     let alphaMeans = {}
@@ -147,7 +148,7 @@ class Manager{
 
                                 let a1 = coord.means.alpha1.slice(i1, i2)
                                 let a2 = coord.means.alpha2.slice(i1, i2)
-                                console.log(i1, i2, a1, a2)
+                                // console.log(i1, i2, a1, a2)
                                 
                                 let a = (this.session.atlas.mean(a1) + this.session.atlas.mean(a2)) / 2
                                 alphaMeans[key][coord.tag] = a
@@ -183,13 +184,14 @@ class Manager{
 
 
                     this.props.experiment.style.display = 'none'
+                    console.log("TEST")
                     return alphaMeans
                 }
             },
 
             start: {
                 onUpdate: (user) =>{
-                    console.log(user)
+                    console.log("start")
                     if (user.data){
                         this.props.start.style.display = 'none'
                         this.props.experiment.style.display = ''
@@ -201,9 +203,10 @@ class Manager{
             testport: {
                 edit: false,
                 input: {type: undefined},
-                output: {type: null},
+                output: {type: 'boolean'},
                 onUpdate: (user) => {
-                    console.log(user)
+                    console.log("test")
+                    return false
                 }
             }
         }
