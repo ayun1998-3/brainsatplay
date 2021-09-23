@@ -172,21 +172,33 @@ export class StateManager {
         }
 
         Object.assign(this.pushToState,updateObj);
+        
+        if(Object.keys(this.triggers).length > 0) {
+            Object.assign(this.data,this.pushToState);
+            for (const prop of Object.getOwnPropertyNames(updateObj)) {
+                if(this.triggers[prop]) {
+                    this.triggers[prop].forEach((obj)=>{
+                        obj.onchange(updateObj[prop]);
+                    });
+                }
+                delete this.pushToState[prop];
+            }
+        }
 
         return this.pushToState;
     }
 
     //setState but also run triggers, allows subscribing to the same key in state without interrupting anything
     setState_T(updateObj={}) {
-        
-        Object.assign(this.pushToState,updateObj); //also copy the data for the event listener loop
 
-        if(Object.keys(this.pushToState).length > 0) {
+        Object.assign(this.pushToState,updateObj);
+        
+        if(Object.keys(this.triggers).length > 0) {
             Object.assign(this.data,this.pushToState);
             for (const prop of Object.getOwnPropertyNames(updateObj)) {
-                if(this.triggers[key]) {
-                    this.triggers[key].forEach((obj)=>{
-                        obj.onchange(updateObj[key]);
+                if(this.triggers[prop]) {
+                    this.triggers[prop].forEach((obj)=>{
+                        obj.onchange(updateObj[prop]);
                     });
                 }
                 delete this.pushToState[prop];
@@ -197,7 +209,7 @@ export class StateManager {
     }
 
     //Trigger-only functions on otherwise looping listeners
-    subscribeTrigger(key=undefined,onchange=(prop)=>{}) {
+    subscribeTrigger(key=undefined,onchange=(key)=>{}) {
         if(key) {
             if(!this.triggers[key]) {
                 this.triggers[key] = [];

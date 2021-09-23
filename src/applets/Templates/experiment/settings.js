@@ -71,9 +71,10 @@ export const settings = {
             justify-content: center;
           }
           `
-          }
-        },
+        }
+      },
 
+      // {id: 'debug', class: brainsatplay.plugins.debug.Debug},
       ],
 
       edges: [
@@ -185,6 +186,12 @@ export const settings = {
         //   source: 'scheduler:done',
         //   target: 'barchart:test'
         // },
+
+        // {
+        //   source: 'manager:done', 
+        //   target: 'debug'
+        // },
+
 
         // Show Results
         // {

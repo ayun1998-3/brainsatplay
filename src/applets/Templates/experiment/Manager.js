@@ -116,8 +116,6 @@ class Manager{
                 onUpdate: (user) => {
                     // console.log(user)
                     if (user.data != null){ 
-
-                        console.error(user.data)
                         let state = (user.data != 'ITI') ? user.data : this.props.prevState
                         if (this.props.states[state] == null) this.props.states[state] = new Set()
                         if (this.props.lastAtlas) this.props.states[state].add(this.props.lastAtlas.eeg[0].fftCount)
@@ -127,10 +125,10 @@ class Manager{
             },
 
             done: {
+                // data: {},
                 edit: false,
                 input: {type: undefined},
-                output: {type: Object},
-                data: {},
+                output: {type: 'boolean'},
                 onUpdate: (user) => {
                     // console.log(this.ports.element.output)
                     let alphaMeans = {}
@@ -147,19 +145,12 @@ class Manager{
                                 let i2 = iterator.next().value
 
                                 let a1 = coord.means.alpha1.slice(i1, i2)
-                                let a2 = coord.means.alpha2.slice(i1, i2)
-                                // console.log(i1, i2, a1, a2)
-                                
+                                let a2 = coord.means.alpha2.slice(i1, i2)                                
                                 let a = (this.session.atlas.mean(a1) + this.session.atlas.mean(a2)) / 2
                                 alphaMeans[key][coord.tag] = a
                             })
                         }
                     })
-
-                    console.log(this.props.lastAtlas)
-                    // let chart = new BarChart(label, session);
-                    // chart.init()
-                    // console.log(alphaMeans)
 
                     this.props.start.style.display = 'flex'
                     this.props.start.innerHTML = ''
@@ -184,14 +175,13 @@ class Manager{
 
 
                     this.props.experiment.style.display = 'none'
-                    console.log("TEST")
-                    return alphaMeans
+
+                    return {data: alphaMeans}
                 }
             },
 
             start: {
                 onUpdate: (user) =>{
-                    console.log("start")
                     if (user.data){
                         this.props.start.style.display = 'none'
                         this.props.experiment.style.display = ''
