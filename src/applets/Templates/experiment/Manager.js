@@ -19,6 +19,7 @@ class Manager{
             cross: document.createElement('p'),
             start: document.createElement('div'),
             startButton: document.createElement('button'),
+            chart: null,
         }
         
         this.props.container.id = this.props.id
@@ -113,7 +114,7 @@ class Manager{
                 input: {type: 'string'},
                 output: {type: null},
                 onUpdate: (user) => {
-
+                    // console.log(user)
                     if (user.data != null){ 
                         let state = (user.data != 'ITI') ? user.data : this.props.prevState
                         if (this.props.states[state] == null) this.props.states[state] = new Set()
@@ -124,12 +125,11 @@ class Manager{
             },
 
             done: {
-                // data: {},
                 edit: false,
                 input: {type: undefined},
-                output: {type: 'boolean'},
+                output: {type: Object},
                 onUpdate: (user) => {
-
+                    // console.log(this.ports.element.output)
                     let alphaMeans = {}
                         Object.keys(this.props.states).forEach(key => {
                         
@@ -153,24 +153,39 @@ class Manager{
 
                     this.props.start.style.display = 'flex'
                     this.props.start.innerHTML = ''
+
                     for (let condition in alphaMeans){
                         let div = document.createElement('div')
-                        div.style.padding = '20px'
+                        div.style.padding = '80px'
                         div.style.textAlign = 'left'
 
-                        if (condition != ''){
-                            div.innerHTML += `<i style="font-size: 80%">Alpha Power</i>`
+
+
+                        if (condition != ''){ //end screen, check for not '' condition
+                            div.innerHTML += `<i style="font-size: 80%">Alpha</i>`
                             div.innerHTML += `<h2 style="margin: 0px">${condition}</h2>`
                             for (let tag in alphaMeans[condition]){
                                 div.innerHTML += `<p style="font-size: 80%">${tag}: ${alphaMeans[condition][tag].toFixed(4)}</p>`
                             }
                             this.props.start.insertAdjacentElement('beforeend', div)
+                            // this.props.start.insertAdjacentElement('beforeend', this.props.chart)
+
                         }
+                    }
+
+                    delete alphaMeans[""]
+                    for (let state in alphaMeans) {
+                        let temp = new Array()
+                        for (let channel in alphaMeans[state]){
+                            temp.push(alphaMeans[state][channel])
+                        }
+                        alphaMeans[state] = temp
                     }
 
                     this.props.experiment.style.display = 'none'
 
                     return {data: alphaMeans}
+     
                 }
             },
 

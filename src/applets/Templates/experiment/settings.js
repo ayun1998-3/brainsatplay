@@ -1,8 +1,9 @@
 
 import * as brainsatplay from '../../../libraries/js/brainsatplay'
 import {Manager} from './Manager'
-import {Results} from './Results'
+// import {Results} from './Results'
 import audioCue from './audioCue.mp3'
+import {BarChart} from '../../../libraries/js/src/plugins/interfaces/BarChart'
 
 export const settings = {
     name: "Experiment Template",
@@ -34,11 +35,13 @@ export const settings = {
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
-            duration: 60,
+            duration: 5,
             interTrialInterval: 2,
             allowConsecutive: false,
             start: false
           }},
+
+        {id:'barchart', class: BarChart},
 
         {id: 'audioCue', class: brainsatplay.plugins.audio.Audio, params: {file: audioCue}},
         {id: 'data', class: brainsatplay.plugins.utilities.DataManager},
@@ -153,15 +156,31 @@ export const settings = {
         //   source: 'scheduler:done', 
         //   target: 'data:get'
         // },
-        {
-          source: 'scheduler:done', 
-          target: 'data:csv'
-        },
+        // {
+        //   source: 'scheduler:done', 
+        //   target: 'data:csv'
+        // },
 
         {
           source: 'scheduler:done', 
           target: 'manager:done'
         },
+        
+        //barchart visualization
+        // { 
+        //   source: 'manager:done',
+        //   target: 'barchart:data'
+        // },
+
+        // {
+        //   source: 'barchart:element',
+        //   target: 'manager:showChart'
+        // },
+
+        // {
+        //   source: 'scheduler:done',
+        //   target: 'barchart:test'
+        // },
 
 
         // Show Results
