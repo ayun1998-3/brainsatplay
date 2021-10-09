@@ -162,24 +162,15 @@ export const settings = {
           target: 'manager:done'
         },
         
-        { 
-          source: 'manager:done',
-          target: 'barchart:data'
-        },
-
-        // {
+        //barchart visualization
+        // { 
         //   source: 'manager:done',
-        //   target: 'barchart:test'
-        // },
-
-        // {
-        //   source: 'manager:testport',
         //   target: 'barchart:data'
         // },
 
-        // { //these work
+        // {
         //   source: 'barchart:element',
-        //   target: 'manager:testport'
+        //   target: 'manager:showChart'
         // },
 
         // {

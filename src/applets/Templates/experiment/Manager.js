@@ -19,6 +19,7 @@ class Manager{
             cross: document.createElement('p'),
             start: document.createElement('div'),
             startButton: document.createElement('button'),
+            chart: null,
         }
         
         this.props.container.id = this.props.id
@@ -125,10 +126,9 @@ class Manager{
             },
 
             done: {
-                // data: {},
                 edit: false,
                 input: {type: undefined},
-                output: {type: 'boolean'},
+                output: {type: Object},
                 onUpdate: (user) => {
                     // console.log(this.ports.element.output)
                     let alphaMeans = {}
@@ -154,12 +154,13 @@ class Manager{
 
                     this.props.start.style.display = 'flex'
                     this.props.start.innerHTML = ''
+
                     for (let condition in alphaMeans){
                         let div = document.createElement('div')
-                        div.style.padding = '20px'
+                        div.style.padding = '80px'
                         div.style.textAlign = 'left'
 
-                        let chart = document.createElement('div')
+
 
                         if (condition != ''){ //end screen, check for not '' condition
                             div.innerHTML += `<i style="font-size: 80%">Alpha</i>`
@@ -167,16 +168,25 @@ class Manager{
                             for (let tag in alphaMeans[condition]){
                                 div.innerHTML += `<p style="font-size: 80%">${tag}: ${alphaMeans[condition][tag].toFixed(4)}</p>`
                             }
-                            // chart.innerHTML += `<></>`
                             this.props.start.insertAdjacentElement('beforeend', div)
+                            // this.props.start.insertAdjacentElement('beforeend', this.props.chart)
+
                         }
                     }
 
-
+                    delete alphaMeans[""]
+                    for (let state in alphaMeans) {
+                        let temp = new Array()
+                        for (let channel in alphaMeans[state]){
+                            temp.push(alphaMeans[state][channel])
+                        }
+                        alphaMeans[state] = temp
+                    }
 
                     this.props.experiment.style.display = 'none'
 
                     return {data: alphaMeans}
+     
                 }
             },
 
@@ -190,13 +200,14 @@ class Manager{
                 }
             },
 
-            testport: {
+            showChart: { 
                 edit: false,
-                input: {type: undefined},
-                output: {type: 'boolean'},
+                input: {type: Element},
+                output: {type: null},
                 onUpdate: (user) => {
-                    console.log("test")
-                    return false
+                    console.log(user.data) //user.data gives a canvas
+                    this.props.chart = user.data
+
                 }
             }
         }
