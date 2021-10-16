@@ -36,7 +36,7 @@ export class Application{
         }
     }
 
-    init() {
+    async init() {
         delete this.intro
         // Grab Style of Previous Top-Level Wrapper
         if (this.props.id == null) this.container.style = `height:100%; width:100%; max-height: 100vh; max-width: 100vw; position: relative; display: flex; overflow: scroll;`
@@ -46,7 +46,7 @@ export class Application{
         this.container.id = this.props.id
 
         // Register App in Session
-        this.graph = this.session.registerApp(this)
+        this.graph = await this.session.registerApp(this)
         // this.info.graph = this.graph
         let setupHTML = () => {
 
@@ -175,6 +175,8 @@ export class Application{
         _setCoreAttributes(info={}, parent=document.body, session=new Session(), settings=[]) {
             this.session = session; //Reference to the Session to access data and subscribe
             this.parentNode = parent;
+
+            info = this.session.graph.parseParamsForSettings(info)
             this.info = this._copySettingsFile(info)
             this.settings = settings
         }

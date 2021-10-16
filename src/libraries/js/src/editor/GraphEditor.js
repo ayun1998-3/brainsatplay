@@ -5,7 +5,9 @@ import { StateManager } from '../ui/StateManager'
 
 // Project Selection
 import {appletManifest} from '../../../../platform/appletManifest' // MUST REMOVE LINKS TO PLATFORM
-import { getApplet, getAppletSettings } from "../../../../libraries/js/src/utils/general/importUtils"
+import { getApplet, getAppletSettings, dynamicImport } from "../../../../libraries/js/src/utils/general/importUtils"
+import {pluginManifest} from '../plugins/pluginManifest'
+
 
 // Node Interaction
 import * as dragUtils from './dragUtils'
@@ -772,13 +774,9 @@ export class GraphEditor{
     animateEdge(source,target){
         let instance = this.graph.nodes[source.label]
         instance.edges.forEach(e=>{
-            let splitSource = e.structure.source.split(':')
-            if (splitSource.length < 2 ) splitSource.push('default')
-            if(splitSource[1] === source.port){
+            if(e.structure.source.port === source.port){
                 if (e.structure.target){
-                    let splitTarget = e.structure.target.split(':')
-                    if (splitTarget.length < 2 ) splitTarget.push('default')
-                    if (splitTarget[0] === target.label && splitTarget[1] == target.port){
+                    if (e.structure.target.node === target.label && e.structure.target.port == target.port){
                         e.node.curve.classList.add('updated')
                         e.node.curve.setAttribute('data-update', Date.now())
                         setTimeout(()=>{
@@ -800,11 +798,14 @@ export class GraphEditor{
         })
         type = type.replace('-ports','')
 
-        dict[type] = `${p1.getAttribute('data-node')}:${p1.getAttribute('data-port')}`
-        
+        dict[type] = {}
+        dict[type].node = p1.getAttribute('data-node')
+        dict[type].port = p1.getAttribute('data-port')
         if (p2 && p2.classList.contains('node-port')){
             let otherType = (type === 'source') ? 'target' : 'source'
-            dict[otherType] = `${p2.getAttribute('data-node')}:${p2.getAttribute('data-port')}`
+            dict[otherType] = {}
+            dict[otherType].node = p2.getAttribute('data-node')
+            dict[otherType].port = p2.getAttribute('data-port')
             this.addEdge(dict)
         } else {
             this.addEdge(dict)
@@ -815,15 +816,15 @@ export class GraphEditor{
 
         if (this.files['Graph Editor'].tab) this.files['Graph Editor'].tab.classList.add('edited')
 
-        if (e.source) e.source = e.source.replace(':default', '')
-        if (e.target) e.target = e.target.replace(':default', '')
+        // if (e.source) e.source = e.source.replace(':default', '')
+        // if (e.target) e.target = e.target.replace(':default', '')
         this.editing = true
         let res = await this.graph.addEdge(e)
 
         if (res.msg === 'OK'){
             let edge = res.edge
-            edge.structure.source = edge.structure.source.replace(':default', '')
-            edge.structure.target = edge.structure.target.replace(':default', '')
+            // edge.structure.source = edge.structure.source.replace(':default', '')
+            // edge.structure.target = edge.structure.target.replace(':default', '')
             this.addEdgeReactivity(edge) 
             this.app.info.graph.edges.push(edge.structure) // Change actual settings file
             this.manager.addEdge(this.app.props.id,edge.structure)   
@@ -868,7 +869,7 @@ export class GraphEditor{
         if (this.files['Graph Editor'].tab) this.files['Graph Editor'].tab.classList.add('edited')
 
         if (nodeInfo.id == null) nodeInfo.id = nodeInfo.class.id
-        if (skipManager == false) nodeInfo = await this.manager.addNode(this.app, nodeInfo)
+        if (skipManager == false) nodeInfo = await this.manager.addNode(nodeInfo, this.app, false)
         if (skipInterface == false) this.app.insertInterface(nodeInfo)
         
         let node = this.graph.addNode(nodeInfo)
@@ -1419,10 +1420,7 @@ export class GraphEditor{
             }
 
             // Add Option to Selector
-            this.addNodeOption({id:target.id, label: target.name, class:target}, null, () => {
-                this.addNode({class:target})
-                this.selectorToggle.click()
-            })
+            this.addNodeOption({id:target.id, label: target.name, class:target})
 
         } else {
             this.clickTab(this.files[filename].tab)
@@ -1499,45 +1497,46 @@ export class GraphEditor{
         }
 
         this.library = await this.app.session.projects.getLibraryVersion(this.app.info.version)
-        this.classRegistry = Object.assign({}, this.library.plugins)
-        this.classRegistry['custom'] = {}
+        this.classRegistry = Object.assign({}, pluginManifest)
+
+        // this.classRegistry['custom'] = {}
         let usedClasses = []
 
-        this.addNodeOption({id:'newplugin', label: 'Add New Plugin', class: this.library.plugins.Plugin}, null, () => {
-            this.createFile(this.library.plugins.Plugin, this.search.value)
-            // this.addNode({class:this.library.plugins.Plugin})
+        this.addNodeOption(undefined, () => {
+            this.createFile(this.library.plugins.Blank, this.search.value)
             this.selectorToggle.click()
         })
 
 
-        for (let type in this.classRegistry){
-            let nodeType = this.classRegistry[type]
-
-            if (typeof nodeType === 'object'){ // Skip classes
-                for (let key in nodeType){
-                    let cls = this.classRegistry[type][key]
-                        if (!usedClasses.includes(cls.id)){
-                            // let label = (type === 'custom') ? cls.name : `${type}.${cls.name}`
-                            this.addNodeOption({id: cls.id, label:key, class: cls}, type, () => {
-                                this.addNode({class:cls})
-                                this.selectorToggle.click()
-                            })
-                            usedClasses.push(cls)
-                        }
-                }
-            }
+        for (let className in this.classRegistry){
+            this.addNodeOption(this.classRegistry[className])
         }
 
-        this.plugins.nodes.forEach(n => {
-            let cls = n.class
-            if (!usedClasses.includes(cls)){
-                this.classRegistry['custom'][cls.name] = cls
-                this.addNodeOption({id:cls.id, label: cls.name, class:cls}, null, () => {
-                    this.addNode({class:cls})
-                    this.selectorToggle.click()
-                })
-                usedClasses.push(cls)
+        this.plugins.nodes.forEach(async n => {
+            let clsInfo = this.classRegistry[n.class.name]
+
+            let checkWhere = async (n, info) => {
+                if (info && n.class === info.class){
+                    // clsInfo.class = n.class
+                    let baseClass = this.library.plugins[info.category][clsInfo.name]
+
+                    if (info.class != baseClass){
+                        info.category = null // 'custom'
+                        this.addNodeOption(clsInfo)
+                    }
+                } else {
+                    if (info != null && info.class == null){
+                        let module = await dynamicImport(info.folderUrl)
+                        clsInfo.class = module[info.name]
+                        await checkWhere(n, info)
+                    } else {
+                        this.addNodeOption({category: null, class: n.class})
+                    }
+                }
             }
+
+            await checkWhere(n, clsInfo)
+
         })
 
         this.selectorMenu.insertAdjacentElement('beforeend',nodeDiv)
@@ -1581,9 +1580,9 @@ export class GraphEditor{
                 if (matchedHeaderTypes.includes(nodetype)) show = true // Show header if matched
                 else {
                     // Check Label
-                    let labelMatch = (regex != null) ? regex.test(o.label) : false
-                    if (labelMatch || o.label == 'Add New Plugin') show = true
-                    
+                    let labelMatch = (regex != null) ? regex.test(o.name) : false
+                    if (labelMatch || o.name == 'Add New Plugin') show = true
+
                     // Check Types
                     o.types.forEach(type => {
                         let typeMatch = (regex != null) ? regex.test(type) : false
@@ -1626,11 +1625,24 @@ export class GraphEditor{
         })
     }
 
-    addNodeOption(classInfo, type, onClick){
+    addNodeOption(classInfo={id:'newplugin', name: 'Add New Plugin', class: this.library.plugins.Plugin, category: null, types: []}, onClick){
 
-        let id = classInfo.id
-        let label = classInfo.label
-        if (('class' in classInfo)) classInfo = classInfo.class
+        if (!('types' in classInfo)) classInfo.types = []
+
+
+        let type = classInfo.category
+        let id = classInfo.id // TODO Fix this
+        let name = classInfo?.class?.name ?? classInfo.name
+
+        if (!(onClick instanceof Function)) onClick = async () => {
+            if (!('class' in classInfo)) {
+                let module = await dynamicImport(classInfo.folderUrl)
+                classInfo.class = module[classInfo.name]
+            }
+
+            this.addNode(classInfo)
+            this.selectorToggle.click()
+        }
 
         
         let options = this.selectorMenu.querySelector(`.node-options`)
@@ -1662,12 +1674,12 @@ export class GraphEditor{
             options.insertAdjacentElement('beforeend',contentOfType)
         }
 
-        let element = contentOfType.querySelector(`.${label}`)
+        let element = contentOfType.querySelector(`.${name}`)
         if (element == null){
             element = document.createElement('div')
             element.classList.add("brainsatplay-option-node")
             element.classList.add(`${id}`)
-            element.innerHTML = `<p>${label}</p>`
+            element.innerHTML = `<p>${name}</p>`
             
             element.onclick = () => {
                 onClick()
@@ -1683,15 +1695,14 @@ export class GraphEditor{
                 if (classInfo.hidden) element.classList.add("experimental")
 
                 // Add Instance Details to Plugin Registry
-                let types = new Set()
-                let ports = this.manager.getPortsFromClass({class:classInfo})
-                for(let port in ports){
-                    let type = ports[port]?.input?.type
-                    if (type instanceof Object) types.add(type.name)
-                    else types.add(type)
-                }
 
-                this.searchOptions.push({label, element, types, category: type})
+                let types = classInfo.types.map(t => {
+                    if (typeof t === 'string' && t.includes('Element')) return eval(t)
+                    else return t
+                    // if (type instanceof Object) types.add(type.name)
+                })
+
+                this.searchOptions.push({name, element, types, category: type})
                 if (type == null) contentOfType.style.maxHeight = contentOfType.scrollHeight + "px"; // Resize options without a type (i.e. not hidden)
 
                 let count = options.querySelector(`.${type}-count`)

@@ -41,39 +41,7 @@ export class DataAtlas {
 		}
 		
 
-		// Add Blink Detection
 		this.graph = new GraphManager({atlas: this})
-		let app = {
-			props: {
-				id: this.props.id
-			},
-			info: {
-				graph: {
-					nodes: [
-						{id: 'blink', class: Blink},
-						{id: 'focus', class: Focus},
-					],
-				}
-			}
-		}
-		this.liveGraph = this.graph.init(app)
-		this.graph.start(this.props.id)
-
-		this.liveGraph.nodes.forEach(n => {
-			let ui = n.ui
-            if (ui){
-                n.fragment = new DOMFragment( // Fast HTML rendering container object
-                    ui.HTMLtemplate, //Define the html template string or function with properties
-                    undefined,    //Define where to append to (use the parentNode)
-                    undefined,         //Reference to the HTML render properties (optional)
-                    ui.setupHTML,          //The setup functions for buttons and other onclick/onchange/etc functions which won't work inline in the template string
-                    undefined,          //Can have an onchange function fire when properties change
-                    "NEVER",             //Changes to props or the template string will automatically rerender the html template if "NEVER" is changed to "FRAMERATE" or another value, otherwise the UI manager handles resizing and reinits when new apps are added/destroyed
-                    undefined, // deinit
-                    ui.responsive // responsive
-                )
-            }
-		})
 
 		let analysisDict = {
 			eegcoherence: false,
@@ -193,7 +161,28 @@ export class DataAtlas {
 		this.workerId = window.workers.addWorker(); // add a worker for this DataAtlas analyzer instance
 		window.workers.workerResponses.push(this.workeronmessage);
 		//this.analyzer();
-    }
+	}
+	
+	init = async () => {
+
+		// Add Default Analysis Options
+		let app = {
+			props: {
+				id: this.props.id
+			},
+			info: {
+				graph: {
+					nodes: [
+						{id: 'blink', class: Blink}, // Blink Detection
+						{id: 'focus', class: Focus}, // Focus Detection
+					],
+				}
+			}
+		}
+
+		this.liveGraph = await this.graph.init(app)
+		this.graph.start(this.props.id)
+	}
 
 	deinit = () => {
 		this.settings.runAnalysisLoop = false;
@@ -1439,7 +1428,6 @@ export class DataAtlas {
 	}
 
 	workeronmessage = (msg) => {
-		//console.log(msg);
 		if(msg.origin === this.name) {
 			if(msg.foo === "multidftbandpass" || msg.foo === "multidft") { 
 				//parse data into atlas
@@ -1620,6 +1608,7 @@ export class DataAtlas {
 					return true;
 				}
 			})
+
 			keys.forEach((run,i) => {
 				if (this.settings.analysis[run] === true){
 					this.analyzerOpts.forEach((opt,j) => {

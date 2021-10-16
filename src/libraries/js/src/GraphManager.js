@@ -1,7 +1,6 @@
 // Managers
 import { StateManager } from './ui/StateManager'
 import {GraphEditor} from './editor/GraphEditor'
-import {plugins} from '../brainsatplay'
 import {dynamicImport} from './utils/general/importUtils'
 import {pluginManifest} from './plugins/pluginManifest'
 import {Brainstorm} from './plugins/networking/Brainstorm'
@@ -11,25 +10,7 @@ export class GraphManager{
     constructor(session, settings = {}){
         this.session = session
 
-        // Centrally Manage Plugins through the Project Manager
-        this.plugins = plugins //pluginManifest
-        // this.preloadedPlugins = {}
-
-        // let toPreload = ['Brainstorm', 'Event']
-        // console.log('CREATING NEW MANAGER')
-        // toPreload.forEach(async k => {
-        //     console.log(pluginManifest[k])
-        //     let module = await dynamicImport(pluginManifest[k].folderUrl)
-        //     this.preloadedPlugins[k] = module[k]
-        //     console.log(this.preloadedPlugins)
-        // })
-
-        if (this.session.projects) {
-            (async() => {
-                let library = await this.session.projects.getLibraryVersion(this.session.projects.version)
-                this.plugins = library.plugins
-            })()
-        }
+        if (!('graph' in session)) this.session.graph = this
 
         // Two Modes
         this.applets = {}
@@ -56,6 +37,20 @@ export class GraphManager{
         this.state = new StateManager()
     }
 
+    parseParamsForSettings = (settings) => {
+        settings.graph.nodes.forEach(n => {
+            for (let k in n.params){
+                let value = n.params[k]
+                let regex = new RegExp('([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) =>')
+                let func = (typeof value === 'string') ? value.substring(0,8) == 'function' : false
+                let arrow = regex.test(value)
+                n.params[k] = ( func || arrow) ? eval('('+value+')') : value;
+            }
+        })
+        return settings
+    }
+
+
     convertNodeParamsToSaveableTypes = (node) => {
         for (let port in node.ports){
             // if (typeof node.params[port] === 'object') {
@@ -79,7 +74,7 @@ export class GraphManager{
     }
 
 
-    instantiateNode(nodeInfo,session=this.session){
+    async instantiateNode(nodeInfo,session=this.session){
 
         // return new Promise(resolve => {
 
@@ -127,12 +122,12 @@ export class GraphManager{
 
         // Download Dependencies
         if ('dependencies' in node){
-            node.dependencies.forEach((url,i) => {
+            await node.dependencies.forEach(async (url,i) => {
                 const script = document.createElement("script");
                 script.src = url
                 script.async = true;
 
-                let promise = new Promise(resolve => {
+                await new Promise(resolve => {
                     script.onload = () => {
                         resolve(url)
                     }
@@ -141,10 +136,11 @@ export class GraphManager{
                 node.dependencies[i] = promise
             })
         } else node.dependencies = []
+
         return nodeInfo
     }
 
-    removeNode(appId,label, resize=true){
+    removeNode(appId, label, resize=true){
         let applet = this.applets[appId]
 
         let toRemove = null
@@ -186,7 +182,7 @@ export class GraphManager{
     }
 
     createUniqueId(app, base){
-        this.applets[app.props.id].nodes.forEach(n => {
+        app.nodes.forEach(n => {
             if (n.id === base) {
                 base = `${base}_${this._getRandomId()}`
             }
@@ -196,12 +192,24 @@ export class GraphManager{
 
     }
 
-    async addNode(app, nodeInfo){
-        let appId = app.props.id
+    async addNode(nodeInfo, app, runEditor=false){
+
+        let appId;
+
+        if (app == null){
+            appId = Object.keys(this.applets)
+            app = this.applets[appId]
+        } else {
+            appId = app?.props?.id
+        }
 
         // Add Basic Node Information to the Graph
-        nodeInfo.id = this.createUniqueId(app, nodeInfo.id)
-        if (typeof nodeInfo.class === 'string') nodeInfo.class = await dynamicImport(pluginManifest[classname])
+        nodeInfo.id = this.createUniqueId(this.applets[appId], nodeInfo.id)
+        if (typeof nodeInfo.class === 'string') {
+            let module = await dynamicImport(pluginManifest[nodeInfo.class].folderUrl) // classname
+            nodeInfo.class = module[nodeInfo.class]
+        }
+
 
         let found = this.applets[appId].nodes.find(n => {
             if (n.id == nodeInfo.id){
@@ -213,12 +221,13 @@ export class GraphManager{
         this.applets[appId].nodes.push(nodeInfo);
         
         // Create Node
-        nodeInfo = this.instantiateNode(nodeInfo,this.session)
+        nodeInfo = await this.instantiateNode(nodeInfo,this.session)
 
         // Initialize the Node
         nodeInfo.instance.stateUpdates = {}
         nodeInfo.instance.stateUpdates.manager = this.state
-        nodeInfo.instance.app = app
+
+        if (app != this.applets[appId]) nodeInfo.instance.app = app
 
         let node = nodeInfo.instance
                 
@@ -234,23 +243,21 @@ export class GraphManager{
         // Grab Configure Function
         nodeInfo.configure = node.configure
 
-        // Run Init Function and Instantiate Some Additional Nodes
-        if (node.dependencies.length > 0){
-            Promise.allSettled(node.dependencies).then(res => {
-                this.setUI(node, nodeInfo)
-            })
-        } else {
-            this.setUI(node, nodeInfo)
-        }
-
         // Update Event Registry
         this.updateApp(appId)
+
+        // Add to Editor
+        // if (runEditor == true && app?.editor != null) await app.editor.addNode(nodeInfo, true)
+        
+        // Run Init Function and Instantiate External Dependencies
+        await this.setUI(node, nodeInfo)
 
         return nodeInfo
     }
 
-    setUI = (node,nodeInfo) => {
-        let ui = node.init()
+    setUI = async (node,nodeInfo) => {
+
+        let ui = await node.init()
 
         // Grab Created UI Functions
         if (ui != null) {
@@ -273,18 +280,6 @@ export class GraphManager{
     updateApp(appId){
         if (this.session.updateApps){
             this.session.updateApps(appId)
-        }
-    }
-
-    getNode(id,name){
-        let appInfo = this.applets[id]
-        if (appInfo){
-            let node = appInfo.nodes.find(n => {
-                if (n.id == name){
-                    return true
-                }
-            })
-            return node.instance
         }
     }
 
@@ -368,20 +363,14 @@ export class GraphManager{
             if (!inputCopy.meta) inputCopy.meta = {}
             if (!internal) inputCopy.meta.source = this.getLabel(node,port) // Add Source to Externally Triggered Updates
             
-            let connected
-            if (node.ports[port].output.active > 0) connected = true
-            if (node.ports[port].input.active > 0) connected = true
-            if (node.ports[port].output.type === null) connected = true
-            if (node.ports[port].input.type === null) connected = true
-
-            // Only Continue the Chain with Updated Data (or when forced) AND When Edges Exist
-
             // console.log('data', 'data' in inputCopy)
             // console.log('forceRun', forceRun)
             // console.log('connected', connected)
             // console.log('forceUpdate', forceUpdate)
 
-            if (('data' in inputCopy || forceRun) && ((connected || forceUpdate))){
+
+            // Run when data exists
+            if (('data' in inputCopy || forceRun)){
                 let result
 
                 if (node.ports[port] && node.ports[port].onUpdate instanceof Function) {
@@ -482,7 +471,7 @@ export class GraphManager{
         })
     }
 
-    init(app){
+    async init(app){
         
         let id = app.props.id
         let settings = app.info
@@ -511,8 +500,8 @@ export class GraphManager{
         let setupCallbacks = []
         if (graph){
             if (Array.isArray(graph.nodes)){
-                graph.nodes.forEach((nodeInfo,i) => {
-                    let o = this.addNode(app,nodeInfo)
+                await graph.nodes.forEach(async (nodeInfo,i) => {
+                    await this.addNode(nodeInfo,app);
                 })
             }
 
@@ -520,7 +509,7 @@ export class GraphManager{
             if (Array.isArray(graph.edges)){
                 graph.edges.forEach((edge,i) => {
                     try {
-                        setupCallbacks.push(this.addEdge(id, edge, false))
+                        setupCallbacks.push(this.addEdge(edge, id, false))
                     } catch (e) {console.log('Failed to Create Edge', e)}
                 })
             }
@@ -601,8 +590,10 @@ export class GraphManager{
 
         let types = ['input', 'output']
         types.forEach(type => {
-            if (node.ports[port][type] == null) node.ports[port][type] = {type: undefined, active: 0}
+            if (node.ports[port][type] == null) node.ports[port][type] = {type: undefined, active: 0, edges: new Map()}
             if (!('active' in node.ports[port][type])) node.ports[port][type].active = 0
+            if (!('edges' in node.ports[port][type])) node.ports[port][type].edges = new Map()
+
         })
 
         let coerceType = (t) => {
@@ -685,9 +676,18 @@ export class GraphManager{
         return typeDict
     }
 
-    addEdge = (appId, newEdge, sendOutput=true) => {
+    addEdge = (newEdge, appId, sendOutput=true, runEditor=false) => {
 
-        let applet = (typeof appId === 'string') ? this.applets[appId] : appI
+        let applet
+        if (typeof appId === 'string'){
+            applet = this.applets[appId]
+        } else {
+            appId = appId.props.id
+            applet = this.applets[appId]
+        }
+
+        newEdge = this.convertToStandardEdge(newEdge, this.applets[appId].nodes)
+
 
         let existingEdge = this.applets[appId].edges.find(edge => {
             if (newEdge.source == edge.source && newEdge.target == edge.target){
@@ -697,18 +697,15 @@ export class GraphManager{
         
         if (existingEdge == null){ // Do not duplicate edges
 
-            let splitSource = newEdge.source.split(':')
-            let sourceName = splitSource[0]
-            let sourcePort = splitSource[1]
-            if (sourcePort == null) sourcePort = 'default'
+            let sourceName = newEdge.source.node
+            let sourcePort = newEdge.source.port
 
             let sourceInfo = applet.nodes.find(n => {
                 if (n.id == sourceName) return true
             })
             let source = sourceInfo.instance
-            let splitTarget = newEdge.target.split(':')
-            let targetName = splitTarget[0]
-            let targetPort = splitTarget[1]
+            let targetName = newEdge.target.node
+            let targetPort = newEdge.target.port
             if (targetPort == null) targetPort = 'default'
             let targetInfo = applet.nodes.find(n => {
                 if (n.id == targetName) return true
@@ -761,6 +758,7 @@ export class GraphManager{
             // Register Brainstorm State
             let brainstormSource = source instanceof Brainstorm
             let brainstormTarget = target instanceof Brainstorm
+
             if (brainstormTarget) {
                 applet.streams.add(label) // Keep track of streams
 
@@ -783,10 +781,17 @@ export class GraphManager{
             let tP = target.ports[targetPort]
             let sP = source.ports[sourcePort]
 
+            // Count active edges
             tP.input.active++
             sP.output.active++
-            if (tP.input.active && tP.output.active && tP.analysis) applet.analysis.dynamic.push(...tP.analysis)
-            if (sP.input.active && sP.output.active && sP.analysis) applet.analysis.dynamic.push(...sP.analysis)
+
+            // Set edge references
+            tP.input.edges.set(label, {node: source, port: sP})
+            sP.output.edges.set(label, {node: target, port: tP})
+
+
+            if ((tP.input.active || tP.input.type === null) && (tP.output.active || tP.output.type === null) && tP.analysis) applet.analysis.dynamic.push(...tP.analysis)
+            if ((sP.input.active || sP.input.type === null) && (sP.output.active || sP.output.type === null) && sP.analysis) applet.analysis.dynamic.push(...sP.analysis)
 
             // Push Edge into Registry
             this.applets[appId].edges.push(newEdge)
@@ -794,6 +799,8 @@ export class GraphManager{
             // Update Applet
             this.updateApp(appId)
 
+            // Add to Editor
+            if (runEditor == true && this.applets[appId]?.editor != null) this.applets[appId].editor.addEdge(newEdge)
 
             let input = source.ports[sourcePort]
 
@@ -879,17 +886,86 @@ export class GraphManager{
 
         for (let i = applet.edges.length - 1; i >=0; i--) {
             let edge = applet.edges[i] 
-            if ((edge.source.split(':')[0] == label) || (edge.target.split(':')[0] == label)){
-                this.removeEdge(id,edge)
+            if ((edge.source.node == label) || (edge.target.node == label)){
+                this.removeEdge(edge, id);
             }
         }
     }
 
-    removeEdge = (appId, structure) => {
+    getNode(id,name){
+        let appInfo = this.applets[id]
+        if (appInfo){
+            let node = appInfo.nodes.find(n => {
+                // TODO: Replace eventually, though this isn't actually known to a user...
+                // if (n.uuid === uuid) return true
+                if (n.id == name){
+                    return true
+                }
+            })
+            return node.instance
+        } else return undefined
+    }
 
-        let applet = this.applets[appId]
-        let stateKey = structure.source.replace(':', '_')
+    getNodes = (nodeType, nodes) => {
+        if(nodes) {
+        return nodes.filter(n => {
+            if (n.label === nodeType) return true
+            else if (n.class.name === nodeType) return true
+            
+            // else if (port == null) return true
+            // else if (e.target === str) return true
+        });
+        } else return [];
+    }
 
+    //return first node of a type/label
+    getNodeByType = (nodeType,app) => {
+        if (app) {
+            let filtered = app.graph.nodes.filter(n => {
+                if (n.label === nodeType) return true
+                else if (n.class.name === nodeType) return true
+                else if (n.uuid === nodeType) return true
+                // else if (port == null) return true
+                // else if (e.target === str) return true
+            });
+            return filtered[0]; 
+        } else return undefined;
+    }
+
+    convertToStandardEdge = (structure, nodes=[]) => { //???
+        let standardStruct = {source: {}, target: {}}
+        Object.keys(standardStruct).forEach(type => {
+            if (structure[type] instanceof Object) {
+                nodes = this.getNodes(structure[type].node,nodes)
+                standardStruct[type].node = nodes[0]?.label ?? structure[type].node
+                standardStruct[type].port = structure[type].port ?? 'default'
+            } else if (typeof structure[type] === 'string') {
+                let structSplit = structure[type].split(':')
+                standardStruct[type] = {node: structSplit[0], port: structSplit[1] ?? 'default'}
+            }
+        })
+
+        return standardStruct
+    }
+
+    getEdge = (source={node:'',port:''},target={node:'',port:''}, app) => {
+        return app.edges.find(e => {
+            if (e.source.node === source.node && e.source.port === source.port && e.target.node === target.node && e.target.port === e.target.port) return true // this doesn't work
+        });
+    }
+
+    getEdges = (target='', app) => {
+        return app.nodes.find((n)=>{
+            if(n.class.name === target || n.uuid === target || n.label === target) return true;
+        });
+    }
+
+    removeEdge = (structure, app) => {
+
+        let appId = (typeof app === 'string') ? app : app.props.id
+        let applet = (typeof app === 'string') ? this.applets[app] : this.applets[app.props.id]
+        let stateKey = `${structure.source.node}_${structure.source.port}`
+    
         let sessionSubs = applet.subscriptions.session[stateKey]
         let localSubs = applet.subscriptions.local[stateKey]
 
@@ -918,18 +994,14 @@ export class GraphManager{
         })
 
         // Remove Edge Analysis Flags
-        let splitSource = structure.source.split(':')
-        let sourceName = splitSource[0]
-        let sourcePort = splitSource[1]
-        if (sourcePort == null) sourcePort = 'default'
+        let sourceName = structure.source.node
+        let sourcePort = structure.source.port
         let sourceInfo = applet.nodes.find(n => {
             if (n.id == sourceName) return true
         })
         let source = sourceInfo.instance
-        let splitTarget = structure.target.split(':')
-        let targetName = splitTarget[0]
-        let targetPort = splitTarget[1]
-        if (targetPort == null) targetPort = 'default'
+        let targetName = structure.target.node
+        let targetPort = structure.target.port
 
         let targetInfo = applet.nodes.find(n => {
             if (n.id == targetName) return true
@@ -937,8 +1009,15 @@ export class GraphManager{
         let target = targetInfo.instance
         let tP = target.ports[targetPort]
         let sP = source.ports[sourcePort]
+
+        // Decrement Counter
         tP.input.active--
         sP.output.active--
+
+        // Remove edge references
+        tP.input.edges.delete(stateKey)
+        sP.output.edges.delete(stateKey)
+        
 
         let toRemove = []
         let toCheck = []

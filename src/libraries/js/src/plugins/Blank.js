@@ -1,3 +1,5 @@
+import {Plugin} from './Plugin'
+
 /* 
 
     This is an example plugin for the Brains@Play software library. 
@@ -20,6 +22,9 @@ export class Blank extends Plugin {
         // ADded AFTER CONSTRUCTION
         // this.app: The application that this plugin is running in
 
+
+        // EXTERNAL DEPENDENCIES (e.g. ['https://cdn.plot.ly/plotly-2.0.0.min.js'])
+        this.dependencies = []
 
         // PROPS
         this.props = { id: String(Math.floor(Math.random() * 1000000)) } // properties of the plugin

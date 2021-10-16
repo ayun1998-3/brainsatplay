@@ -1,4 +1,75 @@
 //By Joshua Brewster (AGPL)
+
+
+/**
+ * Math2 Contains All Static Methods
+ * We'll add more useful static things like filter kernels etc. as we get to making them.
+ * 
+ * //Just type these and the variable inputs that pop up should be easy to follow. Everything is commented otherwise till we document it
+ * genSineWave() //generate a sine wave
+ * getSineAmplitude() //get amplitude of a sine at time t
+ * mean() //array mean
+ * mode() //array mode
+ * std() //standard dev
+ * relError() //relative error
+ * informationEntropy() //trying to build a maxent distribution off of this stuff
+ * zscore() //array z score
+ * variance() //variance
+ * dot() //dot product
+ * cross3D() //3d cross product
+ * magnitude() //vector magnitude
+ * distance() //distance function p1-p2
+ * normalize() //array normalization
+ * newtonsMethod() //root approximation
+ * integral() //1d integral
+ * dintegral() //2d integral
+ * tintegral() //3d integral
+ * pintegral() //2d path integral
+ * makeVec() 
+ * transpose(mat) //2d mat transpose
+ * matmul(a,b) 
+ * matscale(mat,scalar)
+ * matadd(a,b)
+ * matsub(a,b)
+ * normalDistribution(samples=[], normalize=true) //create a norall (gaussian) distribution
+ * expectedValue(samples=[],probabilities=this.normalDistribution(samples)) //get expected value of an array
+ * originMoment(samples=[],probabilities=this.normalDistribution(samples),order=1) //statistical moment about origin
+ * centralMoment(samples=[],probabilities=this.normalDistribution(samples),order=1) //statistical moment about mean
+ * linearDiscriminantAnalysis(samples=[], classifier=[]) //LDA
+ * conv1D(arr=[],kern=[],pad=0) //1d convolution //1d convolution
+ * conv2D(mat=[[],[],[]],kern=[[],[],[]],pad=0) //2d convolution
+ * cov2d(mat) //2d covariance
+ * cov1d(arr1=[],arr2=[]) //1d covariance
+ * cov3d(x=[],y=[],z=[]) //3d covariance
+ * covNd(dimensionalData=[]) //nd covariance
+ * eigens2x2(mat=[[1,2],[3,4]]) //fast 2x2 eigenvalue 
+ * eigenvectors2x2(mat=[[1,2],[3,4]], eigens=[1,2]) //fast 2x2 eigenvector 
+ * fastpca2d(xarr,yarr) //fast 2d pca
+ * crosscorrelation(arr1,arr2) //crosscor
+ * autocorrelation(arr1) //autocor
+ * correlograms(dat=[[],[]]) //return cross correlations of many signals
+ * sma(arr=[], window) //simple moving average 
+ * sum(arr=[]) //array sum
+ * reduceArrByFactor(arr,factor=2) //reduce array sizes
+ * makeArr(startValue, stopValue, nSteps) //linspace
+ * interpolateArray(data, fitCount, scalar=1) 
+ * isExtrema(arr,critical='peak') //peak or valley
+ * isCriticalPoint(arr,critical='peak') //peak, valley
+ * peakDetect = (smoothedArray,type='peak',window=49) //wider window to find less peaks
+ * getPeakThreshold(arr, peakIndices, thresholdVar)
+ * 
+ * eigens(M=[[],[]], tolerance=0.0001, max_iterations=1000)
+ * pca(mat=[[],[]],tolerance = 0.00001) //power iteration method PCA
+ * eigenvalue_of_vector(mat, eigenvector)
+ * power_iteration(mat, tolerance=0.00001, max_iterations=1000)
+ * squared_difference(v1, v2)
+ * flatten_vector(v) //column to row
+ * column(mat, x) //row to column
+ * 
+ */
+
+
+
 export class Math2 {
 	constructor() {
 
@@ -33,6 +104,58 @@ export class Math2 {
 	static B = 1.458e-6; 				//Thermal constant Kg / m*s*sqrt(kg)
 	static S = 110.4; 					//Sutherland's constant K
 	static Sigma = 3.65e-10; 			//Collision diameter of air m
+
+	static imgkernels = {
+		edgeDetection: [
+		  [-1, -1, -1],
+		  [-1,  8, -1],
+		  [-1, -1, -1]
+		], boxBlur: [
+		  [1/9, 1/9, 1/9],
+		  [1/9, 1/9, 1/9],
+		  [1/9, 1/9, 1/9]
+		], sobelLeft: [
+		  [1,  0, -1],
+		  [2,  0, -2],
+		  [1,  0, -1]
+		], sobelRight: [
+		  [-1, 0, 1],
+		  [-2, 0, 2],
+		  [-1, 0, 1]
+		], sobelTop: [
+		  [1,  2,   1],
+		  [0,  0,   0],
+		  [-1, -2, -1] 
+		], sobelBottom: [
+		  [-1, 2, 1],
+		  [0,  0, 0],
+		  [1,  2, 1]
+		], identity: [
+		  [0, 0, 0],
+		  [0, 1, 0], 
+		  [0, 0, 0]
+		], gaussian3x3: [
+		  [1,  2,  1],
+		  [2,  4,  2], 
+		  [1,  2,  1]
+		], guassian7x7: [
+		  [0, 0,  0,   5,   0,   0,  0],
+		  [0, 5,  18,  32,  18,  5,  0],
+		  [0, 18, 64,  100, 64,  18, 0],
+		  [5, 32, 100, 100, 100, 32, 5],
+		  [0, 18, 64,  100, 64,  18, 0],
+		  [0, 5,  18,  32,  18,  5,  0],
+		  [0, 0,  0,   5,   0,   0,  0],
+		], emboss: [
+		  [-2, -1,  0],
+		  [-1,  1,  1], 
+		  [ 0,  1,  2]
+		], sharpen: [
+		  [0, -1,   0],
+		  [-1,  5, -1],
+		  [0, -1,   0]
+		]
+	  };
 
 	//----------------------------------------------------------------
 	//-------------------- Static Functions --------------------------
@@ -157,7 +280,6 @@ export class Math2 {
         })
         return Math.sqrt(dsqrd);
     }
-
 	static normalize(vec) { //nDimensional vector normalization
         var norm = 0;
         norm = this.magnitude(vec);
@@ -167,6 +289,48 @@ export class Math2 {
         })
         return vecn;
     }
+
+	//return the quadratic roots based on your input ax^2 + bx + c = 0
+	static quadraticFormula(a,b,c) {
+		let bbmac4 = Math.sqrt(b*b-4*a*c);
+		if(!isNaN(bbmac4)) return ['complex','complex'];
+		let _a2 = 1/(2*a);
+		if(bbmac4 === 0) return [b*_a2];
+		let nb = -b;
+		return [(nb + bbmac4)*_a2,((nb - bbmac4)*_a2)];
+	}
+
+	//approximation of function roots. Provide a function (1d), window, and precision and it will return approximate roots along that window
+	static newtonsMethod(foo=(x)=>{return Math.pow(x,5) + x*x - x - 0.2}, start=0,end=1, precision=0.01, attempts=10) {
+		let roots = [];
+
+		for(let i = 0; i < attempts; i++) {
+			let seedx = Math.random()*(end-start);	
+			let guess = foo(seedx);
+			let guess2 = foo(seedx + precision);
+			let slope = (guess2 - guess)/precision;
+
+			let xn = seedx+precision;
+			while((Math.abs(slope) > precision)) {
+				let step = -guess/slope;
+				let xn1 = xn+step;
+				guess = guess2;
+				guess2 = foo(xn1);
+				let slope = (guess2 - guess)/(xn1-xn);
+			}
+
+			let idx;
+			let f = roots.find((root,i) => {
+				if(Math.abs(xn1 - root) < precision) {
+					idx = i;
+					return true;
+				}
+			});
+			if(f) roots[idx] = (xn1 + f)*0.5;
+			else roots.push(xn1);
+		}
+		return roots;
+	}
 
 	//2D integral approximation using rectangular area under the curve. If you need absolute values be sure to return that.
     static integral = (func=(x)=>{ let y=x; return y;}, range=[], stepx=0.01) => {
@@ -283,18 +447,6 @@ export class Math2 {
 		return m;
 	}
 
-	//Statistical moment about the origin (discrete)
-	static centralMoment(probabilities=[],order=1) {
-		let moment = 0;
-		let mean = this.mean(probabilities); //expected value
-		let len = probabilities.length;
-		for(let i = 0; i < len; i++) {
-			moment += probabilities[i] * Math.pow(mean[i],order);
-		}
-
-		return moment;
-	}
-
 	//Get probability densities for the samples
 	static normalDistribution(samples=[], normalize=true) {
 		let mean = this.mean(samples);
@@ -349,6 +501,88 @@ export class Math2 {
 		return dk;
 	}
 
+	//1D convolution (filtering)
+	static conv1D(arr=[],kern=[1/3,1/3,1/3],pad=Math.floor(kern.length*0.5)) {
+		let result = [];
+		let _n = 1/kern.length;
+
+		if(pad > 0) {
+			let pads = new Array(pad).fill(0);
+			arr = [...pads,...arr,...pads];
+		}
+
+		let start = Math.floor(kern.length*0.5); //offset since kernel will reduce size of array
+		let end = arr.length - kern.length + start; //end index
+
+		for(let i = start; i < end; i++) {
+			let acc = 0;
+			for(let j = 0; j < kern.length; j++) {
+				acc += arr[i-start] * kern[j];
+			}
+			result.push(acc* _n);
+		}
+
+		return result;
+	}	
+
+	//2D convolution (filtering), input 2d mat and 2d kernel 
+	static conv2D(mat=[[],[],[]],kern=[[],[],[]],pad=0) {
+		let result = new Array(mat.length - Math.ceil(kern.length*0.5)).fill([]);
+		
+		let mat_t;
+		let kern_t = Math2.transpose(kern_t);
+
+		if(pad > 0) {
+			let pads = new Array(pad).fill(0);
+
+			//transpose to col/row
+			mat_t = Math2.transpose(mat); //hard copy
+			for(let i = 0; i < mat_t.length; i++) {
+				mat_t[i] = [...pads,...mat_t[i],...pads];
+			}
+
+			//transpose back
+			mat = Math2.transpose(mat_t);
+			for(let j = 0; j < mat.length; j++) {
+				mat[j] = [...pads,...mat[j],...pads];
+			}
+ 
+		}
+
+		
+		let startr = Math.floor(kern[0].length*0.5); //offset since kernel will reduce size of array
+		let startl = Math.floor(kern_t[0].length*0.5); //offset since kernel will reduce size of array
+
+		let endr = mat[0].length - kern[0].length + startr; //row end
+		let endl = mat_t[0].length - kern_t[0].length + startl; //column end
+
+		let _n = 1/(kern[0].length*kern_t[0].length);
+
+		let iters = endr*endl; //number of convolutions to perform
+
+		let i = startr;
+		let x; let y=startl;
+		while(i < iters) {
+			let acc = 0;
+			x = i % mat[0].length;
+			if(x === 0) {
+				y++;
+			}
+
+			for(let j = 0; j < kern[0].length; j++) {
+				for(let k = 0; k < kern_t[0].length; j++) {
+					acc += mat[y-startl+k][x-startr+j] * kern[k][j];
+				}
+
+				result[y].push(acc*_n);
+			}
+			
+			i++;
+		}
+		
+		return result;
+
+	}	
 
 	//2D matrix covariance (e.g. for lists of signals). Pretty fast!!!
 	static cov2d(mat) { //[[x,y,z,w],[x,y,z,w],...] input list of vectors of the same length
@@ -400,6 +634,7 @@ export class Math2 {
 		//console.timeEnd("cov2d");
 		return m; //Covariance matrix
 	}
+
 
 	//Covariance between two 1D arrays
 	static cov1d(arr1=[],arr2=[]) {
@@ -511,7 +746,7 @@ export class Math2 {
 	}
 
 	//Compute correlograms of the given array of arrays (of equal length). Input array of equal length arrays of latest raw data (use dat = eeg32instance.getTaggedRawData())
-	static correlograms(dat) {//Coherence network math for data pushed to the atlas
+	static correlograms(dat=[[],[]]) {//Coherence network math for data pushed to the atlas
 		var correlograms = []; //auto and cross correlations for each channel
 		dat.forEach((row1,i) => {
 			dat.forEach((row2,j) => {
@@ -524,7 +759,7 @@ export class Math2 {
 	}
 
 	//Input data and averaging window, output array of moving averages (should be same size as input array, initial values not fully averaged due to window)
-	static sma(arr, window) {
+	static sma(arr=[], window) {
 		var smaArr = []; //console.log(arr);
 		for(var i = 0; i < arr.length; i++) {
 			if((i == 0)) {
@@ -570,12 +805,10 @@ export class Math2 {
     }
 
 	//Linear interpolation from https://stackoverflow.com/questions/26941168/javascript-interpolate-an-array-of-numbers. Input array and number of samples to fit the data to
-	static interpolateArray(data, fitCount, normalize=1) {
-
-		var norm = normalize;
+	static interpolateArray(data, fitCount, scalar=1) {
 
 		var linearInterpolate = function (before, after, atPoint) {
-			return (before + (after - before) * atPoint)*norm;
+			return (before + (after - before) * atPoint)*scalar;
 		};
 
 		var newData = new Array();
@@ -748,30 +981,30 @@ export class Math2 {
 	}
 
 	// See: https://math.stackexchange.com/questions/768882/power-method-for-finding-all-eigenvectors
-	static shift_deflate(M, eigenvalue, eigenvector)  {
+	static shift_deflate(mat, eigenvalue, eigenvector)  {
 		let len = Math.sqrt( this.matmul(this.transpose(eigenvector), eigenvector)  );
 		let U = this.matscale(eigenvector, 1.0/len);
 		let delta = this.matscale( this.matmul(U, this.transpose(U)) , eigenvalue);
-		let M_new = this.matsub(M, delta);
+		let M_new = this.matsub(mat, delta);
 		return M_new;
 	}
 
-	static eigenvalue_of_vector(M, eigenvector) {
+	static eigenvalue_of_vector(mat, eigenvector) {
 		// Xt * M * x
-		ev = this.matmul( this.matmul(this.transpose(eigenvector), M ), eigenvector);
+		ev = this.matmul( this.matmul(this.transpose(eigenvector), mat ), eigenvector);
 		return ev;
 	}
 
 	//Input square 2D matrix
-	static power_iteration(M, tolerance=0.00001, max_iterations=1000) {
+	static power_iteration(mat, tolerance=0.00001, max_iterations=1000) {
 
-		let rank = M.length;
+		let rank = mat.length;
 	
 		// Initialize the first guess pf the eigenvector to a row vector of the sqrt of the rank
 		let eigenvector = new Array(rank).fill(0).map(() => new Array(1).fill(Math.sqrt(rank)));
 	
 		// Compute the corresponding eigenvalue
-		let eigenvalue = this.eigenvalue_of_vector(M, eigenvector);
+		let eigenvalue = this.eigenvalue_of_vector(mat, eigenvector);
 	
 		let epsilon = 1.0;
 		let iter = 0;
@@ -780,13 +1013,13 @@ export class Math2 {
 			let old_eigenvalue = JSON.parse(JSON.stringify(eigenvalue));
 	
 			// Multiply the Matrix M by the guessed eigenveector
-			let Mv = this.matmul(M,eigenvector);
+			let Mv = this.matmul(mat,eigenvector);
 	
 			// Normalize the eigenvector to unit length
 			eigenvector = this.normalize(Mv);
 	
 			// Calculate the associated eigenvalue with the eigenvector (transpose(v) * M * v)
-			eigenvalue = this.eigenvalue_of_vector(M, eigenvector);
+			eigenvalue = this.eigenvalue_of_vector(mat, eigenvector);
 	
 			// Calculate the epsilon of the differences
 			epsilon = Math.abs( eigenvalue - old_eigenvalue);
@@ -798,15 +1031,15 @@ export class Math2 {
 	}
 	
 	//Input square 2D matrix
-	static eigens(M, tolerance=0.0001, max_iterations=1000) {
+	static eigens(mat, tolerance=0.0001, max_iterations=1000) {
 
 		let eigenvalues = [];
 		let eigenvectors = [];
 	
-		for (let i = 0; i < M.length; i++ ) {
+		for (let i = 0; i < mat.length; i++ ) {
 	
 			// Compute the remaining most prominent eigenvector of the matrix M
-			let result = this.power_iteration(M, tolerance, max_iterations);
+			let result = this.power_iteration(mat, tolerance, max_iterations);
 	
 			// Separate the eigenvalue and vector from the return array
 			let eigenvalue = result[0];
@@ -816,7 +1049,7 @@ export class Math2 {
 			eigenvectors[i] = this.flatten_vector(eigenvector);
 	
 			// Now remove or peel off the last eigenvector
-			M = this.shift_deflate(M, eigenvalue, eigenvector);
+			mat = this.shift_deflate(mat, eigenvalue, eigenvector);
 		}
 	
 		return [eigenvalues, eigenvectors];
@@ -859,5 +1092,10 @@ export class Math2 {
 	}	
 
 	//-------------------------------------------------------------
+
+	static p300(raw_signal=[],signal_timestamps=[],event_timestamps=[]) {
+		
+
+	}
 
 }

@@ -1,7 +1,4 @@
-import {DataQuality} from '../algorithms/DataQuality'
-import {Canvas} from '../canvas/Canvas'
 import {Plugin} from '../Plugin'
-
 
 export class Blink extends Plugin {
     
@@ -106,45 +103,36 @@ export class Blink extends Plugin {
             }
         }
 
-        // Dependencies
-        this.analysis = new Set()
-        this.props.dataquality = this.session.atlas.graph.instantiateNode({id: 'dataquality', class: DataQuality, params: {method: 'Mean Amplitude'}}, this.session)
-        this.props.canvas = this.session.atlas.graph.instantiateNode({id: 'canvas', class: Canvas, params: {}}, this.session)
-        this.analysis.add(...Array.from(this.props.dataquality.analysis))
-        this.analysis.add(...Array.from(this.props.canvas.analysis))
-
         this.lastBlink = {}
         this.lastBlink.left = Date.now()
         this.lastBlink.right = Date.now()
     }
 
-    init = () => {
+    init = async () => {
         this.props.looping = true
 
-        // let setupHTML = (app) => {
-            this.props.canvas.instance.init()
-            this.props.container.insertAdjacentElement('beforeend', this.props.canvas.instance.props.container)
+        this.props.dataquality = await this.addNode({id: 'dataquality', class: 'DataQuality', params: {method: 'Mean Amplitude'}})
+        this.props.canvas = await this.addNode({id: 'canvas', class: 'Canvas'})
 
-            this.session.atlas.graph.runSafe(this.props.canvas.instance, 'draw', 
-                {  
-                    forceRun: true,
-                    forceUpdate: true,
-                    data: {active: true, function: (ctx) => {
-                        if (this.props.looping){
-                            if (this.ports.debug.data){
-                                this.props.container.style.display = 'block'
-                                this._drawSignal(ctx)
-                            } else {
-                                this.props.container.style.display = 'none'
-                                // this.props.container.style.pointerEvents = 'none'
-                            }
+        this.props.container.insertAdjacentElement('beforeend', this.props.canvas.instance.props.container)
+
+        this.session.atlas.graph.runSafe(this.props.canvas.instance, 'draw', 
+            {  
+                forceRun: true,
+                forceUpdate: true,
+                data: {active: true, function: (ctx) => {
+                    if (this.props.looping){
+                        if (this.ports.debug.data){
+                            this.props.container.style.display = 'block'
+                            this._drawSignal(ctx)
+                        } else {
+                            this.props.container.style.display = 'none'
+                            // this.props.container.style.pointerEvents = 'none'
                         }
-                    }}
-                }
-            )
-        // }
-
-        // return { HTMLtemplate, setupHTML}
+                    }
+                }}
+            }
+        )
     }
 
     deinit = () => {
@@ -222,10 +210,13 @@ export class Blink extends Plugin {
 
     _calculateBlink = async (user, tags) => {
         let blink = false
-        this.props.dataquality.ports.qualityThreshold.data = this.ports.qualityThreshold.data
+
+       if (this.props.dataquality) {
+           this.props.dataquality.ports.qualityThreshold.data = this.ports.qualityThreshold.data
         
-        this.props.channelQuality = await this.session.atlas.graph.runSafe(this.props.dataquality.instance,'default',user) // Grab results of dependencies (no mutation)
-        this.props.channelQuality = this.props.channelQuality.data
+            this.props.channelQuality = await this.session.atlas.graph.runSafe(this.props.dataquality.instance,'default',user) // Grab results of dependencies (no mutation)
+            this.props.channelQuality = this.props.channelQuality.data
+       }
 
         tags.forEach(tag => {
             let side = this._getTagSide(tag)
