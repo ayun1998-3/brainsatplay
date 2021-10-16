@@ -3,7 +3,7 @@ import * as brainsatplay from '../../../libraries/js/brainsatplay'
 import {Manager} from './Manager'
 // import {Results} from './Results'
 import audioCue from './audioCue.mp3'
-import {BarChart} from '../../../libraries/js/src/plugins/interfaces/BarChart'
+import {BarChart} from '../../../libraries/js/src/plugins/displays/BarChart'
 
 export const settings = {
     name: "Experiment Template",
@@ -35,8 +35,8 @@ export const settings = {
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
-            duration: 5,
-            interTrialInterval: 2,
+            duration: 1,
+            interTrialInterval: 1,
             allowConsecutive: false,
             start: false
           }},
@@ -164,6 +164,15 @@ export const settings = {
         {
           source: 'scheduler:done', 
           target: 'manager:done'
+        },
+
+        {
+          source: 'manager:done',
+          target: 'manager:learn'
+        },
+
+        {
+
         },
         
         //barchart visualization

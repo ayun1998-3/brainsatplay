@@ -41,14 +41,6 @@ export class BarChart extends Plugin {
                 output: {type: Element}
             },
 
-            test: {
-                edit: false,
-                input: {type: undefined},
-                output: {type: null},
-                onUpdate: (user) => {
-                    console.log("test success")
-                }
-            }
         }
     }
 
