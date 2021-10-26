@@ -91,10 +91,14 @@ export class hegduino {
 
 //alternatively use heg-connection.ts by Dovydas (@Giveback007 on Github)
 export class hegBLE { //This is formatted for the way the HEG sends/receives information. Other BLE devices will likely need changes to this to be interactive.
-    constructor(serviceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e', rxUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e', txUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e', defaultUI = false, parentId="main_body" , buttonId = "blebutton", async = false ){
-     this.serviceUUID = serviceUUID;
-     this.rxUUID      = rxUUID; //characteristic that can receive input from this device
-     this.txUUID      = txUUID; //characteristic that can transmit input to this device
+    constructor(
+        serviceUUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e', 
+        rxUUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e', 
+        txUUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e', 
+        defaultUI = false, parentId="main_body" , buttonId = "blebutton", async = false ){
+     this.serviceUUID = serviceUUID.toLowerCase();
+     this.rxUUID      = rxUUID.toLowerCase(); //characteristic that can receive input from this device
+     this.txUUID      = txUUID.toLowerCase(); //characteristic that can transmit input to this device
      this.encoder     = new TextEncoder("utf-8");
      this.decoder     = new TextDecoder("utf-8");
  
@@ -126,7 +130,7 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
     this.versionCharacteristicUuid = '6E400007-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
     this.fileCharacteristicUuid = '6E400006-B5A3-F393-E0A9-E50E24DCCA9E'.toLowerCase();
 
-    this.esp32Device = null;
+    //this.esp32Device = null;
     this.esp32otaService = null;
     this.readyFlagCharacteristic = null;
     this.dataToSend = null;
@@ -158,7 +162,7 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
             }
         }
         var HTMLtoAppend = '<button id="'+buttonId+'">BLE Connect</button>';
-        HEGwebAPI.appendFragment(HTMLtoAppend,parentId);
+        document.getElementById(parentId).insertAdjacentHTML('afterbegin',HTMLtoAppend);
         document.getElementById(buttonId).onclick = () => { 
             if(this.async === false) {
                 this.connect();
@@ -223,9 +227,9 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
     onConnectedCallback = () => {
        //Use this to set up the front end UI once connected here
     }
-    onErrorCallback = () => {
+    onErrorCallback = (err) => {
         //Use this to set up the front end UI once connected here
-     }
+    }
  
     sendMessage = (msg) => {
         if (this.service) this.service.getCharacteristic(this.rxUUID).then(tx => {return tx.writeValue(this.encoder.encode(msg));});
