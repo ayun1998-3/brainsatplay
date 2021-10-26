@@ -1,9 +1,6 @@
 import {Blink} from '../models/Blink'
 import {LDA} from './LDA'
 import {createCards} from '../../ui/browserUtils';
-import * as brainsatplay from '../../../brainsatplay'
-
-
 
 export class Train {
 
@@ -11,10 +8,7 @@ export class Train {
     static hidden = true
     
     constructor(info, graph) {
-        
-        
-        
-        
+
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),            
             ui: {}
