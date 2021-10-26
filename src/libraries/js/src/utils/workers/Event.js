@@ -25,28 +25,22 @@
  * 
  */
 
-import {StateManager} from '../ui/StateManager'
+import {StateManager} from '../../ui/StateManager'
 
-export class Event {
-    constructor() {
-
-        if(window) {
-            if(!window.workers) { 
-                window.workers = new WorkerManager();
-            } //if on main thread
-            else {
-                let found = window.workers.workerResponses.find((foo) => {
-                    if(foo.name === 'eventmanager') return true;
-                });
-                if(!found) {
-                    window.workers.addCallback('eventmanager',this.workerCallback);
-                }
-            }
-        } 
+export class Events {
+    constructor(workermanager=undefined) {
 
         this.state = new StateManager({},undefined,false); //trigger only state (no overhead)
 
-        // this.events = new Map(); 
+        if(workermanager) { //only in window
+            let found = workermanager.workerResponses.find((foo) => {
+                if(foo.name === 'eventmanager') return true;
+            });
+            if(!found) {
+                workermanager.addCallback('eventmanager',this.workerCallback);
+            }
+        } 
+
     }
 
     //subscribe a to an event, default is the port reponse 
@@ -55,36 +49,36 @@ export class Event {
     }
 
     unsubEvent(eventName, sub) {
-        return this.state.unsubscribe(eventName,sub);
+        return this.state.unsubscribeTrigger(eventName,sub);
+    }
+
+    //remove an event
+    removeEmitter(eventName) {
+        this.state.unsubscribeAllTriggers(eventName);
     }
 
     //use this to set values by event name, will post messages on threads too
     emit(eventName, val) {
         let output = val;
         if(typeof output === 'object') {
-            output.event = eventName;
+            output.eventName = eventName;
         }
         else {
-            output = {event:eventName, output:output};
+            output = {eventName:eventName, output:output};
         }
         // run this in global scope of window or worker. since window.self = window, we're ok
         if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
             postMessage(output); //thread event 
         }
 
-        let event = this.events.get(eventName);
-        this.state.setState({[event.id]:output}); //local event 
+        this.state.setState({[eventName]:output}); //local event 
     }
-
-    //remove an event
-    removeEmitter(eventName) {
-        this.state.unsubscribeAll(eventName);
-    }
-
 
     workerCallback = (msg) => {
-        if(msg.event) {
-            this.state.setState({[msg.event]:msg.output});
+        if(typeof msg === 'object') {
+            if(msg.eventName) {
+                this.state.setState({[msg.eventName]:msg.output});
+            }
         }
     }
 

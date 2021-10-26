@@ -1,5 +1,6 @@
 import { gpuUtils } from '../gpu/gpuUtils.js';
 import { Math2 } from '../mathUtils/Math2';
+import { Events } from './Event.js';
 import 'regenerator-runtime/runtime' 
 
 let dynamicImport = async (url) => {
@@ -59,12 +60,16 @@ export class CallbackManager{
             this.gpu = gpu;
         }
 
+        this.events = new Events();
+        this.eventSettings = [];
+
         this.canvas = new OffscreenCanvas(512,512); //can add fnctions and refer to this.offscreen 
         this.context;
         this.animation = undefined;
         this.animtionFunc = undefined;
         this.animating = false;
         this.threeWorker = undefined;
+        
 
         this.callbacks = [
           {case:'list',callback:(args)=>{
@@ -91,6 +96,9 @@ export class CallbackManager{
           }},
           {case:'callkernel',callback:(args)=>{ //arg0 = kernel name, args.slice(1) = kernel input arguments
             return this.gpu.callKernel(args[0],args.slice(1)); //generalized gpu kernel calls
+          }},
+          {case:'addevent',callback:(args,origin)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
+            this.eventSettings.push({eventName:args[0],case:args[1],origin:origin});
           }},
           {case:'resizecanvas',callback:(args)=>{
             this.canvas.width = args[0];
@@ -267,11 +275,22 @@ export class CallbackManager{
         ];
     }
 
+    checkEvents(foo,origin) {
+      return this.eventSettings.find((o)=>{
+        if(o.origin === origin) {
+          if(o.foo) {
+            if(o.foo === foo) return true;
+            else return false;
+          } else return true;
+        }
+      });
+    }
+
     checkCallbacks(event) {
       let output = 'function not defined';
       this.callbacks.find((o,i)=>{
         if(o.case === event.data.foo) {
-          output = o.callback(event.data.input);
+          output = o.callback(event.data.input,event.data.origin);
           return true;
         }
       });

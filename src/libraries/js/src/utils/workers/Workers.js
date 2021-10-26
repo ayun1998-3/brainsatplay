@@ -1,19 +1,21 @@
 // import Worker from 'web-worker'
-let defaultWorkerThreads = 0;
 
 import {CallbackManager} from './workerCallbacks' 
 
 // WEBPACK
 // import worker from './eeg.worker.js'
 import * as worker from './eeg.worker.js'
+import { Events } from './Event';
 
 export class WorkerManager {
-    constructor(workerURL= new URL('./eeg.worker.js', import.meta.url)){
+    constructor(workerURL= new URL('./eeg.worker.js', import.meta.url, defaultWorkerThreads=0)){
         this.workerURL = workerURL;
         this.workerResponses = [];
         this.workers = [];
         this.workerThreads = defaultWorkerThreads;
         this.workerThreadrot = 0;
+
+        this.events = new Events(this); //window.workers.events.subEvent('abc',(output)=>{do someting})
 
         for(var i = 0; i < defaultWorkerThreads; i++){
           this.addWorker()
