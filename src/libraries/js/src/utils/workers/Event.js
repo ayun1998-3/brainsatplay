@@ -88,22 +88,6 @@ export class Events {
         }
     }
 
-    // portResponse = (eventName) => {
-    //     let event = this.events.get(eventName);
-    //     if(event && event.port) return this.state.subscribeTrigger(event.id,(output) => {event.port.set(output)});
-    //     else return undefined;
-    // }
-
-    // //add an event when a port emits a value (sets state)
-    // portEventEmitter(eventName, port) {
-    //     let event = {name:eventName, id:randomId('event'), port:port, sub:undefined};
-    //     if(port) event.sub = this.state.subscribeTrigger(port.id,(val)=>{this.emit(eventName,val);});
-    //     this.events.set(eventName,event);
-        
-    //     return event;
-    // }
-
-
     export = () => {
         return this
     }
