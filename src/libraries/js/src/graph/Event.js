@@ -44,40 +44,21 @@ export class Event {
             }
         } 
 
-        this.eventState = new StateManager({},undefined,false); //trigger only state (no overhead)
+        this.state = new StateManager({},undefined,false); //trigger only state (no overhead)
 
-        this.events = new Map(); 
+        // this.events = new Map(); 
     }
 
-    //subscribe a port to an event
-    subEvent(eventName, port) {
-        let event = this.events.get(eventName);
-        if(event) return this.eventState.subscribeTrigger(event.id,(val)=>{port.set(val);});
-        else return undefined;
+    //subscribe a to an event, default is the port reponse 
+    subEvent(eventName, response=(output)=>{console.log(eventName,output);}) {
+        return this.state.subscribeTrigger(eventName,response);
     }
 
     unsubEvent(eventName, sub) {
-        let event = this.events.get(eventName);
-        if(event) this.eventState.unsubscribe(event.id,sub);
+        return this.state.unsubscribe(eventName,sub);
     }
 
-    //add an event when a port emits a value (sets state)
-    eventEmitter(eventName, port) {
-        let event = {name:eventName, id:randomId('event'), port:port, sub:undefined};
-        if(port) event.sub = this.eventState.subscribeTrigger(port.id,(val)=>{this.emit(eventName,val);});
-        this.events.set(eventName,event);
-        
-        return event;
-    }
-
-    //remove an event
-    removeEmitter(eventName) {
-        let event = this.events.get(eventName);
-        this.eventState.unsubscribeAll(event.id);
-        if(event.sub) this.eventState.unsubscribe(event.port.id,event.sub);
-        this.events.delete(eventName);
-    }
-
+    //use this to set values by event name, will post messages on threads too
     emit(eventName, val) {
         let output = val;
         if(typeof output === 'object') {
@@ -92,21 +73,36 @@ export class Event {
         }
 
         let event = this.events.get(eventName);
-        this.eventState.setState({[event.id]:output}); //local event 
-      
+        this.state.setState({[event.id]:output}); //local event 
     }
+
+    //remove an event
+    removeEmitter(eventName) {
+        this.state.unsubscribeAll(eventName);
+    }
+
 
     workerCallback = (msg) => {
         if(msg.event) {
-            let event = this.events.get(msg.event);
-            if(!event) {  
-                event = this.eventEmitter(msg.event);
-            }
-            
-            this.eventState.setState({[event.id]:msg.output});
-
+            this.state.setState({[msg.event]:msg.output});
         }
     }
+
+    // portResponse = (eventName) => {
+    //     let event = this.events.get(eventName);
+    //     if(event && event.port) return this.state.subscribeTrigger(event.id,(output) => {event.port.set(output)});
+    //     else return undefined;
+    // }
+
+    // //add an event when a port emits a value (sets state)
+    // portEventEmitter(eventName, port) {
+    //     let event = {name:eventName, id:randomId('event'), port:port, sub:undefined};
+    //     if(port) event.sub = this.state.subscribeTrigger(port.id,(val)=>{this.emit(eventName,val);});
+    //     this.events.set(eventName,event);
+        
+    //     return event;
+    // }
+
 
     export = () => {
         return this
