@@ -13,6 +13,15 @@ export class Train {
             id: String(Math.floor(Math.random() * 1000000)),            
             ui: {}
         }
+
+        this.graphs = [
+            {
+                nodes: [
+                    {name: 'blink', class: Blink},
+                    {name: 'lda', class: LDA},
+                ]
+            }
+        ]
         
         this.props.container = document.createElement('div')
         this.props.container.classList.add('training-prompt-container')

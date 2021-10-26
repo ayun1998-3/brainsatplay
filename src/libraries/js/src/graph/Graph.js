@@ -310,7 +310,7 @@ export class Graph {
                                     if (cM instanceof Function) cM(...args)
                                     if (pM instanceof Function) pM(...args)
                                 } catch (e) { 
-                                    throw new Error(`${child.className} cannot be constructed`);
+                                    throw new Error(`${child.className} cannot be constructed`, e);
                                 }
                             }
                         })

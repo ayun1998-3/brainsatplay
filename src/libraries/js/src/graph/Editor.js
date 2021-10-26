@@ -258,7 +258,7 @@ export class Editor{
             for (let key in appletManifest){
                 let o = appletManifest[key]
                 let settings = await getAppletSettings(o.folderUrl)
-                if (settings.graph) {
+                if (settings.graph || settings.graphs) {
                     if (o.folderUrl.includes('/Templates')) templateSet.push({destination: 'Templates', settings})
                     else templateSet.push({destination: 'Library', settings})
                 }
@@ -1416,7 +1416,6 @@ export class Editor{
     deinit(){
         if (this.container){
             this.container.style.opacity = '0'
-            // console.log(this.container)
             setTimeout(() => {this.container.remove()}, 500)
         }
         window.removeEventListener('resize', this.responsive)
