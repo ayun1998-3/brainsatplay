@@ -290,7 +290,8 @@ export class CallbackManager{
       let output = 'function not defined';
       this.callbacks.find((o,i)=>{
         if(o.case === event.data.foo) {
-          output = o.callback(event.data.input,event.data.origin);
+          if(event.data.input) output = o.callback(event.data.input,event.data.origin);
+          else if (event.data.args) output = o.callback(event.data.args,event.data.origin);
           return true;
         }
       });

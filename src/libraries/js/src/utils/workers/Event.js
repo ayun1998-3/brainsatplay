@@ -31,6 +31,7 @@ export class Events {
     constructor(workermanager=undefined) {
 
         this.state = new StateManager({},undefined,false); //trigger only state (no overhead)
+        this.workermanager = workermanager;
 
         if(workermanager) { //only in window
             let found = workermanager.workerResponses.find((foo) => {
@@ -52,6 +53,22 @@ export class Events {
         return this.state.unsubscribeTrigger(eventName,sub);
     }
 
+    //add an event name, can optionally add them to any threads too from the main thread
+    addEvent(eventName,origin=undefined,foo=undefined,workerIdx=undefined) {
+        this.state.setState({[eventName]:undefined});
+        if(this.workermanager) {
+            if(origin) {
+                if(workerIdx) {
+                    this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},i);
+                } else {
+                    this.workermanager.workers.forEach((w,i)=>{
+                        this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},i); //add it to all of them since we're assuming we're rotating threads
+                    });
+                }
+            }
+        }
+    }
+
     //remove an event
     removeEmitter(eventName) {
         this.state.unsubscribeAllTriggers(eventName);
@@ -69,9 +86,11 @@ export class Events {
         // run this in global scope of window or worker. since window.self = window, we're ok
         if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
             postMessage(output); //thread event 
+        } else if (this.workermanager) {
+            this.workermanager.postTo
         }
 
-        this.state.setState({[eventName]:output}); //local event 
+        this.state.setState({[eventName]:val}); //local event 
     }
 
     workerCallback = (msg) => {
