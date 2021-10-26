@@ -44,7 +44,8 @@ self.onmessage = (event) => {
   else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
       self.postMessage(dict);
       return 0;
-  } else return dict
+  } 
+  return dict
 }
 
 if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
