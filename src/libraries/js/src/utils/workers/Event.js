@@ -2,27 +2,8 @@
 //multithreaded event manager, spawn one per thread and import a single instance elsewhere.
 
 /**
- * How it'll work:
- * Function output --> Event Emitter Tx
- * 
- * Event Emitter Rx[] --> State sub triggers to pass output to subscribed ports.
- * 
- * So set the worker onmessage up with the event manager as well (when it's done).
- * This is going to be integral with the node/plugin system so that's what will handle wiring up event i/o
- * and enable native multithreaded graphs. 
- * Use flags, intervals, and animation loops where appropriate to avoid overrun. 
- * 
- * EX:
- * Thread 1:
- * Say ports a b and c emit events x y and z respectively at different times
- * 
- * This creates 3 events that can call postEvent separately
- * 
- * postEvent tags the output object with the event tag based on the port emitting to it
- * 
- * 
- * 
- * 
+ * This is both a simple wrapper for a trigger-only state manager as well 
+ * as an interface for multithreaded events for simpler, more dynamic threading pipelines
  */
 
 import {StateManager} from '../../ui/StateManager'
