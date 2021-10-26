@@ -70,7 +70,7 @@ export class Events {
             output = {eventName:eventName, output:output};
         }
 
-        if (this.workermanager) { //when emitting values for workers, val should be an object like {input:0, foo'abc', origin:'here'}
+        if (this.workermanager) { //when emitting values for workers, input should be an object like {input:0, foo'abc', origin:'here'} for correct worker callback usage
             this.workermanager.postToWorker(output,workerIdx);
         } else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         // run this in global scope of window or worker. since window.self = window, we're ok
