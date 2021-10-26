@@ -4,6 +4,11 @@
 /**
  * This is both a simple wrapper for a trigger-only state manager as well 
  * as an interface for multithreaded events for simpler, more dynamic threading pipelines
+ * 
+ * From any thread:
+ * emit -> tx
+ * rx -> run trigger 
+ * 
  */
 
 import {StateManager} from '../../ui/StateManager'
@@ -56,19 +61,20 @@ export class Events {
     }
 
     //use this to set values by event name, will post messages on threads too
-    emit(eventName, val) {
-        let output = val;
+    emit(eventName, input, workerIdx=undefined) {
+        let output = input;
         if(typeof output === 'object') {
             output.eventName = eventName;
         }
         else {
             output = {eventName:eventName, output:output};
         }
+
+        if (this.workermanager) { //when emitting values for workers, val should be an object like {input:0, foo'abc', origin:'here'}
+            this.workermanager.postToWorker(output,workerIdx);
+        } else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         // run this in global scope of window or worker. since window.self = window, we're ok
-        if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
             postMessage(output); //thread event 
-        } else if (this.workermanager) {
-            this.workermanager.postTo
         }
 
         this.state.setState({[eventName]:val}); //local event 
