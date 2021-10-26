@@ -34,17 +34,17 @@ export class ThreadedCanvas {
     setAnimation(animationFunction) {
         if(typeof animationFunction !== 'function') return false;
         let fstring = animationFunction.toString();
-        window.workers.postToWorker({origin:this.name,foo:'setAnimation',args:[fstring]},this.workerId)
+        window.workers.postToWorker({origin:this.name,foo:'setAnimation',input:[fstring]},this.workerId)
     }
 
     addSetup(setupFunction) {
         if(typeof animationFunction !== 'function') return false;
         let fstring = setupFunction.toString();
-        window.workers.postToWorker({origin:this.name,foo:'addFunc',args:['setupAnim',fstring]},this.workerId)
+        window.workers.postToWorker({origin:this.name,foo:'addFunc',input:['setupAnim',fstring]},this.workerId)
     }
 
     setThreeAnimation(setupFunction, drawFunction) {
-        window.workers.postToWorker({origin:this.name,foo:'initThree',args:[setupFunction.toString(),drawFunction.toString()]})
+        window.workers.postToWorker({origin:this.name,foo:'initThree',input:[setupFunction.toString(),drawFunction.toString()]})
     }
 
     startThreeAnimation() {
@@ -57,7 +57,7 @@ export class ThreadedCanvas {
 
     setValues(values={}) {
         if(typeof values === 'object') {
-            window.workers.postToWorker({origin:this.name,foo:'setValues',args:values},this.workerId);
+            window.workers.postToWorker({origin:this.name,foo:'setValues',input:values},this.workerId);
         }
     }
 
@@ -70,7 +70,7 @@ export class ThreadedCanvas {
     }
 
     setCanvasSize(w=this.canvas.width,h=this.canvas.height) {
-        window.workers.postToWorker({origin:this.name,foo:'resizecanvas',args:[w,h]},this.workerId);
+        window.workers.postToWorker({origin:this.name,foo:'resizecanvas',input:[w,h]},this.workerId);
     }
 
     init() {

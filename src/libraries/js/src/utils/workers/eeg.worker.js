@@ -38,10 +38,14 @@ self.onmessage = (event) => {
 
   let dict = {output: output, foo: event.data.foo, origin: event.data.origin}
   
-if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+  let eventSetting = manager.checkEvents(event.data.foo,event.data.origin);
+
+  if(eventSetting) manager.events.emit(eventSetting.eventName,dict);
+  else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
       self.postMessage(dict);
       return 0;
-  } else return dict
+  } 
+  return dict
 }
 
 if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
