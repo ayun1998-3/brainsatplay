@@ -18,6 +18,8 @@ export class HEG {
         }
 
         this.ports = {
+
+            // Full Data Atlas
             atlas: {
                 edit: false,
                 input: {type:null},
@@ -25,14 +27,30 @@ export class HEG {
                 onUpdate: () =>{
                     return {data: this.session.atlas.data}
                 }
-            }, status: {
+            }, 
+            
+            // Connection Status
+            status: {
                 edit: false,
                 input: {type: null},
                 output: {type: 'boolean'},
                 onUpdate: () => {
                     return {data: (this.session.getDevice('heg') != null)}
                 }
-            }
+            },
+
+            // Relative Flow Direction
+             flow: {
+                onUpdate: () => {user.data.heg.find((o,i) => {
+                        if (i == 0){
+                            if (o.count > 0){
+                                user.value = o.ratio[o.count-1] - this.session.atlas.mean(o.ratio.slice(o.count-20,o.count-1))
+                                return true
+                            }
+                        }
+                    })
+                }
+             }
         }
 
         let keys = ['times','red', 'ir', 'ambient', 'ratio', 'temp']
