@@ -306,12 +306,12 @@ export class Graph {
                             let cM = child[f]
                             let pM = parent[f]
                             parent[f] = child[f] = (...args) => {
-                                try {
+                                // try {
                                     if (cM instanceof Function) cM(...args)
                                     if (pM instanceof Function) pM(...args)
-                                } catch (e) { 
-                                    throw new Error(`${child.className} cannot be constructed`, e);
-                                }
+                                // } catch (e) { 
+                                //     throw new Error(`${child.className} cannot be constructed`, e);
+                                // }
                             }
                         })
 

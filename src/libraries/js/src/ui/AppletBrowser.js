@@ -155,17 +155,17 @@ export class AppletBrowser {
         ]
 
         let settings = {
-            graph: {
+            graphs: [{
                 nodes: [],
                 edges: []
-            }
+            }]
         }
 
         // Training Selection
         trainingModes.forEach((mode, i) => {
-            settings.graph.nodes.push({ name: mode, class: Train, params: { mode , applets: this.props.applets} })
-            settings.graph.nodes.push({ name: `${mode}ui`, class: DOM, params: { style: `div {flex-grow: 1;}`, parentNode: trainingContainer } })
-            settings.graph.edges.push({ source: `${mode}:element`, target: `${mode}ui:content` })
+            settings.graphs[0].nodes.push({ name: mode, class: Train, params: { mode , applets: this.props.applets} })
+            settings.graphs[0].nodes.push({ name: `${mode}ui`, class: DOM, params: { style: `div {flex-grow: 1;}`, parentNode: trainingContainer } })
+            settings.graphs[0].edges.push({ source: `${mode}:element`, target: `${mode}ui:content` })
         })
 
         this.props.trainingModule = new App(settings, trainingContainer, this.session)

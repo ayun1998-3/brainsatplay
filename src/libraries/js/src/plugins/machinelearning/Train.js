@@ -140,11 +140,19 @@ export class Train {
         let appletFilter = (settings) => {
 
             let foundBinding;
-            if (settings.graph){
+            if (settings?.graphs){
+                settings.graphs.forEach(g => {
+                    g.nodes.forEach(n => {
+                        if (n.class.name === 'Event') foundBinding = true
+                    })
+                })
+            } 
+            else if (settings?.graph){
                 settings.graph.nodes.forEach(n => {
                     if (n.class.name === 'Event') foundBinding = true
                 })
             }
+            
             if (foundBinding && settings.canTrain) return settings
         }
 

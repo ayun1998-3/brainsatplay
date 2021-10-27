@@ -40,7 +40,7 @@ export class App {
             sessionId: null, // Track Brainstorm sessions,
             ready: false,
             edgeCallbacks: [],
-            elements: []
+            elements: [],
         };
 
         this.editor = new Editor(this, parent)
@@ -80,6 +80,10 @@ export class App {
             else if (e.key === 'r') { // Reload Application
                 e.preventDefault();
                 this.reload()
+            }
+            else if (e.key === 'd') { // Open Device Manager
+                e.preventDefault();
+                this.session.toggleDeviceSelectionMenu(this.info?.connect?.filter)
             }
         }
     }
@@ -158,13 +162,12 @@ export class App {
 
     // Executes after UI is created
     _setupUI = () => {
-        if (this.info.connect) this._createDeviceManager(this.info.connect)
-        setTimeout(() => this.graphs.forEach(g => g._resizeUI()), 250) // resize again
+        this._createDeviceManager(this.info.connect)
+        this.graphs.forEach(g => g._resizeUI())
     }
 
     // Populate the UI with a Device Manager
     _createDeviceManager = ({parentNode, toggle, filter, autosimulate, onconnect, ondisconnect}) => {
-        if (typeof toggle === 'string') toggle = document.querySelector(`[id="${toggle}"]`)
         let elements = this.session.connectDevice(parentNode, toggle, filter, autosimulate, onconnect, ondisconnect)
         this.props.elements.push(...elements)
     }

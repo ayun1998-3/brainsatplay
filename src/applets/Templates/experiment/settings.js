@@ -30,7 +30,7 @@ export const settings = {
 
         button.innerHTML = 'Start Experiment'
         button.onclick = () => {
-            let n = settings.graph.nodes.find(n => n.id === 'manager')
+            let n = settings.graphs[0].nodes.find(n => n.id === 'manager')
             n.instance.update('start', {data: true})
         }
 
@@ -38,7 +38,7 @@ export const settings = {
     },
 
     // App Logic
-    graph:
+    graphs:[
     {
       nodes: [
         {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
@@ -189,5 +189,5 @@ export const settings = {
         //   target: 'scheduler:reset'
         // },
       ]
-    },
+    }],
 }

@@ -338,7 +338,8 @@ export class Session {
 
 	connectDevice(parentNode = document.body, toggleButton = null, deviceFilter = null, autosimulate = false, onconnect = () => { }, ondisconnect = () => { }) {
 
-		if (typeof toggleButton === 'string') toggleButton = document.getElementById(toggleButton)
+		let shortcut = (toggleButton === 'shortcut') ? true : false
+		if (typeof toggleButton === 'string') toggleButton = document.getElementById(toggleButton) // existing element
 
 		// Apply User Filter
 		let newDeviceList = (deviceFilter != null) ? deviceList.filter(d => deviceFilter.includes(d.name)) : deviceList
@@ -492,13 +493,13 @@ export class Session {
 						z-index: 100;
 					`
 				toggleButton.innerHTML = 'Open Device Manager'
-				document.body.insertAdjacentElement('afterbegin', toggleButton)
+				if (!shortcut) document.body.insertAdjacentElement('afterbegin', toggleButton)
 				toggleButton.onclick = () => {
-					this.openDeviceSelectionMenu(deviceFilter)
+					this.toggleDeviceSelectionMenu(deviceFilter)
 				}
 			} else {
 				toggleButton.onclick = () => {
-					this.openDeviceSelectionMenu(deviceFilter)
+					this.toggleDeviceSelectionMenu(deviceFilter)
 				}
 			}
 
@@ -518,7 +519,7 @@ export class Session {
 
 			if (toggleButton) {
 				toggleButton.onclick = () => {
-					this.openDeviceSelectionMenu(deviceFilter)
+					this.toggleDeviceSelectionMenu(deviceFilter)
 				}
 			}
 
@@ -530,37 +531,45 @@ export class Session {
 		return (toggleButton?.id === 'deviceManagerOpen') ? [container, toggleButton] : [container]
 	}
 
-	openDeviceSelectionMenu = (filter) => {
+	toggleDeviceSelectionMenu = (filter) => {
 		let deviceSelection = document.getElementById(`${this.id}DeviceSelection`)
 		if (deviceSelection) {
-			deviceSelection.style.opacity = '1'
-			deviceSelection.style.pointerEvents = 'auto'
+			if (deviceSelection.style.opacity != '1') {
+				deviceSelection.style.opacity = '1'
+				deviceSelection.style.pointerEvents = 'auto'
 
-			// Apply Filter to UI
-			let newDeviceList = (filter != null) ? deviceList.filter(d => filter.includes(d.name)) : deviceList
-			let companies = {}
-			deviceList.forEach(d => {
-				let deviceContainer = document.getElementById(`brainsatplay-device-${d.id}`)
-				if (deviceContainer) {
-					let cleanCompanyString = d.company.replace(/[|&;$%@"<>()+,]/g, "")
-					if (companies[cleanCompanyString] == null) companies[cleanCompanyString] = false
-					if (newDeviceList.includes(d)) {
-						deviceContainer.style.display = ''
-						companies[cleanCompanyString] = true
-					} else {
-						deviceContainer.style.display = 'none'
+				// Apply Filter to UI
+				let newDeviceList = (filter != null) ? deviceList.filter(d => filter.includes(d.name)) : deviceList
+				let companies = {}
+				deviceList.forEach(d => {
+					let deviceContainer = document.getElementById(`brainsatplay-device-${d.id}`)
+					if (deviceContainer) {
+						let cleanCompanyString = d.company.replace(/[|&;$%@"<>()+,]/g, "")
+						if (companies[cleanCompanyString] == null) companies[cleanCompanyString] = false
+						if (newDeviceList.includes(d)) {
+							deviceContainer.style.display = ''
+							companies[cleanCompanyString] = true
+						} else {
+							deviceContainer.style.display = 'none'
+						}
+					}
+				})
+
+				for (let c in companies) {
+					let div = document.body.querySelector(`[name="${c}"]`)
+					if (div) {
+						if (companies[c]) div.style.display = ''
+						else div.style.display = 'none'
 					}
 				}
-			})
 
-			for (let c in companies) {
-				let div = document.body.querySelector(`[name="${c}"]`)
-				if (div) {
-					if (companies[c]) div.style.display = ''
-					else div.style.display = 'none'
-				}
-			}
-
+			} 
+			
+			// NO OFF YET
+			// else {
+			// 	deviceSelection.style.opacity = '0'
+			// 	deviceSelection.style.pointerEvents = 'none'
+			// }
 		}
 	}
 

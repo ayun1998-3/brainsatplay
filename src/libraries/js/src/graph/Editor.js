@@ -554,8 +554,8 @@ export class Editor{
                 // },
 
                 connect: {
-                    filter:[],
-                    toggle: '',
+                    filter: null,
+                    toggle: null,
                     onconnect: () => {}
                 },
             
