@@ -387,7 +387,7 @@
         //************** Customize me *****************
         //*********************************************
         ble.onNotificationCallback = (e) => {
-            let val = this.decoder.decode(e.target.value);
+            let val = ble.decoder.decode(e.target.value);
             console.log("BLE MSG: ",val);
             
             let outputdiv = document.getElementById('output');
