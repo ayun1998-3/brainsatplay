@@ -10,7 +10,8 @@ import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerM
 export class Scene {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'scene'
+
     constructor(info, graph) {
         
         

@@ -4,6 +4,7 @@ import { updateStatement } from "typescript"
 export class Brainstorm {
 
     static id = String(Math.floor(Math.random() * 1000000))
+    static category = 'networking'
 
     constructor(info, graph) {
         

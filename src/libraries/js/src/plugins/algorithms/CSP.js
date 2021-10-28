@@ -6,12 +6,9 @@ export class CSP {
 
     static id = String(Math.floor(Math.random()*1000000))
     static hidden = true
+    static category = 'algorithms'
 
     constructor(info, graph, params={}) {
-        
-        
-        
-        
         
         this.props = {
             model: null,

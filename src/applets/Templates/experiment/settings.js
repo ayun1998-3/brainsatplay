@@ -11,7 +11,7 @@ export const settings = {
     devices: ["EEG"],
     author: "Garrett Flynn",
     description: "Compare alpha power when eyes closed vs. eyes open.",
-    categories: ["learn"],
+    categories: ["learn", 'templates'],
     instructions:"Coming soon...",
     display: {
       production: false,
@@ -41,11 +41,11 @@ export const settings = {
     graphs:[
     {
       nodes: [
-        {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
+        {name: 'eeg', class: 'EEG'},
         {name: 'manager', class: Manager, params: {button}},
         {
           name: 'scheduler', 
-          class: brainsatplay.plugins.utilities.Scheduler, 
+          class: Scheduler, 
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
@@ -55,13 +55,13 @@ export const settings = {
             start: false
           }},
 
-        {name: 'audioCue', class: brainsatplay.plugins.audio.Audio, params: {file: audioCue}},
-        {name: 'data', class: brainsatplay.plugins.utilities.DataManager},
-        // {name: 'spacebar', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
+        {name: 'audioCue', class: 'Audio', params: {file: audioCue}},
+        {name: 'data', class: 'DataManager'},
+        // {name: 'spacebar', class: Event, params: {keycode: 'Space'}},
         // {name: 'results', class: Results},
 
         // UI
-        {name:'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
+        {name:'ui', class: 'DOM', params: {
           html: `<div id="experiment"></div>`,
           style: `
           .brainsatplay-ui-container {
@@ -86,7 +86,7 @@ export const settings = {
         }
       },
 
-      {name: 'debug', class: brainsatplay.plugins.debug.Debug},
+      {name: 'debug', class: 'Debug'},
       ],
 
       edges: [

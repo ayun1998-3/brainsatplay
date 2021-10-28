@@ -4,6 +4,7 @@
 export class Canvas {
 
     static id = String(Math.floor(Math.random()*1000000))
+    static category = 'canvas'
     
     constructor(info, graph, params={}) {
         

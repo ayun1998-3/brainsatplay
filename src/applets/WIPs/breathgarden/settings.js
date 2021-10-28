@@ -106,48 +106,48 @@ export const settings = {
       nodes: [
 
         // Biofeedback
-        {name: 'breath', class: brainsatplay.plugins.biosignals.Breath},
-        {name: 'heg', class: brainsatplay.plugins.biosignals.HEG},
+        {name: 'breath', class: 'Breath'},
+        {name: 'heg', class: 'HEG'},
 
         // Utilities
-        {name: 'lastHEG', class: brainsatplay.plugins.transforms.Index},
-        {name: 'lastBreath', class: brainsatplay.plugins.transforms.Index},
-        {name: 'scheduler', class: brainsatplay.plugins.utilities.Scheduler, params: { duration: 4, progression: ['Welcome to Breath Garden', 'Welcome to Breath Garden', 'Breathe In','Hold','Breathe Out','Hold','Breathe In','Hold','Breathe Out','Hold','Breathe In','Hold','Breathe Out','Hold','Breathe In','Hold','Breathe Out','Thank You for Playing!']}},
+        {name: 'lastHEG', class: 'Index'},
+        {name: 'lastBreath', class: 'Index'},
+        {name: 'scheduler', class: 'Scheduler', params: { duration: 4, progression: ['Welcome to Breath Garden', 'Welcome to Breath Garden', 'Breathe In','Hold','Breathe Out','Hold','Breathe In','Hold','Breathe Out','Hold','Breathe In','Hold','Breathe Out','Hold','Breathe In','Hold','Breathe Out','Thank You for Playing!']}},
 
         // Tree
-        {name: 'tree1', class: brainsatplay.plugins.scene.Trees, params: {count: 5}},
+        {name: 'tree1', class: 'Trees', params: {count: 5}},
 
         // Light
-        {name: 'light', class: brainsatplay.plugins.scene.Light},
+        {name: 'light', class: 'Light'},
 
         // Ground
-        {name: 'meshvertex', class: brainsatplay.plugins.scene.Shader, params: {default: desertGroundVertexShader, uniforms: meshUniforms}},
-        {name: 'meshfragment', class: brainsatplay.plugins.scene.Shader, params: {default: desertGroundFragmentShader, uniforms: meshUniforms}},
-        {name: 'meshmat', class: brainsatplay.plugins.scene.Material, params:{wireframe: true, transparent:true, depthWrite: true}},
-        {name: 'mesh', class: brainsatplay.plugins.scene.Object3D, params:{type: 'Mesh', x:0, y:0.05, z:0,scale:1, rotatex: Math.PI/2}},
+        {name: 'meshvertex', class: 'Shader', params: {default: desertGroundVertexShader, uniforms: meshUniforms}},
+        {name: 'meshfragment', class: 'Shader', params: {default: desertGroundFragmentShader, uniforms: meshUniforms}},
+        {name: 'meshmat', class: 'Material', params:{wireframe: true, transparent:true, depthWrite: true}},
+        {name: 'mesh', class: 'Object3D', params:{type: 'Mesh', x:0, y:0.05, z:0,scale:1, rotatex: Math.PI/2}},
         
-        {name: 'groundvertex', class: brainsatplay.plugins.scene.Shader, params: {default: desertGroundVertexShader, uniforms: groundUniforms}},
-        {name: 'groundfragment', class: brainsatplay.plugins.scene.Shader, params: {default: desertGroundFragmentShader, uniforms: groundUniforms}},
-        {name: 'groundgeo', class: brainsatplay.plugins.scene.Geometry, params:{type: 'PlaneGeometry', radius: terrainLength, segments: 256}},
-        {name: 'groundmat', class: brainsatplay.plugins.scene.Material, params:{wireframe: false, transparent:true, depthWrite: true}},
-        {name: 'ground', class: brainsatplay.plugins.scene.Object3D, params:{type: 'Mesh', x:0, y:0, z:0,scale:1, rotatex: Math.PI/2}},
+        {name: 'groundvertex', class: 'Shader', params: {default: desertGroundVertexShader, uniforms: groundUniforms}},
+        {name: 'groundfragment', class: 'Shader', params: {default: desertGroundFragmentShader, uniforms: groundUniforms}},
+        {name: 'groundgeo', class: 'Geometry', params:{type: 'PlaneGeometry', radius: terrainLength, segments: 256}},
+        {name: 'groundmat', class: 'Material', params:{wireframe: false, transparent:true, depthWrite: true}},
+        {name: 'ground', class: 'Object3D', params:{type: 'Mesh', x:0, y:0, z:0,scale:1, rotatex: Math.PI/2}},
         
 
         // River
-        {name: 'riververtex', class: brainsatplay.plugins.scene.Shader, params: {default: invisisphereVertexShader, uniforms: invisisphereUniforms}},
-        {name: 'riverfragment', class: brainsatplay.plugins.scene.Shader, params: {default: invisisphereFragmentShader, uniforms: invisisphereUniforms}},
-        {name: 'rivergeo', class: brainsatplay.plugins.scene.Geometry, params:{type: 'BufferGeometry', attributes: riverattributes}},
-        {name: 'rivermat', class: brainsatplay.plugins.scene.Material, params:{type: 'ShaderMaterial',wireframe: false, transparent:true, depthWrite: false}},
-        {name: 'river', class: brainsatplay.plugins.scene.Object3D, params:{type: 'Points', x: riverOffset - riverWidth/2, y:-1, z:terrainFog,scalex:terrainFog*2, scalez: riverWidth, rotatey: Math.PI/2}},
+        {name: 'riververtex', class: 'Shader', params: {default: invisisphereVertexShader, uniforms: invisisphereUniforms}},
+        {name: 'riverfragment', class: 'Shader', params: {default: invisisphereFragmentShader, uniforms: invisisphereUniforms}},
+        {name: 'rivergeo', class: 'Geometry', params:{type: 'BufferGeometry', attributes: riverattributes}},
+        {name: 'rivermat', class: 'Material', params:{type: 'ShaderMaterial',wireframe: false, transparent:true, depthWrite: false}},
+        {name: 'river', class: 'Object3D', params:{type: 'Points', x: riverOffset - riverWidth/2, y:-1, z:terrainFog,scalex:terrainFog*2, scalez: riverWidth, rotatey: Math.PI/2}},
 
         // Particles
-        {name: 'particlesvertex', class: brainsatplay.plugins.scene.Shader, params: {default: particlesVertexShader, uniforms: particleUniforms}},
-        {name: 'particlesfragment', class: brainsatplay.plugins.scene.Shader, params: {default: particlesFragmentShader, uniforms: particleUniforms}},
-        {name: 'particlesgeo', class: brainsatplay.plugins.scene.Geometry, params:{type: 'BufferGeometry', attributes: particleattributes}},
-        {name: 'particlesmat', class: brainsatplay.plugins.scene.Material, params:{type: 'ShaderMaterial',wireframe: false, transparent:true, depthWrite: false}},
-        {name: 'particles', class: brainsatplay.plugins.scene.Object3D, params:{type: 'Points', x: -terrainLength/4, y:0, z:-terrainLength/4,scalex:terrainLength/2, scaley: 5, scalez: terrainLength/2}},
-        {name: 'sine', class: brainsatplay.plugins.controls.Event},//, params: {center: 0.5, scale: 0.5, frequency: 0.1}},
-        {name: 'html', class: brainsatplay.plugins.interfaces.DOM, params:{
+        {name: 'particlesvertex', class: 'Shader', params: {default: particlesVertexShader, uniforms: particleUniforms}},
+        {name: 'particlesfragment', class: 'Shader', params: {default: particlesFragmentShader, uniforms: particleUniforms}},
+        {name: 'particlesgeo', class: 'Geometry', params:{type: 'BufferGeometry', attributes: particleattributes}},
+        {name: 'particlesmat', class: 'Material', params:{type: 'ShaderMaterial',wireframe: false, transparent:true, depthWrite: false}},
+        {name: 'particles', class: 'Object3D', params:{type: 'Points', x: -terrainLength/4, y:0, z:-terrainLength/4,scalex:terrainLength/2, scaley: 5, scalez: terrainLength/2}},
+        {name: 'sine', class: 'Event'},//, params: {center: 0.5, scale: 0.5, frequency: 0.1}},
+        {name: 'html', class: 'DOM', params:{
           html: `
           <div style='background: transparent; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;'>
             <div>
@@ -176,8 +176,8 @@ export const settings = {
         }
         },
 
-        {name: 'scene', class: brainsatplay.plugins.scene.Scene, params: {camerax: 1, cameray: 2.0, cameraz: 9.0}},
-        {name:'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
+        {name: 'scene', class: 'Scene', params: {camerax: 1, cameray: 2.0, cameraz: 9.0}},
+        {name:'ui', class: 'DOM', params: {
           html: `<div id="sceneContainer" id="scene-container"></div>`,
           style: `
           .brainsatplay-ui-container {

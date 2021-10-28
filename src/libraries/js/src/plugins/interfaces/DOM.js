@@ -2,7 +2,8 @@
 export class DOM {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'interfaces'
+
     constructor(info, graph) {
         
         this.props = {
@@ -103,8 +104,13 @@ export class DOM {
                                         node.insertAdjacentElement('beforeend', data)
                                         node.setAttribute('data-active', true)
 
-                                        let newStr = this.ports.style.data.replace(new RegExp(`\n\n#${node.id} {[^}]+}`), ``)
-                                        this.update( 'style', {data: newStr + `\n\n#${node.id} {\n\twidth: 100%;\n\theight: 100%;\n}`})
+                                        let regex = new RegExp(`\n\n[^#].+#${node.id} {([^}]+)}`)
+                                        let match = regex.exec(this.ports.style.data)
+                                        let def = '\n\twidth: 100%;\n\theight: 100%;\n'
+                                        if (!match || match[1] === `\n\t\n` || match[1] === def) {
+                                            let newStr = this.ports.style.data.replace(regex, ``)
+                                            this.update( 'style', {data: newStr + `\n\n#${node.id} {${def}}`})
+                                        }
 
                                         setTimeout(() => {
                                             if (data.onload instanceof Function) data.onload()

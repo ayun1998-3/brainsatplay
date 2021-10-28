@@ -42,7 +42,9 @@ export class Editor{
             id: String(Math.floor(Math.random()*1000000)),
             projectContainer: null,
             projectDefaults: null,
-            open: false
+            open: false,
+            lastClickedProjectCategory: '',
+            galleries: {}
         }
 
         this.elementTypesToUpdate = ['INPUT', 'SELECT', 'OUTPUT', 'TEXTAREA']
@@ -225,131 +227,122 @@ export class Editor{
         if (this.toggle) this.toggle.addEventListener('click', () => {this.toggleDisplay()})
     }
 
+    insertProject = ({settings, destination}) => {
+
+            let restricted = ['BuckleUp', 'Analyzer', 'Brains@Play Studio', 'One Bit Bonanza', 'Applet Browser']
+
+            if (!restricted.includes(settings.name)){
+
+            // Set Experimental Version on Example Projects
+            if (!['Defaults', 'My Projects'].includes(destination)) settings.version = 'experimental'
+
+            let item = document.createElement('div')
+            item.innerHTML = settings.name
+            item.classList.add('brainsatplay-option-node')
+            item.style.padding = '10px 20px'
+            item.style.display = 'block'
+
+            item.onclick = async () => {
+                
+
+                // Import App Only when Necessary
+                console.log(settings)
+                let fullSettings = await getAppletSettings(settings)
+                console.log(fullSettings)
+
+                // Rename Template Projects
+                if (destination !== 'My Project'){
+                    fullSettings = Object.assign({}, fullSettings)
+                    if (fullSettings.name === 'Blank Project') fullSettings.name = 'My Project'
+                }
+
+                // Create Application
+                if (fullSettings.name === 'Load from File') {
+                    let loadedSettings = await this.app.session.projects.loadFromFile()
+                    if (loadedSettings) await this._createApp(loadedSettings)
+                } else {
+                    if (((this.lastSavedProject === this.app.info.name) || this.props.lastClickedProjectCategory == 'My Projects') && destination === 'My Projects' && this.app.info.name === fullSettings.name) await this._createApp(this.app.info)
+                    else await this._createApp(fullSettings)
+                }
+            // }
+            this.props.lastClickedProjectCategory = destination
+
+            }
+
+            if (settings.name === 'Blank Project' || settings.name === 'Load from File') this.props.galleries[destination].insertAdjacentElement('afterbegin',item)
+            else this.props.galleries[destination].insertAdjacentElement('beforeend',item)
+
+            let header = this.props.galleries[destination].previousElementSibling
+            if (header && header.classList.contains('active')) this._resizeGallery(destination) // show all
+        }
+    }
 
     insertProjects = async () => {
 
+        // --------------- Create UI --------------- 
         this.props.projectContainer = this.container.querySelector(`[id="${this.props.id}projects"]`)
         this.props.projectContainer.style.padding = '0px'
         this.props.projectContainer.style.display = 'block'
 
-        let galleries = {}
-        galleries['My Projects'] = []
-        galleries['Defaults'] = []
+        let galleries =  ['Defaults', 'My Projects', 'Templates', 'Library']
+        galleries.forEach(k => {
 
-        // Get Project Settings Files
-        let projectSet = await this.app.session.projects.list()
-        for (let key in projectSet) {
-            projectSet[key] = Array.from(projectSet[key])
-        }
-
-        let length = projectSet.local.length
-        let projects = Array.from({length}, e => new Promise(()=> {})) 
-        for(let i=0;i<projectSet.local.length;i++) {
-            let str = projectSet.local[i]
-            let files = await this.app.session.projects.getFilesFromDB(str)
-            let settings =  await this.app.session.projects.load(files)
-            projects[i] = {destination: 'My Projects', settings}
-        }
-
-        // Get Template Files
-        let templateSet = []
-
-        try {
-            for (let key in appletManifest){
-                let o = appletManifest[key]
-                let settings = await getAppletSettings(o.folderUrl)
-                if (settings.graph || settings.graphs) {
-                    if (o.folderUrl.includes('/Templates')) templateSet.push({destination: 'Templates', settings})
-                    else templateSet.push({destination: 'Library', settings})
-                }
+            // Create Top Header
+            if (k !== 'Defaults'){
+                let div = document.createElement('div')
+                div.classList.add(`brainsatplay-option-type`) 
+                div.classList.add(`option-type-collapsible`)
+                div.innerHTML = k
+                this.addDropdownFunctionality(div)
+                this.props.projectContainer.insertAdjacentElement('beforeend', div)
             }
-        } catch (e) {}
 
-        Promise.allSettled([...projects,...templateSet]).then(set => {
+            // Create Project List
+            this.props.galleries[k] = document.createElement('div')
+            this.props.galleries[k].id = `${this.props.id}-projectlist-${k}`
+            this.props.galleries[k].classList.add("option-type-content")
+            this.props.projectContainer.insertAdjacentElement(`beforeend`, this.props.galleries[k])
 
-            let restrictedTemplates = ['BuckleUp', 'Analyzer', 'Brains@Play Studio', 'One Bit Bonanza', 'Applet Browser']
-            set.forEach(o => {
-                if (o.status === 'fulfilled' && o.value.settings){
-                    if (!restrictedTemplates.includes(o.value.settings.name)) {
-                        if (galleries[o.value.destination] == null) galleries[o.value.destination] = []
-                        
-                        galleries[o.value.destination].push(o.value.settings)
-                    }
-                }
-            })
+            if (k === 'Defaults') {
+                this.props.projectDefaults = this.props.galleries[k]
+                this._resizeGallery(k)
+            }
+        })
 
-            // Add Load from File Button
-            galleries['Defaults'].unshift({name: 'Load from File'})
+        // Add Load from File Button
+        this.insertProject({settings: {name: 'Load from File'}, destination: 'Defaults'})
 
-            let galleryKeys = ['Defaults', 'My Projects', 'Templates', 'Library'] // Specify ordering
+        // --------------- Get Project Settings Files --------------- 
+        let projectSet = await this.app.session.projects.list()
+        for (let key in projectSet) projectSet[key] = Array.from(projectSet[key])
 
-            let lastClickedProjectCategory = ''
-            galleryKeys.forEach(k => {
-
-                let projectArr = galleries[k]
-
-                if (projectArr){
-                    // Create Top Header
-                    if (k !== 'Defaults'){
-                        let div = document.createElement('div')
-                        div.classList.add(`brainsatplay-option-type`) 
-                        div.classList.add(`option-type-collapsible`)
-                        div.innerHTML = k
-                        this.addDropdownFunctionality(div)
-                        this.props.projectContainer.insertAdjacentElement('beforeend', div)
-                    }
-
-                    // Create Project List
-                    let projects = document.createElement('div')
-                    projects.id = `${this.props.id}-projectlist-${k}`
-                    projects.classList.add("option-type-content")
-                    this.props.projectContainer.insertAdjacentElement(`beforeend`, projects)
-
-                    if (k === 'Defaults') {
-                        this.props.projectDefaults = projects
-                        this._resizeDefaultProjects()
-                    }
-
-                    projectArr.forEach(settings => {
-
-                        // Set Experimental Version on Example Projects
-                        if (!['Defaults', 'My Projects'].includes(k)) settings.version = 'experimental'
-
-                        let item = document.createElement('div')
-                        item.innerHTML = settings.name
-                        item.classList.add('brainsatplay-option-node')
-                        item.style.padding = '10px 20px'
-                        item.style.display = 'block'
-
-                        item.onclick = async () => {
-                            
-                            // Rename Template Projects
-                            if (k !== 'My Project'){
-                                settings = Object.assign({}, settings)
-                                if (settings.name === 'Blank Project') settings.name = 'My Project'
-                            }
-
-                            // Create Application
-                            if (settings.name === 'Load from File') {
-                                settings = await this.app.session.projects.loadFromFile()
-                                this._createApp(settings)
-                            } else {
-                                if (((this.lastSavedProject === this.app.info.name) || lastClickedProjectCategory == 'My Projects') && k === 'My Projects' && this.app.info.name === settings.name) this._createApp(this.app.info)
-                                else this._createApp(settings)
-                            }
-                        // }
-                        lastClickedProjectCategory = k
-
-                        }
-                        if (settings.name === 'Blank Project' || settings.name === 'Load from File') projects.insertAdjacentElement('afterbegin',item)
-                        else projects.insertAdjacentElement('beforeend',item)
-                    })
-                }
+        // --------------- Local --------------- 
+        console.log(projectSet.local)
+        projectSet.local.map(async str => {
+            let files = await this.app.session.projects.getFilesFromDB(str)
+            await this.app.session.projects.load(files).then(settings => {
+                this.insertProject({destination: 'My Projects', settings})
             })
         })
+
+        // --------------- Templates --------------- 
+        for (let key in appletManifest){
+            try {
+                let settings = appletManifest[key]
+                console.log(settings.graphs)
+                if (settings.graphs || settings.zip) {
+                    if (settings.categories.includes('templates')) this.insertProject({destination: 'Templates', settings})
+                    else this.insertProject({destination: 'Library', settings})
+                }
+            } catch (e) { console.log(e)}
+        }
     }
 
-    _createApp(settings){
+    async _createApp(settings){
+
+        console.log(settings)
+        
+        settings = await this.app.session.getSettings(settings) // filter through to get external .zip files
 
         settings.editor = {
             parentId: this.app.ui.parent,
@@ -359,6 +352,8 @@ export class Editor{
             z-index: 9;
             `,
         }
+
+        console.log(settings)
 
         this.app.replace(settings)
     }
@@ -602,8 +597,8 @@ export class Editor{
 
         }
 
-        _resizeDefaultProjects = () => {
-            setTimeout(() => {if (this.props.projectDefaults) this.props.projectDefaults.style.maxHeight = `${this.props.projectDefaults.scrollHeight}px`}, 50)
+        _resizeGallery = (name) => {
+            setTimeout(() => {if (this.props.galleries[name]) this.props.galleries[name].style.maxHeight = `${this.props.galleries[name].scrollHeight}px`}, 50)
         }
 
 
@@ -631,7 +626,7 @@ export class Editor{
                             // this.graph._nodesToGrid()
                         }
                     })
-                    this._resizeDefaultProjects()
+                    this._resizeGallery('Defaults')
                 },50)
             } else if (!on) {
                 this.container.style.display = 'none'
@@ -1131,7 +1126,7 @@ export class Editor{
         this.library = await this.app.session.projects.getLibraryVersion(this.app.info.version)
 
         let usedClasses = []
-        this.classRegistry = this.app.session.projects.classRegistries[this.app.info.version]
+        this.classRegistry = this.library.plugins
 
         this.addNodeOption(undefined)
 

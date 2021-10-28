@@ -5,7 +5,8 @@ import { WorkerManager } from "../../utils/workers/Workers"
 export class Thread {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'utilities'
+
     constructor(info, graph, params={}) {
         
         

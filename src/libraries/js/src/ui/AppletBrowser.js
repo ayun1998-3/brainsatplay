@@ -72,15 +72,10 @@ export class AppletBrowser {
         
                 // Create App Library Section (dependent on platform)
                 let onclickInternal = (element, settings) => {
-
-                    if (settings.link){
-                        window.open(settings.link, "_blank");
-                    } else {
                         let selector = document.getElementById(`applet${0}`) // this.appletToReplace
                         selector.value = settings.name
                         window.history.pushState({ additionalInformation: 'Updated URL from Applet Browser (applet)' }, '', `${window.location.origin}/#${settings.name}`)
                         selector.onchange()
-                    }
                 }
                 
                 this._createSection('App Library', this.props.applets, onclickInternal)

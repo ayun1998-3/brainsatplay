@@ -5,7 +5,8 @@ import {transformCSSForBCICursor} from '../../ui/cssForBCI'
 export class Cursor {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'interfaces'
+
     constructor(info, graph, params={}) {
         
         

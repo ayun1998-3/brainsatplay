@@ -18,29 +18,29 @@ export const settings = {
       nodes: [ 
 
         // Manual Control
-        {name:'event', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
+        {name:'event', class: 'Event', params: {keycode: 'Space'}},
 
         // Data-Based Controls
-        {name:'eeg', class: brainsatplay.plugins.biosignals.EEG},
-        {name:'neurofeedback', class: brainsatplay.plugins.algorithms.Neurofeedback, metric: 'Focus'},
+        {name:'eeg', class: 'EEG'},
+        {name:'neurofeedback', class: 'Neurofeedback', metric: 'Focus'},
 
-        {name:'buffer', class: brainsatplay.plugins.transforms.Buffer},
-        {name:'arithmetic', class: brainsatplay.plugins.transforms.Arithmetic},
+        {name:'buffer', class: Buffer},
+        {name:'arithmetic', class: 'Arithmetic'},
 
-        {name:'peakDetector', class: brainsatplay.plugins.transforms.Peak},
+        {name:'peakDetector', class: 'Peak'},
 
         // File Manager
         {name:'manager', class: Ramchurn},
 
         // Video Player
-        {name:'video', class: brainsatplay.plugins.interfaces.Video, params: {cut: true, files: [], ui: false}},
+        {name:'video', class: 'Video', params: {cut: true, files: [], ui: false}},
 
         // Audio
-        // {name:'audio', class: brainsatplay.plugins.audio.Audio},
-        {name:'mixer', class: brainsatplay.plugins.audio.Mixer},
+        // {name:'audio', class: Audio},
+        {name:'mixer', class: 'Mixer'},
 
         // UI
-        {name:'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
+        {name:'ui', class: 'DOM', params: {
           html: `<div id="vidContainer" class="video-container"></div><div id="filmSelection"></div>`,
           style: `
           .brainsatplay-ui-container {
@@ -141,20 +141,20 @@ export const settings = {
 
     // graph: {
     //   nodes: [
-    //     {name:'eeg', class: brainsatplay.plugins.biosignals.EEG},
-    //     {name:'neurofeedback', class: brainsatplay.plugins.algorithms.Neurofeedback, metric: 'Focus'},
+    //     {name:'eeg', class: EEG},
+    //     {name:'neurofeedback', class: Neurofeedback, metric: 'Focus'},
 
-    //     {name:'buffer', class: brainsatplay.plugins.transforms.Buffer},
-    //     {name:'arithmetic', class: brainsatplay.plugins.transforms.Arithmetic},
+    //     {name:'buffer', class: Buffer},
+    //     {name:'arithmetic', class: Arithmetic},
 
-    //     {name:'peakDetector', class: brainsatplay.plugins.transforms.Peak},
+    //     {name:'peakDetector', class: Peak},
 
-    //     {name:'changeView', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
-    //     {name:'player', class: brainsatplay.plugins.interfaces.Video, params: {
+    //     {name:'changeView', class: Event, params: {keycode: 'Space'}},
+    //     {name:'player', class: Video, params: {
     //       cut: true,
     //       ramchurn: true
     //     }},
-    //     {name:'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
+    //     {name:'ui', class: DOM, params: {
     //       html: `<div id="vidContainer" class="video-container"></div>`,
     //       style: `
     //       .brainsatplay-ui-container {

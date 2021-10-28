@@ -5,7 +5,7 @@ export const settings = {
     devices: ["EEG"],
     author: "Christopher Coogan + Garrett Flynn",
     description: "Control a mouse with your brain",
-    categories: ["UI"],
+    categories: ["UI", 'extension'],
     // "image":  featureImg,
     instructions:"Coming soon...",
     display: {
@@ -15,13 +15,13 @@ export const settings = {
     graph:
       {
       nodes: [
-        {name: 'up', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowUp'}},
-        {name: 'down', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowDown'}},
-        {name: 'left', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowLeft'}},
-        {name: 'right', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowRight'}},
-        {name: 'click', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
-        {name: 'move', class: brainsatplay.plugins.utilities.Move},
-        {name: 'cursor', class: brainsatplay.plugins.interfaces.Cursor, params: {}},
+        {name: 'up', class: 'Event', params: {keycode: 'ArrowUp'}},
+        {name: 'down', class: 'Event', params: {keycode: 'ArrowDown'}},
+        {name: 'left', class: 'Event', params: {keycode: 'ArrowLeft'}},
+        {name: 'right', class: 'Event', params: {keycode: 'ArrowRight'}},
+        {name: 'click', class: 'Event', params: {keycode: 'Space'}},
+        {name: 'move', class: 'Move'},
+        {name: 'cursor', class: 'Cursor', params: {}},
       ],
       edges: [
 

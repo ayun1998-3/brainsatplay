@@ -5,6 +5,7 @@ export class OSC {
 
     static id = String(Math.floor(Math.random()*1000000))
     static hidden = true
+    static category = 'networking'
 
     constructor(info, graph, params={}) {
         

@@ -2,7 +2,8 @@ import fragmentShader from './fragment.glsl'
 export class Shader {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'scene'
+
     constructor(info, graph, params={}) {
         
         

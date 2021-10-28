@@ -3,6 +3,7 @@
 export class Neurofeedback {
     
     static id = String(Math.floor(Math.random()*1000000))
+    static category = 'algorithms'
 
     constructor(info, graph) {
         

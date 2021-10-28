@@ -19,12 +19,11 @@ export const settings = {
     graph:
       {
       nodes: [
+        {name: 'buzz', class: 'Buzz'},
+        {name: 'spacebar', class: 'Event', params: {keycode: 'Space'}},
+        {name: 'up', class: 'Event', params: {keycode: 'ArrowUp'}},
         {name: 'ui', class: UI, params: {}},
-        {name: 'buzz', class: brainsatplay.plugins.haptics.Buzz},
-        {name: 'spacebar', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
-        {name: 'up', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowUp'}},
-        {name: 'ui', class: UI, params: {}},
-        {name: 'document', class: brainsatplay.plugins.interfaces.DOM},   
+        {name: 'document', class: 'DOM'},   
       ],
       edges: [
 

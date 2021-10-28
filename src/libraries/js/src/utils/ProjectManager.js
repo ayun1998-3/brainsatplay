@@ -17,15 +17,12 @@ export class ProjectManager {
             app: null
         }
 
+        this.local = location.hostname === "localhost" || location.hostname === "127.0.0.1"
         this.platform = window.brainsatplayPlatform
         this.latest = latest
-        this.script = document.createElement("script");
 
         // Load Latest B@P Library
         this.libraries = {}
-
-        // Organize as a Class Registry
-        this.classRegistries = {}
 
         // Set Server Connection Variables
         this.serverResolved = true
@@ -48,48 +45,33 @@ export class ProjectManager {
 
     init = async () => {
         this.version = this.latest
-        await this.getLibraryVersion('experimental')
-        if (!this.local && this.platform) await this.getLibraryVersion(this.version)
+        this.getLibraryVersion('experimental')
+        if (!this.local && this.platform) this.getLibraryVersion(this.version)
+
+        // WAITING TAKES TOO DANG LONG
+        // await this.getLibraryVersion('experimental')
+        // if (!this.local && this.platform) await this.getLibraryVersion(this.version)
     }
 
     getLibraryVersion = async (version='experimental') => {
 
-        this.libraries[version] = await Promise.resolve(new Promise(resolve => {
-            if (this.libraries[version] == null){
-                if (version === 'experimental') resolve(experimental)
-                else {
-                    this.script.src = `https://cdn.jsdelivr.net/npm/brainsatplay@${version}`
-                    this.script.async = true;
-                    this.script.onload = () => {
+        if (version==='experimental') return this.libraries[version] = experimental
+        else  {
+            this.libraries[version] = await Promise.resolve(new Promise(resolve => {
+                if (this.libraries[version] == null){
+                    let script = document.createElement('script')
+                    script.src = `https://cdn.jsdelivr.net/npm/brainsatplay@${version}`
+                    script.async = true;
+                    script.onload = () => {
                         if (window.brainsatplay) resolve(window.brainsatplay)
+                        script.remove()
                     }
-                    document.body.appendChild(this.script);
-                }
-            } else resolve(this.libraries[version])
-        }))
+                    document.body.appendChild(script);
+                } else resolve(this.libraries[version])
+            }))
 
-        // Organize in a single object
-        if (this.classRegistries[version] == null){
-            this.classRegistries[version] = {}
-            for (let category in this.libraries[version].plugins){
-                for (let name in this.libraries[version].plugins[category]){
-                    // TODO: Should shift to ID at some point
-
-                    let cls = this.libraries[version].plugins[category][name]
-                    let clsStr = cls.toString().trim().slice(0,5) === 'class'
-                    let funcStr = cls.toString().trim().slice(0,8) === 'function' // compiled
-
-                    if (clsStr || funcStr){
-                        this.classRegistries[version][name] = {
-                            name,
-                            category, 
-                            class: cls
-                        }
-                    }
-                }
-            }
+            return this.libraries[version]
         }
-        return this.libraries[version]
     }
 
     getPlugins = (version) =>{
@@ -236,31 +218,40 @@ app.init()`)
         })
     }
 
-    getFilesFromZip(zip){
-        return new Promise(resolve => {
+    iterateFiles = (zip, base='') => {
+        return new Promise(async resolve => {
             let fileArray = []
             let i = 0
             for (let filename in zip.files) {
-                let split = filename.split('app/')
-                if (split.length === 2 && split[1] != '') {
-                    zip.file(filename).async("string").then(content => {
-                        fileArray.push({ content, filename: filename.split('app/')[1] })
-                        i++
-                        if (i == Object.keys(zip.files).length) resolve(fileArray)
-                    })
-                } else {
-                    i++
-                }
+                let includesBase = filename.includes(base) && filename !== base
+                if (includesBase){
+                    if (filename[filename.length - 1] === '/'){
+                        this.iterateFiles(zip, filename).then((res) => {
+                            fileArray.push(...res)
+                            i++
+                            if (i == Object.keys(zip.files).length) resolve(fileArray)
+                        })
+                    } else {
+                        let split = filename.split(base)
+                        if (split.length === 2 && split[1] != '') {
+                            zip.file(filename).async("string").then((content) => {
+                                fileArray.push({ content, filename: filename.split(base)[1] })
+                                i++
+                                if (i == Object.keys(zip.files).length) resolve(fileArray)
+                            })
+                        }
+                    }
+                } else i++
+                if (i == Object.keys(zip.files).length) resolve(fileArray)
             }
         })
     }
 
-    _prettyPrint(string, indent='\t'){
-        // string = string.replaceAll('{', '{\n')
-        // string = string.replaceAll('}', '\n}')
-        // string = string.replaceAll(',', ',\n')
-
-        return string
+    getFilesFromZip(zip){
+        return new Promise(async resolve => {
+            let fileArray = await this.iterateFiles(zip, 'app/') // flatten all files in the app directory
+            resolve(fileArray)
+        })
     }
 
     appToFile(app) {
@@ -337,7 +328,7 @@ app.init()`)
         return {
             name: app.info.name, filename: 'settings.js', content: `${imports}
         
-        export const settings = ${info};`, combined: `const settings = ${this._prettyPrint(info)};\n`, classes
+        export const settings = ${info};`, combined: `const settings = ${info};\n`, classes
         }
     }
 
@@ -456,6 +447,7 @@ app.init()`)
     }
 
     async getFilesFromDB(name) {
+        console.log('LOADING PROJECTS FROM DB')
         return new Promise(async (resolve, reject) => {
             let projects = await this.session.dataManager.readFiles(`/projects/`)
             let file = projects.filter(s => s.includes(name))
@@ -466,7 +458,7 @@ app.init()`)
         })
     }
 
-    async load(files) {
+    async load(files,alert=true) {
         return new Promise(async (resolve, reject) => {
             try {
                 if (files.length > 0) {
@@ -488,9 +480,20 @@ app.init()`)
                     })
 
                     let classes = {}
+                    let thrown = false
                     info.classes.forEach(c => {
-                        let toEval = c.split('export')[0]
-                        c = eval(`(${toEval})`) 
+                        let toEval = (c.trim().slice(0,6) === 'export') 
+                        ? c.split('export')[1] // beginning export
+                        : c.split('export')[0] // end export
+                        try{
+                            c = eval(`(${toEval})`) 
+                        } catch (e) {
+
+                            if (alert && !thrown) alert(`Application cannot be loaded.`)
+                            
+                            resolve(false)
+                            thrown = true
+                        }
                         classes[c.name] = c
                     })
 
@@ -498,6 +501,7 @@ app.init()`)
                     let classMap = {}
                     var re = /import\s+{([^{}]+)}[^\n]+/g;
                     let m;
+
                     do {
                         m = re.exec(info.settings)
                         if (m == null) m = re.exec(info.settings); // be extra sure (weird bug)
@@ -507,8 +511,9 @@ app.init()`)
                                 name: m[1],
                                 class: classes[m[1]]
                             }
+
                             info.settings = info.settings.replace(m[0], ``)
-                            info.settings = info.settings.replaceAll(`"class":${m[1]}`, `"class":${id}`)
+                            info.settings = info.settings.replaceAll(new RegExp(`['"]?class['"]?:\\s*${m[1]}`, 'g'), `class:${id}`)
                         }
                     } while (m);
 
@@ -516,12 +521,13 @@ app.init()`)
                     let m2;
 
                     let library;
-                    let version = info.settings.match(/"version":\s?"([^"]+)/)
+                    let version = info.settings.match(/['"]?version['"]?:\s*"([^"]+)/)
                     if (version){
                         library = await this.getLibraryVersion(version[1])
                     } else {
                         library = await this.getLibraryVersion('experimental')
                     }
+
 
                     do {
                         m2 = re.exec(info.settings);
@@ -548,15 +554,18 @@ app.init()`)
                         let moduleText = "data:text/javascript;base64," + btoa(info.settings);
                         let module = await import(moduleText);
                         settings = module.settings
-
+                        
                         // Replace Random IDs with Classes
+                        if (!('graphs' in settings)) settings.graphs = []
+                        if ('graph' in settings) settings.graphs.push(settings.graph)
+                        delete settings.graph
+
                         settings.graphs.forEach(g => {
                             g.nodes.forEach(n => {
                                 if (n?.class && classMap[n.class]?.class) n.class = classMap[n.class]?.class
                             })
                         })
                         // settings = this.session.graph.parseParamsForSettings(settings)
-
                         resolve(settings)
                     } catch (e) {
                         console.error(e);

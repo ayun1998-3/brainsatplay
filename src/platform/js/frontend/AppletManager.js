@@ -262,7 +262,7 @@ export class AppletManager {
             if (typeof conf === 'object') {
                 if (!currentApplets.reduce(isAllNull, 0) && appletManifest[conf.name] != null) {
                     appletPromises.push(new Promise(async (resolve, reject) => {
-                        let settings = await getAppletSettings(appletManifest[conf.name].folderUrl)
+                        let settings = await getAppletSettings(appletManifest[conf.name])
                         let applet = await getApplet(settings)
                         return (applet != null) ? resolve([applet, settings]) : resolve([App,settings])
                         // else return reject('applet does not exist')
@@ -271,7 +271,7 @@ export class AppletManager {
             }
             else if (!currentApplets.reduce(isAllNull, 0) && appletManifest[conf] != null) {
                 appletPromises.push(new Promise(async (resolve, reject) => {
-                    let settings = await getAppletSettings(appletManifest[conf].folderUrl)
+                    let settings = await getAppletSettings(appletManifest[conf])
                     let applet = await getApplet(settings)
                     return (applet != null) ? resolve([applet, settings]) : resolve([App,settings])
                 }))
@@ -281,7 +281,7 @@ export class AppletManager {
         // If no applets have been configured, redirect to base URL
         if (appletPromises.length == 0) {
             let getBrowser = async () => {
-                let settings = await getAppletSettings(appletManifest['Applet Browser'].folderUrl)
+                let settings = await getAppletSettings(appletManifest['Applet Browser'])
                 let applet = await getApplet(settings)
                 return (applet != null) ? [applet, settings] : [App,settings]
             }
@@ -397,17 +397,13 @@ export class AppletManager {
 
     createInstance = (appletCls, info={}, config=[]) => {
 
-        return new Promise(resolve => {
+        return new Promise(async(resolve,reject) => {
             let parentNode = document.getElementById("applets")
             if (appletCls === App){
                 if (info.name === 'Applet Browser'){
                     config = {
                         hide: [],
-                        applets: Object.keys(appletManifest).map(async (key) => {
-                            try {
-                                return await getAppletSettings(appletManifest[key].folderUrl)
-                            } catch {}
-                        }),
+                        applets: Object.keys(appletManifest).map((key) => appletManifest[key]),
                         presets: presetManifest
                     }
 
@@ -416,7 +412,8 @@ export class AppletManager {
                         resolve(new App(info, parentNode, this.session, [config]))
                     })
                 } else {
-                    resolve(new App(info, parentNode, this.session, config))
+                    let app = await this.session.createApp(info, parentNode, this.session, config)
+                    resolve(app)
                 }
             } else {
                 resolve(new appletCls(parentNode, this.session, config))
@@ -539,7 +536,7 @@ export class AppletManager {
         select.onchange = async (e) => {
             this.deinitApplet(appletIdx + 1);
             if (select.value !== 'None') {
-                let appletSettings = await getAppletSettings(appletManifest[select.value].folderUrl)
+                let appletSettings = await getAppletSettings(appletManifest[select.value])
                 let appletCls = await getApplet(appletSettings) ?? App
                 this.addApplet(appletCls, appletIdx + 1, appletSettings);
             }

@@ -7,6 +7,7 @@ import {Math2} from '../../utils/mathUtils/Math2'
 export class Microphone {
     
     static id = String(Math.floor(Math.random()*1000000))
+    static category = 'audio'
 
     constructor(info, graph, params={}) {
         

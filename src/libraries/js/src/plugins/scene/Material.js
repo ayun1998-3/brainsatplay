@@ -6,7 +6,8 @@ import blankFragment from './shader/blankFragment.glsl'
 export class Material  {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'scene'
+
     constructor(info, graph, params={}) {
 
         this.props = {

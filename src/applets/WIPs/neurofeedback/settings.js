@@ -21,10 +21,10 @@ export const settings = {
     graph:
     {
       nodes: [
-        {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
-        {name: 'heg', class: brainsatplay.plugins.biosignals.HEG},
+        {name: 'eeg', class: 'EEG'},
+        {name: 'heg', class: 'HEG'},
         {name: 'manager', class: Manager, params: {}},
-        {name: 'ui', class: brainsatplay.plugins.interfaces.DOM, params: {}},
+        {name: 'ui', class: 'DOM', params: {}},
 
       ],
 

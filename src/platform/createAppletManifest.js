@@ -8,6 +8,16 @@ const createAppletManifest = () => {
 let appletDict = {}
 let appletDir = path.join(__dirname,'..','applets')
 let categories = fs.readdirSync(appletDir)
+
+// Fetch external files
+let external = fs.readFileSync(path.join(appletDir,'external.js'))
+let decoded = eval(external.toString('utf-8'))
+
+decoded.forEach(info => {
+  appletDict[info.name] = info
+})
+
+
 categories = categories.filter(c => ((fs.existsSync(path.join(appletDir,c)) && fs.lstatSync(path.join(appletDir,c)).isDirectory())))
 
 categories.forEach((category,indOut) => {
@@ -23,11 +33,46 @@ categories.forEach((category,indOut) => {
         let data = fs.readFileSync(settingsFile)
         let decoded = data.toString('utf-8')
 
-          let namereg1 =  /['"]?name['"]?:\s*([^\{\,]+)/g;
-          let match = namereg1.exec(decoded);
-          let name = (match == null) ? undefined : eval(match[1])    
+        let dict = {}
 
-          appletDict[name] = {}
+        // Strings
+        let keywords = ['name', 'author', 'description']
+        keywords.forEach(k => {
+          let regex = new RegExp(`['"]?${k}['"]?:\s*([^\{\,]+)`, 'g')
+          let match = regex.exec(decoded)
+          try {
+            dict[k] = (match == null) ? undefined : eval(`${match[1]}`)  
+          } catch (e) {}
+        })
+
+        // Booleans
+        let boolwords = ['graphs?', 'canTrain']
+        boolwords.forEach(k => {
+          let regex = new RegExp(`['"]?${k}['"]?:\s*([^\{\,]+)`, 'g')
+          let match = regex.exec(decoded)
+          try {
+            dict[k] = (match == null) ? undefined : true
+          } catch (e) {}
+        })
+
+
+          let graphreg1 =  /['"]?graphs?['"]?:\s*([\{\[][^\]\}]+[\}\]])}/g;
+          match = graphreg1.exec(decoded);
+          dict.graphs = (match == null) ? undefined : true
+
+          let eventreg1 =  /brainsatplay.plugins.Event/g;
+          match = eventreg1.exec(decoded);
+          dict.controls = (match == null) ? undefined : true
+
+
+          let displayreg1 =  /['"]?display['"]?:\s*({[^\}]+})/g;
+          match = displayreg1.exec(decoded);
+          try {
+            dict.display = (match == null) ? undefined : eval(`(${match[1]})`) 
+          } catch (e) {}
+
+          let name = dict.name
+          appletDict[name] = dict
           appletDict[name].folderUrl = '../../../../../' + dir.split(path.join(__dirname,'/../'))[1]
 
           let devicereg =  /['"]?devices['"]?:\s*([^\{\]]+)]/g;
@@ -44,7 +89,7 @@ categories.forEach((category,indOut) => {
   bar.then(() => {
     if (indOut === categories.length-1){
     for(const prop in appletDict){
-      appletDict[prop]['folderUrl'] = appletDict[prop]['folderUrl'].replace(/\\/g,'/');
+      if (appletDict[prop]['folderUrl']) appletDict[prop]['folderUrl'] = appletDict[prop]['folderUrl'].replace(/\\/g,'/');
     }
     fs.writeFile('./src/platform/appletManifest.js', 'export const appletManifest = ' + JSON.stringify(appletDict), err => {
       if (err) {

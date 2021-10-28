@@ -5,6 +5,7 @@ import {Audio} from './Audio'
 export class Mixer {
     
     static id = String(Math.floor(Math.random()*1000000))
+    static category = 'audio'
 
     constructor(info, graph, params={}) {
         

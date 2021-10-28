@@ -3,6 +3,7 @@
 export class Move {
     
     static id = String(Math.floor(Math.random()*1000000))
+    static category = 'utilities'
 
     constructor(info, graph) {
         

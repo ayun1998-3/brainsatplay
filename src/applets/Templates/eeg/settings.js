@@ -6,7 +6,7 @@ export const settings = {
     devices: ["EEG"],
     author: "Garrett Flynn",
     description: "Get started working with real-time EEG data!",
-    categories: ["learn"],
+    categories: ["learn", 'templates'],
     instructions:"Coming soon...",
     display: {
       production: false,
@@ -21,7 +21,7 @@ export const settings = {
     graph:
     {
       nodes: [
-        {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
+        {name: 'eeg', class: 'EEG'},
         {name: 'manager', class: Manager, params: {}},
       ],
 

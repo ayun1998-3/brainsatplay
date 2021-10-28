@@ -5,7 +5,8 @@ import {eegBarChart} from '../../utils/graphics/eegvisuals'
 export class BarChart {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'displays'
+
     constructor(info, graph, params={}) {
         
         

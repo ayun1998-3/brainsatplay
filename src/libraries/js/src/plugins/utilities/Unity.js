@@ -1,7 +1,8 @@
 export class Unity{
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'utilities'
+
     constructor(info, graph) {
 
         // Unity instance window callbacks that we call from .jslib in Unity.

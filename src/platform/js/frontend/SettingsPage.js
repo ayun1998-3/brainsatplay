@@ -2,7 +2,7 @@
 import { Page } from './Page';
 import { settings } from '../../../applets/UI/profile/settings.js';
 import { App } from '../../../libraries/js/brainsatplay';
-import { Debug } from '../../../libraries/js/src/plugins/debug';
+import { Debug } from '../../../libraries/js/src/plugins/debug/Debug';
 
 export class SettingsPage extends Page{
     constructor(parentNode, toggle, session){

@@ -7,7 +7,7 @@ import { getApplet, getAppletSettings} from "../../../libraries/js/src/utils/gen
 
 let bonanzaApps = Object.assign({},appletManifest)
 Object.keys(bonanzaApps).forEach(k => {
-    if(!bonanzaApps[k].folderUrl.includes('/Bonanza/')) delete bonanzaApps[k]
+    if(!bonanzaApps[k].categories.includes('onebitbonanza')) delete bonanzaApps[k]
 })
 
 
@@ -158,7 +158,7 @@ class UI{
 
     _getNewApplet = async () => {
         let appletKeys = Object.keys(bonanzaApps)
-        let settings = Object.assign({}, await getAppletSettings(bonanzaApps[appletKeys[Math.floor(Math.random() * appletKeys.length)]].folderUrl))
+        let settings = Object.assign({}, await getAppletSettings(bonanzaApps[appletKeys[Math.floor(Math.random() * appletKeys.length)]]))
         // Check that the chosen applet is not prohibited, compatible with current devices, and not the same applet as last time
         let compatible = true
         let instance;

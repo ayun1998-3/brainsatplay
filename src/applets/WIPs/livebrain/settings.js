@@ -29,31 +29,31 @@ export const settings = {
     graph:
     {
       nodes: [
-        {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
-        {name: 'neurofeedback', class: brainsatplay.plugins.algorithms.Neurofeedback, params: {metric: 'Alpha Ratio', output: 'Channels'}},
+        {name: 'eeg', class: 'EEG'},
+        {name: 'neurofeedback', class: 'Neurofeedback', params: {metric: 'Alpha Ratio', output: 'Channels'}},
 
         // Scene
-        {name: 'vertex', class: brainsatplay.plugins.scene.Shader, params: {default: vertex, uniforms}},
-        {name: 'fragment', class: brainsatplay.plugins.scene.Shader, params: {default: fragment, uniforms}},
-        {name: 'geometry', class: brainsatplay.plugins.scene.Geometry, params:{
+        {name: 'vertex', class: 'Shader', params: {default: vertex, uniforms}},
+        {name: 'fragment', class: 'Shader', params: {default: fragment, uniforms}},
+        {name: 'geometry', class: 'Geometry', params:{
           type: 'BufferGeometry', 
           attributes: {position: {buffer: brainpoints, size: 3}}, 
           // resolution: 0.5
         }},
-        {name: 'material', class: brainsatplay.plugins.scene.Material, 
+        {name: 'material', class: 'Material', 
         params: {
           // type: 'PointsMaterial', transparent:true, depthWrite: false, opacity: 0.1, alphaTest:0.5, size: 0.5
           type: 'ShaderMaterial', wireframe: false, transparent:true, depthWrite: false
           // type: 'ShaderMaterial', wireframe: false, transparent:true, depthWrite: false
         }
         },
-        {name: 'particles', class: brainsatplay.plugins.scene.Object3D, params:{ type: 'Points'}},
-        {name: 'group', class: brainsatplay.plugins.scene.Group, params: {rotatex, rotatez }},
+        {name: 'particles', class: 'Object3D', params:{ type: 'Points'}},
+        {name: 'group', class: 'Group', params: {rotatex, rotatez }},
 
-        {name: 'scene', class: brainsatplay.plugins.scene.Scene, params: {controls: 'orbit', camerax: 0, cameray: 0, cameraz: 200}},
+        {name: 'scene', class: 'Scene', params: {controls: 'orbit', camerax: 0, cameray: 0, cameraz: 200}},
 
         // Utilities
-        {name: 'map', class: brainsatplay.plugins.utilities.MapArray, params: {
+        {name: 'map', class: 'MapArray', params: {
           function: (a)=>{
           const geometry =  new THREE.SphereGeometry(2,32,32)
           const material = new THREE.MeshBasicMaterial({color: 'red', opacity: 0.5, transparent: true})
@@ -64,7 +64,7 @@ export const settings = {
 
 
         // UI
-        {name: 'ui', class: brainsatplay.plugins.interfaces.DOM, params: {}},
+        {name: 'ui', class: 'DOM', params: {}},
       ],
 
       edges: [

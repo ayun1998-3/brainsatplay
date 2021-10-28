@@ -2,6 +2,7 @@ export class ERP {
 
     static id = String(Math.floor(Math.random()*1000000))
     static hidden = true
+    static category = 'controls'
 
     constructor(info, graph, params={}) {
         

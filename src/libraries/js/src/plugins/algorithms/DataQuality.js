@@ -5,6 +5,7 @@ import {Math2} from '../../utils/mathUtils/Math2'
 export class DataQuality {
     
     static id = String(Math.floor(Math.random()*1000000))
+    static category = 'algorithms'
 
     constructor(info, graph, params={}) {
         

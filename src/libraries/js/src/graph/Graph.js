@@ -208,10 +208,12 @@ export class Graph {
             else {
 
                 // Map Class Strings to Classes
-                if (typeof o.class === 'string') {
+                let str = o.class
+                if (typeof str === 'string') {
                     // let module = await dynamicImport(pluginManifest[o.class].folderUrl) // classname
                     // o.class = module[o.class]
-                    o.class = (this.app.editor) ? this.app.editor.classRegistry[o.class].class : this.session.projects.classRegistries.experimental[o.class].class
+                    if (this.app.editor?.classRegistry) o.class = this.app.editor.classRegistry[str]
+                    if (o.class == null || typeof o.class === 'string') o.class = this.app.session.projects.libraries.experimental.plugins[str]
                 }
                 
                 // Create Node based on User-Defined Plugin Class
@@ -220,6 +222,7 @@ export class Graph {
                     // Try To Extend Class
                     let ports = Object.assign({}, o.ports)
                     o.className = o.class.name
+
                     let Plugin = this.extend(o.class, Graph)
                     o.instance = new Plugin(o, this)
 
@@ -301,6 +304,8 @@ export class Graph {
                         let parent = new ParentClass(...args)
                         let child = new ChildClass(...args)
                         let mergeMethods = ['init', 'deinit', 'responsive', 'configure']
+
+                        let thrown = false
                         mergeMethods.forEach(f => {
                             // Merge Init
                             let cM = child[f]
@@ -309,8 +314,10 @@ export class Graph {
                                 // try {
                                     if (cM instanceof Function) cM(...args)
                                     if (pM instanceof Function) pM(...args)
-                                // } catch (e) { 
-                                //     throw new Error(`${child.className} cannot be constructed`, e);
+                                // } 
+                                // catch (e) { 
+                                //     if (!thrown) throw new Error(`${child.className} cannot be constructed`, e);
+                                //     thrown = true // only throw once
                                 // }
                             }
                         })

@@ -1386,8 +1386,48 @@ export class Session {
 
 
 	// App Management
-	createApp(settings, parentNode = document.body, session = this, config = []) {
-		return new App(settings, parentNode, session, config)
+	getSettings = async (info) => {
+
+		return new Promise(resolve => {
+			
+			// Load Zip
+			if (info.zip){
+				if (!info.zip.includes('.zip')) info.zip = info.zip + '/app.zip'
+
+				fetch(info.zip).then((res) => {
+					this.projects.helper.loadAsync(res.blob())
+					.then(async (file) => {
+						let fileArray = await this.projects.getFilesFromZip(file)
+						let loadedInfo = await this.projects.load(fileArray, false)
+						if (!loadedInfo){
+							console.log(`falling back to link: ${info.link}`)
+							if (info.link) {
+								window.open(info.link, "_blank");
+								reject('Redirected to external location')
+							} else reject('Required information not provided')
+						} else {
+							console.log(`creating app from external zip`)
+							resolve(loadedInfo)
+						} 
+					})
+				})
+			} 
+
+			// Redirect to New Page (external)
+			else if (info.link) {
+				window.open(info.link, "_blank");
+				reject('Redirected to external location')
+			}
+
+			// Swap to App (platform)
+			else resolve(info)
+		})
+	}
+
+	async createApp(info, parentNode = document.body, session = this, config = []) {
+		info = await this.getSettings(info)
+		console.log(info)
+		return new App(info, parentNode, session, config)
 	}
 
 	startApp(app, sessionId) {

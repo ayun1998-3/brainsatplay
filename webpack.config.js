@@ -12,6 +12,7 @@ module.exports = {
       type: 'umd',      
     },
     globalObject: 'this',
+    publicPath: ''
   },
   optimization: {
     minimize: false,

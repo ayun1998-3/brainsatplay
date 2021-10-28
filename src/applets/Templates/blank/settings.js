@@ -5,7 +5,7 @@ export const settings = {
     devices: ["EEG", "HEG"],
     author: "Brains@Play",
     description: "Start from scratch with a new project using brainsatplay.js!",
-    categories: ["Learn"],
+    categories: ["Learn", 'templates'],
     instructions: "",
     image: feature,
     display: {

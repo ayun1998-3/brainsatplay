@@ -6,7 +6,7 @@ sidebar_position: 0
 custom_edit_url: null
 ---
 
-# Class: Session
+# class: Session
 
 ```javascript
 import {Session} from 'brainsatplay'

@@ -6,7 +6,8 @@ export class Train {
 
     static id = String(Math.floor(Math.random()*1000000))
     static hidden = true
-    
+    static category = 'machinelearning'
+
     constructor(info, graph) {
 
         this.props = {
@@ -102,7 +103,10 @@ export class Train {
         document.body.insertAdjacentElement('beforeend', this.props.gameOverlay)
 
         // Get Compatible Models and Games
-        let modelTypes = Object.keys(brainsatplay.plugins.machinelearning)
+        let modelTypes = []
+        for (let plugin in brainsatplay.plugins){
+            if (brainsatplay.plugins[plugin].category === 'machinelearning') modelTypes.push(plugin)
+        }
         
         this.props.trainingOverlay.insertAdjacentHTML('beforeend', `<h1>${this.ports.mode.data}</h1>`)  
 
@@ -119,7 +123,7 @@ export class Train {
             button.onclick = () => {
                 for (let child of modelContainer.children){
                     if (child === button) {
-                        selectedModel = brainsatplay.plugins.machinelearning[model]
+                        selectedModel = brainsatplay.plugins[model]
                         child.classList.add('selected')
                     }
                     else child.classList.remove('selected')
@@ -138,22 +142,7 @@ export class Train {
 
         // Find Applets for Training
         let appletFilter = (settings) => {
-
-            let foundBinding;
-            if (settings?.graphs){
-                settings.graphs.forEach(g => {
-                    g.nodes.forEach(n => {
-                        if (n.class.name === 'Event') foundBinding = true
-                    })
-                })
-            } 
-            else if (settings?.graph){
-                settings.graph.nodes.forEach(n => {
-                    if (n.class.name === 'Event') foundBinding = true
-                })
-            }
-            
-            if (foundBinding && settings.canTrain) return settings
+            if (settings.controls && settings.canTrain) return settings
         }
 
         let selectedSettings
@@ -189,9 +178,9 @@ export class Train {
         let continueToggle = document.createElement('button')
         continueToggle.classList.add(`brainsatplay-default-button`)
         continueToggle.innerHTML = 'Start Training'
-        continueToggle.onclick = () => {
+        continueToggle.onclick = async () => {
             // FIX: Integrate selectedModel
-            this.props.trainingGame = this.session.createApp(selectedSettings, this.props.gameOverlay,this.session)
+            this.props.trainingGame = await this.session.createApp(selectedSettings, this.props.gameOverlay,this.session)
             this.props.trainingGame.init()
             this.props.gameOverlay.classList.toggle('shown')
 

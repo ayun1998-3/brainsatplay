@@ -3,7 +3,8 @@
 export class Debug {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'debug'
+
     constructor(info, graph, params={}) {
         
         

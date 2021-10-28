@@ -6,7 +6,7 @@ export const settings = {
     devices: ["EEG"],
     author: "Garrett Flynn",
     description: "Select flashing objects with your brain.",
-    categories: ["learn"],
+    categories: ["learn", 'templates'],
     instructions:"Coming soon...",
     display: {
       production: false,
@@ -21,10 +21,10 @@ export const settings = {
     graph:
     {
       nodes: [
-        {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
+        {name: 'eeg', class: 'EEG'},
         {name: 'manager', class: Manager, params: {}},
          // UI
-         {name:'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
+         {name:'ui', class: 'DOM', params: {
           html: `<div id="content"></div>`,
           style: `
           .brainsatplay-ui-container {

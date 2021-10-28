@@ -1,5 +1,6 @@
 
 import * as brainsatplay from '../../brainsatplay'
+import { getAppletSettings } from "../utils/general/importUtils"
 
 
 export class ExtensionCard {
@@ -52,7 +53,7 @@ export class ExtensionCard {
         }
     }
 
-    _enableExtension = () => {
+    _enableExtension = async () => {
         this.toggle.innerHTML = 'Disable'
 
         this.closeView = document.createElement('div')
@@ -82,7 +83,8 @@ export class ExtensionCard {
         document.body.insertAdjacentElement('beforeend', this.view)
         
         // setTimeout(() => {
-        this.app = new brainsatplay.App(this.settings, this.view, this.session)
+        let settings = await getAppletSettings(this.settings)
+        this.app = new brainsatplay.App(settings, this.view, this.session)
         this.app.init();
         this.show.style.display = 'flex'
         // }, 1000)

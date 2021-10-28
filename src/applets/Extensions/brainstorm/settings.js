@@ -26,7 +26,7 @@ export const settings = {
 	"graph": {
 		"nodes": [
 			{name:'manager', class: Manager},
-			{name:'brainstormInterface', class: brainsatplay.plugins.interfaces.DOM}
+			{name:'brainstormInterface', class: 'DOM'}
 		],
 		"edges": [{
 			source: 'manager:element',

@@ -11,6 +11,8 @@ const createPluginManifest = () => {
   
   categories.forEach((category,indOut) => {
 
+    
+
     let categoryDir = path.join(pluginDir,category)
     let files = fs.readdirSync(categoryDir)
 
@@ -55,6 +57,7 @@ const createPluginManifest = () => {
 
     let fileTypes = getFileTypes(files ,dir)
     let pathComps = dir.replace(/\\/g,'/').split('/')
+
     category = (category == null) ? pathComps[pathComps.length - 1] : category
 
     fileTypes.files.forEach((file,indIn) => {
@@ -70,6 +73,11 @@ const createPluginManifest = () => {
         let classreg =  /class\s*([^\{\s]+)/g;
         let m1 = classreg.exec(decoded);
         let name = (m1 == null) ? undefined : m1[1]
+
+        // Get Category
+        let categoryreg =  /static category\s*=\s*([^\{\s]+)/g;
+        m1 = categoryreg.exec(decoded);
+        category = (m1 == null) ? undefined : m1[1] // override category
 
         // Get Types
         let types = []

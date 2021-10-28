@@ -1,13 +1,15 @@
 import {appletManifest} from '../../../../../platform/appletManifest'
 // import {App} from '../../App'
+import * as brainsatplay from '../../../brainsatplay'
 
 export let dynamicImport = async (url) => {
     let module = await import(url);
     return module;
 }
 
-export let getAppletSettings = async (AppletFolderUrl) => {
-    let config = await dynamicImport(AppletFolderUrl+"/settings.js");
+export let getAppletSettings = async (settings) => {
+    let config = {settings}
+    if (settings.folderUrl) config = await dynamicImport(settings.folderUrl+"/settings.js")
     //let image = await dynamicImport(AppletFolderUrl+"/"+config.settings.image);
     return config.settings;
 }
@@ -26,7 +28,7 @@ export let generateSettings = (appletManifest=appletManifest, from=0, to='end', 
 
     appletKeys.forEach(async (key,i) => {
         if(i >= from && i < to) {
-            let result = await getAppletSettings(appletManifest[key].folderUrl);
+            let result = await getAppletSettings(appletManifest[key]);
             if(category === undefined)
                 settings.set(result.name,result); 
             else if (result.settings.categories.indexOf(category) > -1) 

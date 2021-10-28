@@ -7,7 +7,7 @@ export const settings = {
     devices: ["EEG"],
     author: "Christopher Coogan + Garrett Flynn",
     description: "Let's play Snake!",
-    categories: ["Play"],
+    categories: ["Play", 'onebitbonanza'],
     // "image":  featureImg,
     instructions:"Coming soon...",
     bonanza: {
@@ -19,12 +19,12 @@ export const settings = {
     graph:
       {
       nodes: [
-        {name: 'up', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowUp'}},
-        {name: 'down', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowDown'}},
-        {name: 'left', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowLeft'}},
-        {name: 'right', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowRight'}},
+        {name: 'up', class: 'Event', params: {keycode: 'ArrowUp'}},
+        {name: 'down', class: 'Event', params: {keycode: 'ArrowDown'}},
+        {name: 'left', class: 'Event', params: {keycode: 'ArrowLeft'}},
+        {name: 'right', class: 'Event', params: {keycode: 'ArrowRight'}},
         {name: 'ui', class: UI, params: {}},
-        {name: 'document', class: brainsatplay.plugins.interfaces.DOM},      
+        {name: 'document', class: 'DOM'},      
       ],
       edges: [
         {

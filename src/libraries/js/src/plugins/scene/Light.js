@@ -5,7 +5,8 @@ import { StateManager } from '../../ui/StateManager'
 export class Light {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'scene'
+
     constructor(info, graph, params={}) {
         
         

@@ -16,8 +16,8 @@ export const settings = {
       {
       name: 'benchmark',
       nodes: [
-        {name: 'data', class: brainsatplay.plugins.utilities.DataManager},
-        {name: 'motorimagery', class: brainsatplay.plugins.machinelearning.LDA},
+        {name: 'data', class: 'DataManager'},
+        {name: 'motorimagery', class: 'LDA'},
       ],
       edges: [
 

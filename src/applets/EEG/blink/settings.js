@@ -18,10 +18,10 @@ export const settings = {
     graph:
       {
       nodes: [
-        {name: 'blink_left', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowLeft'}},
-        {name: 'blink_right', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowRight'}},
+        {name: 'blink_left', class: 'Event', params: {keycode: 'ArrowLeft'}},
+        {name: 'blink_right', class: 'Event', params: {keycode: 'ArrowRight'}},
         {name: 'ui', class: UI, params: {}},
-        {name: 'document', class: brainsatplay.plugins.interfaces.DOM},
+        {name: 'document', class: 'DOM'},
 
       ],
       edges: [

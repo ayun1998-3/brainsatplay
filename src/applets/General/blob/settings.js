@@ -14,10 +14,10 @@ export const settings = {
     // Based on Neurofeedback Template
     graph: {
         nodes: [
-            {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
-            {name: 'neurofeedback', class: brainsatplay.plugins.algorithms.Neurofeedback, params: {}},
+            {name: 'eeg', class: 'EEG'},
+            {name: 'neurofeedback', class: 'Neurofeedback', params: {}},
             {name: 'blob', class: Blob, params: {}},
-            {name: 'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
+            {name: 'ui', class: 'DOM', params: {
                 html: `
                     <div id="content"></div>
                     <div id="selector"></div>

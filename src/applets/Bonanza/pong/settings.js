@@ -7,7 +7,7 @@ export const settings = {
     devices: ["EEG"],
     author: "Garrett Flynn",
     description: "Let's play Pong with our minds!",
-    categories: ["Train"],
+    categories: ["Train", 'onebitbonanza'],
     // "image":  featureImg,
     instructions:"Coming soon...",
     bonanza: {
@@ -21,14 +21,14 @@ export const settings = {
     graph:
       {
       nodes: [
-        {name: 'up', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowUp'}},
-        {name: 'down', class: brainsatplay.plugins.controls.Event, params: {keycode: 'ArrowDown'}},
-        {name: 'move', class: brainsatplay.plugins.utilities.Move},
+        {name: 'up', class: 'Event', params: {keycode: 'ArrowUp'}},
+        {name: 'down', class: 'Event', params: {keycode: 'ArrowDown'}},
+        {name: 'move', class: 'Move'},
         {name: 'ui', class: UI, params: {}},
-        {name: 'document', class: brainsatplay.plugins.interfaces.DOM},
+        {name: 'document', class: 'DOM'},
 
-        {name: 'performance', class: brainsatplay.plugins.machinelearning.Performance, params: {method: 'accuracy'}},
-        {name: 'debug', class: brainsatplay.plugins.debug.Debug},
+        {name: 'performance', class: 'Performance', params: {method: 'accuracy'}},
+        {name: 'debug', class: 'Debug'},
 
       ],
       edges: [
