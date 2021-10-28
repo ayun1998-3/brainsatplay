@@ -2,7 +2,7 @@ import JSZip from 'jszip'
 import fileSaver from 'file-saver';
 import * as experimental from '../../brainsatplay'
 
-let latest = '0.0.37'
+let latest = '0.0.38'
 let cdnLink = `https://cdn.jsdelivr.net/npm/brainsatplay@${latest}`;
 
 import * as blobUtils from './general/blobUtils'
@@ -74,17 +74,6 @@ export class ProjectManager {
         }
     }
 
-    getPlugins = (version) =>{
-        let module = this.libraries[version]
-        let plugins = []
-        for (let type in module.plugins) {
-            for (let name in module.plugins[type]) {
-                plugins.push({ name: name, id:module.plugins[type][name].id, label: `brainsatplay.plugins.${type}.${name}` })
-            }
-        }
-        return plugins
-    }
-
     addDefaultFiles() {
         this.helper.file("index.html", this.createDefaultHTML(`<script src="./index.js" type="module"></script>`))
 
@@ -124,7 +113,7 @@ app.init()`)
         this.initializeZip()
 
         // Convert App to File
-        let o = this.appToFile(app)
+        let o = await this.appToFile(app)
         let classInfo = o.classes.map(this.classToFile)
 
         // Check Ability to Load
@@ -254,7 +243,25 @@ app.init()`)
         })
     }
 
-    appToFile(app) {
+    getPluginRegistry = (lib) =>{
+        let keys = Object.keys(lib.plugins)
+        console.log('isESModule',lib.plugins[keys[keys.length - 1]].__esModule)
+        if (lib.plugins[keys[keys.length - 1]].__esModule === true){
+            const plugins = {}
+            for (let type in lib.plugins) {
+
+                if (lib.plugins[type].__esModule === true){
+                    for (let name in lib.plugins[type]) {
+                        let className = lib.plugins[type][name].name
+                        plugins[className] = lib.plugins[type][name]
+                    }
+                } else plugins[lib.plugins[type].name] = lib.plugins[type]
+            }
+            return plugins
+        } else return lib.plugins
+    }
+
+    async appToFile(app) {
 
         let info = JSON.parse(JSON.stringify(app.info))
         // let info = Object.assign({}, app.info)
@@ -270,47 +277,44 @@ app.init()`)
         if (info.version == null) info.version = this.version
         delete info.editor
 
-        let plugins = this.getPlugins(info.version)
+        if (info.version === this.latest) info.version = 'experimental' // experimental defaults to the packaged version
 
+        let library = await this.getLibraryVersion(info.version)
+        let plugins = this.getPluginRegistry(library)
+        
         let imports = ``
         // Add imports
-        let classNames = []
+        let classActive = []
         let classes = []
 
         info.graphs.forEach(g => {
         g.nodes.forEach(n => {
-            let found = plugins.find(o => { if (o?.id === n?.class?.id) return o})
-            // let saveable = this.checkIfSaveable(n.class)
+
+            let name = n.class.name
+            let basePlugin = plugins[name]
+            let same = basePlugin?.toString() === n.class?.toString() // no edits
 
             // Custom Plugin (not included by name)
-            let name = n.class.name
-            if (!found && !classNames.includes(name)) {
+            if (!same && !(name in classActive)) {
                 imports += `import {${name}} from "./${name}.js"\n`
-                classNames.push(name)
                 classes.push(n.class)
             } 
-            else if (found) classNames.push(found.label) // In Plugins
-            else if (classNames.includes(name)) classNames.push(name) // If Already included by Name
-        })
-    })
 
+            classActive[name] = !same
+        
+            n.class = name
 
-        info.graphs.forEach(g => {
-        g.nodes.forEach((n, i) => {
             for (let k in n?.params){ 
                 if (n.params[k] instanceof Function) n.params[k] = n.params[k].toString()
             } 
-
-            n.class = `${classNames[i]}`
-        })})
-
-        info.graphs.forEach(g => {
-            for (let key in g) {
-                if (key != 'nodes' && key != 'edges') {
-                    delete g[key]
-                }
-            }
         })
+
+        for (let key in g) {
+            if (key != 'nodes' && key != 'edges') {
+                delete g[key]
+            }
+        }
+    })
 
         info = JSON.stringify(info, null, 2);
 
@@ -321,9 +325,11 @@ app.init()`)
         do {
             m = re.exec(info);
             if (m) {
-                info = info.replaceAll(m[0], '"class":' + m[1])
+                // Replace only if custom
+                if (classActive[m[1]]) info = info.replaceAll(m[0], '"class":' + m[1])
             }
         } while (m);
+
 
         return {
             name: app.info.name, filename: 'settings.js', content: `${imports}
@@ -447,7 +453,7 @@ app.init()`)
     }
 
     async getFilesFromDB(name) {
-        console.log('LOADING PROJECTS FROM DB')
+        // console.log('LOADING PROJECTS FROM DB')
         return new Promise(async (resolve, reject) => {
             let projects = await this.session.dataManager.readFiles(`/projects/`)
             let file = projects.filter(s => s.includes(name))

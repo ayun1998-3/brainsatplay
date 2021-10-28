@@ -2,6 +2,8 @@ const fs = require('fs')
 const path = require('path')
 
 
+let base = path.join('./_dist_', 'applets')
+
 const createAppletManifest = () => {
 
 // Generate Applet Manifest
@@ -33,6 +35,9 @@ categories.forEach((category,indOut) => {
         let data = fs.readFileSync(settingsFile)
         let decoded = data.toString('utf-8')
 
+        // console.log(__dirname)
+        // console.log(decoded)
+
         let dict = {}
 
         // Strings
@@ -55,6 +60,8 @@ categories.forEach((category,indOut) => {
           } catch (e) {}
         })
 
+        
+
 
           let graphreg1 =  /['"]?graphs?['"]?:\s*([\{\[][^\]\}]+[\}\]])}/g;
           match = graphreg1.exec(decoded);
@@ -64,6 +71,9 @@ categories.forEach((category,indOut) => {
           match = eventreg1.exec(decoded);
           dict.controls = (match == null) ? undefined : true
 
+          let imagereg1 =  /from ['"](.+.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF))['"]/g;
+          match = imagereg1.exec(decoded);
+          dict.image = (match == null) ? undefined : path.join(base, category, file, match[1])
 
           let displayreg1 =  /['"]?display['"]?:\s*({[^\}]+})/g;
           match = displayreg1.exec(decoded);

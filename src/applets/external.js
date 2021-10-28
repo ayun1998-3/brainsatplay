@@ -1,5 +1,5 @@
 [
-    // Templates
+    // -------------------- Templates -------------------- 
     {
         name: 'Multiplayer', 
         devices: ["EEG"],
@@ -9,18 +9,19 @@
         zip: 'https://brainsatplay.com/multiplayer-demo/App.zip'
     },
 
-    // Examples
+    // -------------------- Examples -------------------- 
     {
         name: "Blink",
         devices: ["EEG"],
         author: "Garrett Flynn",
         description: "A staring contest (with yourself...)",
         categories: ["train"],
-        image: 'https://brainsatplay.com/blink/img/feature.png',
-        zip: 'https://brainsatplay.com/blink/app.zip'
+        image: 'https://github.com/brainsatplay/blink/blob/main/app/img/feature.png?raw=true', // Github Image Example
+        zip: 'https://brainsatplay.com/blink/app.zip' // Github Pages Zip Example
     },
 
-    // Community Contributions
+    // -------------------- Community Contributions -------------------- 
+
     {
         name: "Unity Template",
         devices: ["EEG"],

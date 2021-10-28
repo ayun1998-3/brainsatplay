@@ -317,7 +317,6 @@ export class Editor{
         for (let key in projectSet) projectSet[key] = Array.from(projectSet[key])
 
         // --------------- Local --------------- 
-        console.log(projectSet.local)
         projectSet.local.map(async str => {
             let files = await this.app.session.projects.getFilesFromDB(str)
             await this.app.session.projects.load(files).then(settings => {
@@ -329,7 +328,6 @@ export class Editor{
         for (let key in appletManifest){
             try {
                 let settings = appletManifest[key]
-                console.log(settings.graphs)
                 if (settings.graphs || settings.zip) {
                     if (settings.categories.includes('templates')) this.insertProject({destination: 'Templates', settings})
                     else this.insertProject({destination: 'Library', settings})
@@ -339,8 +337,6 @@ export class Editor{
     }
 
     async _createApp(settings){
-
-        console.log(settings)
         
         settings = await this.app.session.getSettings(settings) // filter through to get external .zip files
 
@@ -1138,29 +1134,24 @@ export class Editor{
         if (this.graph){
         this.graph.nodes.forEach(async n => {
             if (n.class != null){
-            let clsInfo = this.classRegistry[n.class.name]
+            let cls = this.classRegistry[n.class.name]
 
-            let checkWhere = async (n, info) => {
-                if (info && n.class === info.class){
+            let checkWhere = async (n, cls) => {
+                if (cls && n.class === cls){
                     // clsInfo.class = n.class
-                    let baseClass = this.library.plugins[info.category][clsInfo.name]
+                    let baseClass = this.library.plugins[cls.name]
+                    // console.log(baseClass, cls.name, cls)
 
-                    if (info.class != baseClass){
+                    if (cls != baseClass){
                         info.category = null // 'custom'
-                        this.addNodeOption(clsInfo)
+                        this.addNodeOption({class: cls})
                     }
                 } else {
-                    if (info != null && info.class == null){
-                        let module = await dynamicImport(info.folderUrl)
-                        clsInfo.class = module[info.name]
-                        await checkWhere(n, info)
-                    } else {
-                        this.addNodeOption({category: null, class: n.class})
-                    }
+                    this.addNodeOption({category: null, class: n.class})
                 }
             }
 
-            await checkWhere(n, clsInfo)
+            await checkWhere(n, cls)
         }
         })
     }
