@@ -54,26 +54,18 @@ export class EventRouter{
 
                     // Blink Detection
                     if (blinkBoth || blinkLeft || blinkRight){
-                        let blinks = await this.device.atlas.getBlink({debug: true})
+                        let blinks = await this.device.atlas.getBlink()
                         if (blinks){
                             if (blinkBoth) this.device.states['blink_both'].data = blinks.reduce((a,b) => a * b, true)
                             if (blinks[0] != null && blinkLeft) this.device.states['blink_left'].data = blinks[0]
                             if (blinks[1] != null && blinkRight) this.device.states['blink_right'].data = blinks[1]
                         }
-                    } else {
-                        // Turn Debug Off
-                        let node = this.device.atlas.graph.getNode('blink')
-                        if (node) node.updateParams({debug: false})
                     }
 
                     // Focus Detection
                     if (focus){
                         this.device.atlas.settings.analysisDetails.system['eegcoherence'] = true
-                        this.device.states['focus'].data = this.device.atlas.getFocus({debug: true})
-                    } else {
-                        this.device.atlas.settings.analysisDetails.system['eegcoherence'] = false
-                        let node = this.device.atlas.graph.getNode('focus')
-                        if (node) node.updateParams({debug: false})
+                        this.device.states['focus'].data = this.device.atlas.getFocus()
                     }
             });
         }
@@ -230,7 +222,7 @@ export class EventRouter{
     updateRouteReserve = () => {
         this.routes.reserve.pool = []
         this.routes.reserve.apps.forEach(a => {
-            this.routes.reserve.pool.push(...a?.controls)
+            this.routes.reserve.pool.push(...a?.controls ?? [])
         })
     }
 
@@ -286,12 +278,13 @@ export class EventRouter{
         }
     }
 
-    addApp(app){
-        this.routes.reserve.apps.push(app)
+    updateApp = (app) => {
+        let found =  this.routes.reserve.apps.find((a) => a === app)
+        if (!found) this.routes.reserve.apps.push(app)
         this.updateRouteReserve()
     }
 
-    removeApp(app){
+    removeApp = (app) => {
         this.removeMatchingRoutes(app?.controls)
         this.routes.reserve.apps.find((a,i) => {
             if (a === app){

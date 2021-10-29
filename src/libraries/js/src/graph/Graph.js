@@ -91,16 +91,16 @@ export class Graph {
         }
 
         // Remove Editor Tab
-        let files = this.app.editor.files[this.uuid].files
-        for (let type in files) {
-            for (let key in files[type]){
-                let el = files[type][key]
-                if (!!el && !(el instanceof Function)) el.remove()
+        if (this.app.editor) {
+            let files = this.app.editor.files[this.uuid]?.files
+            for (let type in files) {
+                for (let key in files[type]){
+                    let el = files[type][key]
+                    if (!!el && !(el instanceof Function)) el.remove()
+                }
             }
+            if (this.app.editor) this.app.editor.removeGraph(this)
         }
-
-
-        if (this.app.editor) this.app.editor.removeGraph(this)
 
     }
 
@@ -275,6 +275,8 @@ export class Graph {
             }
 
             if (this.ui.graph && !(this.ui.graph instanceof Function)) this.insertNode(o.instance) // UI
+
+            if (this.app?.props?.ready && this.session.updateApp instanceof Function) this.session.updateApp(this.app)
             
             return o
     }
@@ -546,14 +548,20 @@ export class Graph {
             <h3>${this.className}</h3>
             <p>${this.name}<p>
         `
+        this.ui.debugger = document.createElement(`div`)
 
         element.insertAdjacentElement('beforeend', nodeText)
-
+        element.insertAdjacentElement('beforeend', this.ui.debugger)
         element.insertAdjacentElement('beforeend', this.ui.portManager)
+
+
         this.ui.element.insertAdjacentElement('beforeend', element)
 
         // Create Existing Ports
         for (let key in this.ports) this._addPortElement(this.ports[key])
+
+        // Show Debugger on Node
+        if(this.ports.debug) this.ui.debugger.insertAdjacentElement('beforeend', this.ports.debug.data)
 
         return this.ui.element
     }
@@ -615,8 +623,8 @@ export class Graph {
             minWidth = Math.max(minWidth, this.ui.portLabels?.offsetWidth ?? 0)
         }
 
-        if (this.ui.portManager?.offsetWidth) this.ui.portManager.style.width = `${minWidth}px`
-        if (this.ui.portManager?.offsetHeight) this.ui.portManager.style.height = `${minHeight}px`
+        if (this.ui.portManager?.offsetWidth) this.ui.portManager.style.minWidth = `${minWidth}px`
+        if (this.ui.portManager?.offsetHeight) this.ui.portManager.style.minHeight = `${minHeight}px`
     }
 
     _createCodeUI = () => {
@@ -661,7 +669,6 @@ export class Graph {
 
                         if (k === 'ports'){
                             for (let port in instance.ports) {
-                                console.log(this.ports[port], instance.ports[port])
                                 delete instance.ports[port].onUpdate
                                 this.ports[port].init(instance.ports[port])
                             }
@@ -829,22 +836,21 @@ export class Graph {
     
         let container = parentNode.querySelector('.brainsatplay-debugger')
 
-        if ('debug' in this.ports) {
+        // if ('debug' in this.ports) {
             // if (parentNode === document.body) {
             //     this.ports.element.data.style.position = 'absolute'
             //     this.ports.element.data.style.top = 0
             //     this.ports.element.data.style.right = 0
             // }
-            this.updateParams({debug: true})
-            // if (container) this.ui.element.insertAdjacentElement('beforeend', this.ports.element.data)
+            // this.updateParams({debug: true})
             if (container) {
                 // let button = document.createElement('button')
                 // button.style = "position: absolute; top: 0; right: 0;"
                 // button.onclick = this.app.editor.toggleDisplay
                 // document.body.insertAdjacentElement('beforeend', button)
-                container.insertAdjacentElement('beforeend', this.ports.element.data)
+                if (this.ports.debug) container.insertAdjacentElement('beforeend', this.ports.debug.data)
             }
-        }
+        // }
     }
 
     // ---------------- EXPORT HELPER ----------------

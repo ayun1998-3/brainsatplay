@@ -259,7 +259,7 @@ export class Session {
 			newStream.configureRoutes(contentChild)
 
 			this.info.apps.forEach(app => {
-				newStream.info.events.addApp(app)
+				newStream.info.events.updateApp(app)
 			})
 
 			newStream.info.events.updateRouteDisplay()
@@ -1432,18 +1432,18 @@ export class Session {
 		})
 	}
 
-	async createApp(info, parentNode = document.body, session = this, config = []) {
+	createApp = async (info, parentNode = document.body, session = this, config = []) => {
 		info = await this.getSettings(info)
 		return new App(info, parentNode, session, config)
 	}
 
-	startApp(app) {
+	startApp = (app) => {
 		// Update Routing UI
 		this.updateApps(app)
 		return app
 	}
 
-	updateApps(thisApp) {
+	updateApps = (thisApp) => {
 		let analysisSet = new Set()
 
 		// Update Per-App Routes
@@ -1451,6 +1451,8 @@ export class Session {
 			analysisSet.add(...[...app.analysis?.default ?? [], ...app.analysis?.dynamic ?? []])
 			if (thisApp == null || thisApp === app) this.updateApp(thisApp)
 		})
+
+		analysisSet.delete(undefined)
 
 		this.startAnalysis(analysisSet)
 		for (let key in this.atlas.settings.analysis) {
@@ -1461,23 +1463,23 @@ export class Session {
 
 	}
 
-	updateApp(app) {
+	updateApp = (app) => {
 		if (app) {
 			this.deviceStreams.forEach(d => {
 				if (d.info.events) {
-					d.info.events.addApp(app)
+					d.info.events.updateApp(app)
 					d.info.events.updateRouteDisplay()
 				}
 			})
 		}
 	}
 
-	async registerApp(app) {
+	registerApp = async (app) => {
 		this.info.apps.push(app)
 		return app
 	}
 
-	removeApp(app) {
+	removeApp = (app) => {
 		// let info = this.graph.remove(appId)
 		this.info.apps.find((a,i) => {
 			this.updateApps()

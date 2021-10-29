@@ -246,9 +246,7 @@ export class Editor{
                 
 
                 // Import App Only when Necessary
-                console.log(settings)
                 let fullSettings = await getAppletSettings(settings)
-                console.log(fullSettings)
 
                 // Rename Template Projects
                 if (destination !== 'My Project'){
@@ -348,8 +346,6 @@ export class Editor{
             z-index: 9;
             `,
         }
-
-        console.log(settings)
 
         this.app.replace(settings)
     }
@@ -521,7 +517,7 @@ export class Editor{
                 categories: [],
                 instructions: "",
                 image: null,
-                version: this.app.session.projects.version,
+                version: this.app.info.version ?? 'experimental', //this.app.session.projects.version,
 
                 display: {
                   production: false,
@@ -1134,6 +1130,7 @@ export class Editor{
         if (this.graph){
         this.graph.nodes.forEach(async n => {
             if (n.class != null){
+
             let cls = this.classRegistry[n.class.name]
 
             let checkWhere = async (n, cls) => {
@@ -1254,7 +1251,7 @@ export class Editor{
         let name = classInfo?.class?.name ?? classInfo.name
         let label = classInfo.label
 
-        
+        if (type !== undefined){
         let options = this.selectorMenu.querySelector(`.node-options`)
         let contentOfType = options.querySelector(`.option-type-content.nodetype-${type}`)
         if (contentOfType == null) {
@@ -1302,10 +1299,10 @@ export class Editor{
                     })
                 }
 
-
                 if (!('class' in classInfo)) {
-                    let module = await dynamicImport(classInfo.folderUrl)
-                    classInfo.class = module[classInfo.name]
+                    classInfo.class = this.classRegistry[classInfo.name]
+                    // let module = await dynamicImport(classInfo.folderUrl)
+                    // classInfo.class = module[classInfo.name]
                 }
     
                 await this.graph.addNode(classInfo)
@@ -1342,6 +1339,7 @@ export class Editor{
                 }
             } 
         }
+    }
     }
 
     addDropdownFunctionality = (node) => {

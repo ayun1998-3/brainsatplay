@@ -2,14 +2,10 @@
 export class Index {
 
     static id = String(Math.floor(Math.random()*1000000))
-    
+    static category = 'tranforms'
+
     constructor(info, graph, params={}) {
         
-        
-        
-        
-        
-
         this.ports = {
             default: {
                 edit: false,

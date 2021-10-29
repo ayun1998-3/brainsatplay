@@ -5,26 +5,29 @@ export class Focus {
     static category = 'models'
 
     constructor(info, graph) {
-        
-        
-        
+
+        this.graphs = [
+            {
+                name: 'focusgraph',
+                nodes: [
+                    {name: 'canvas', class: 'Canvas'},
+                ]
+            }
+        ]
         
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
-            canvas: null,
-            looping: false,
             container: document.createElement('div'),
             alphaAvg: 0,
-            betaAvg: 0
+            betaAvg: 0,
+            context: null
         }
 
+        this.props.container.innerHTML = '<small style="position: absolute; top: 15px; left: 15px; ">Focus</small>'
         this.props.container.id = this.props.id
-        this.props.container.style = 'display: none; align-items: center; justify-content: center; width: 100%; height: 150px; padding: 10px; box-sizing: content-box;'
-        this.props.canvas = document.createElement('canvas')
-        this.props.container.insertAdjacentElement('beforeend',this.props.canvas)
-        this.props.context = this.props.canvas.getContext("2d");
-
-
+        this.props.container.style = 'position: relative; display: block; align-items: center; justify-content: center; aspect-ratio: 2/1; box-sizing: content-box;'
+        
+        
         this.ports = {
             default: {
                 edit: false,
@@ -49,18 +52,18 @@ export class Focus {
                     this.props.betaAvg = this.session.atlas.mean(beta)
 
                     let data = (this.props.alphaAvg > this.ports.alphaMin.data && this.props.alphaAvg < this.ports.alphaMax.data && this.props.betaAvg < this.ports.betaMax.data) ? true : false
+                    this._animate()
 
                     return {data}
                 }
             },
 
-            element: {
+            debug: {
                 data: this.props.container,
                 input: {type: null},
                 output: {type: Element},
             },
 
-            debug: {data: false},
             alphaMin: {data: 0.7},
             alphaMax: {data: 4},
             // betaMin: {data: null},
@@ -70,26 +73,32 @@ export class Focus {
     }
 
     init = () => {
+        this.props.canvas = this.getNode('canvas')
+        this.props.container.insertAdjacentElement('beforeend', this.props.canvas.props.container)
 
-        this.props.looping = true
-        this._animate()
+
+        // ANIMATE ONLY WHEN NEW CALCULATION IS DONE
+        this.props.canvas.update('draw', 
+            {  
+                forceUpdate: true,
+                data: {active: true, onload: (canvas) => {
+                    this.props.canvas = canvas
+                    this.props.context = canvas.getContext("2d");
+                    this._clearCanvas()
+                }}
+            }
+        )
 
     }
 
     deinit = () => {
-        this.props.looping = false
+        
     }
 
     _animate = () => {
-        this._clearCanvas()
-        if (this.props.looping){
-            if (this.ports.debug.data){
-                this.props.container.style.display = 'flex'
-                this._drawSignal(this.props.context)
-            } else {
-                this.props.container.style.display = 'none'
-            }
-            setTimeout(this._animate, 1000/60)
+        if (this.props.context) {
+            this._clearCanvas()
+            this._drawSignal(this.props.context)
         }
     }
 
@@ -145,7 +154,7 @@ export class Focus {
 
     _clearCanvas = () => {
         this.props.context.fillStyle = 'black';
-        this.props.context.stokeStyle = 'white';
+        // this.props.context.stokeStyle = 'white';
         this.props.context.fillRect(0, 0, this.props.canvas.width, this.props.canvas.height)
         // this.props.context.strokeRect(0, 0, this.props.canvas.width, this.props.canvas.height)
     }
