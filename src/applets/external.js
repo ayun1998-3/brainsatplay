@@ -6,7 +6,7 @@
         author: "Garrett Flynn",
         description: "Get started building a multiplayer neurofeedback app!",
         categories: ["learn", "templates"],
-        zip: 'https://brainsatplay.com/multiplayer-demo/App.zip'
+        zip: 'https://brainsatplay.com/multiplayer/App.zip'
     },
 
     // -------------------- Examples -------------------- 
@@ -28,7 +28,7 @@
         author: "Juris Zebneckis",
         description: "",
         categories: ["External"],
-        link: 'https://brainsatplay.com/unity-demo'
+        link: 'https://brainsatplay.com/unity'
     },
 
     {
