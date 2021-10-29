@@ -499,13 +499,13 @@ class Math3D { //some stuff for doing math in 3D
             idx: null,
             position: [0,0,0],
             neighbors: []
-        }
+        };
 
         let neighbor = {
             idx: null,
             position: [0,0,0],
             dist: null
-        }
+        };
 
         var tree = [];
 
@@ -517,19 +517,20 @@ class Math3D { //some stuff for doing math in 3D
         }
 
         //Nearest neighbor search. This can be heavily optimized.
-        for(var i = 0; i < positions.length; i++) {
-            for(var j = i; j < positions.length; j++) {
-                var dist = Math3D.distance(positions[i],positions[j]);
+        for(var i = 0; i < tree.length; i++) { //for each node
+            for(var j = i+1; j < tree.length; j++) { //for each position left to check
+                var dist = Math3D.distance(tree[i].position,tree[j].position);
                 if(dist < isWithinRadius){
                     var newNeighbori = JSON.parse(JSON.stringify(neighbor));
                     newNeighbori.position = positions[j];
                     newNeighbori.dist = dist;
                     newNeighbori.idx = tree[j].idx;
                     tree[i].neighbors.push(newNeighbori);
-                    var newNeighborj = JSON.parse(JSON.stringify(neighbor));
+                    var newNeighborj = JSON.parse(JSON.stringify(neighbor)); //push corresponding neighbor
                     newNeighborj.position = positions[i];
                     newNeighborj.dist = dist;
-                    newNeighborj.idx = positions[j];
+                    newNeighborj.idx = tree[i].idx;
+                    tree[j].neighbors.push(newNeighbori);
                 }
             }
             tree[i].neighbors.sort(function(a,b) {return a.dist - b.dist}); //Sort by distance
@@ -872,6 +873,7 @@ class Physics {
         return newvolume;
     }
 
+    //dynamic AABB trees or octrees
     generateBoundingVolumeTree(bodies=this.physicsBodies, octree=false) {
         
         /*
@@ -883,8 +885,8 @@ class Physics {
         
         */
 
-        let boundX, boundY, boundZ;
-        let minX, minY, minZ;
+        let maxX, maxY, maxZ;
+        let minX = 0, minY = 0, minZ = 0;
         let positions = [];
         let minRadius = this.globalSettings.maxDistCheck;
 
@@ -894,15 +896,14 @@ class Physics {
             let yy = body.position[1]+body.collisionRadius*body.collisionBoundsScale[1];
             let zz = body.position[2]+body.collisionRadius*body.collisionBoundsScale[2];
 
-            maxX = Math.max(boundX,xx);
-            maxY = Math.max(boundY,yy);
-            maxZ = Math.max(boundZ,zz);
+            if(maxX < xx) maxX = xx;
+            if(minX > xx) minX = xx;
+            if(maxY < yy) maxY = yy;
+            if(minY > yy) minY = yy;
+            if(maxZ < zz) maxZ = zz;
+            if(minZ > zz) minZ = zz;
 
-            minX = Math.min(minX,xx);
-            minY = Math.min(minY,yy);
-            minZ = Math.min(minZ,zz);
-
-            minRadius = Math.min(body.collisionRadius,minRadius);
+            if(minRadius > body.collisionRadius) minRadius = body.collisionRadius;
 
             positions.push(body.position[0],body.position[1],body.position[2]);
 
@@ -963,7 +964,10 @@ class Physics {
             return head;
         }
         else {
-            let neighbors = Math3D.nearestNeighborSearch(positions,radius);
+            let neighbors = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
+            
+
+            return head;
         }
         /*
             Now search children recursively till you have small enough groups to speed up collision checking
@@ -973,9 +977,6 @@ class Physics {
             repeat at a smaller radius till no more objects can be grouped at a minimum group size or radius
             bodies will be referenced in each 
         */
-
-        return boundingTree;
-
     }
 
     timeStep(dt, bodies=this.physicsBodies) { //dt in seconds
@@ -1424,6 +1425,7 @@ class WebGLHelper {
         this.canvas.width = newWidth;
         this.canvas.height = newHeight;
     }
+    
 }
 
 
