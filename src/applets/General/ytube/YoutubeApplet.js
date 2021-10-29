@@ -184,7 +184,7 @@ export class YoutubeApplet {
         this.player.destroy();
         this.AppletHTML.deleteNode();
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
     }
 
     //Responsive UI update, for resizing and responding to new connections detected by the UI manager

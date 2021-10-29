@@ -114,7 +114,7 @@ export class Session {
 				password: password,
 				connected: false
 			},
-			apps: {},
+			apps: [],
 			subscriptions: [],
 		}
 
@@ -258,9 +258,9 @@ export class Session {
 		if (Object.keys(newStream.info.events.routes).length > 0) {
 			newStream.configureRoutes(contentChild)
 
-			for (let id in this.info.apps) {
-				newStream.info.events.addApp(id, this.info.apps[id].controls)
-			}
+			this.info.apps.forEach(app => {
+				newStream.info.events.addApp(app)
+			})
 
 			newStream.info.events.updateRouteDisplay()
 		}
@@ -455,10 +455,10 @@ export class Session {
 
 					let updatedOnConnect = (device) => {
 						if (onconnect instanceof Function) onconnect(device)
-						for (let app in this.info.apps) {
-							let connectFunc = this.info.apps[app]?.connect?.onconnect
+						this.info.apps.forEach(app => {
+							let connectFunc = app?.connect?.onconnect
 							if (connectFunc instanceof Function) connectFunc(device)
-						}
+						})
 						div.querySelector('p').innerHTML = "Disconnect"
 						setIndicator(true)
 						div.onclick = () => { this.disconnect() }
@@ -466,10 +466,10 @@ export class Session {
 
 					let updatedOnDisconnect = (device) => {
 						if (ondisconnect instanceof Function) ondisconnect(device)
-						for (let app in this.info.apps) {
-							let connectFunc = this.info.apps[app]?.connect?.ondisconnect
+						this.info.apps.forEach(app => {
+							let connectFunc = app?.connect?.ondisconnect
 							if (connectFunc instanceof Function) connectFunc(device)
-						}
+						})
 						setIndicator(false)
 						div.querySelector('p').innerHTML = variantLabel
 						div.onclick = () => { this.connect(variantTag, d.analysis, updatedOnConnect, updatedOnDisconnect) }
@@ -1437,24 +1437,20 @@ export class Session {
 		return new App(info, parentNode, session, config)
 	}
 
-	startApp(app, sessionId) {
-		app.props.sessionId = sessionId
-
+	startApp(app) {
 		// Update Routing UI
 		this.updateApps(app)
 		return app
 	}
 
-	updateApps(app) {
+	updateApps(thisApp) {
 		let analysisSet = new Set()
 
 		// Update Per-App Routes
-		for (let id in this.info.apps) {
-			if (this.info.apps[id]) {
-				analysisSet.add(...[...this.info.apps[id].analysis?.default ?? [], ...this.info.apps[id].analysis?.dynamic ?? []])
-				if (app == null || app.props.id === id) this.updateApp(app)
-			}
-		}
+		this.info.apps.forEach(app => {
+			analysisSet.add(...[...app.analysis?.default ?? [], ...app.analysis?.dynamic ?? []])
+			if (thisApp == null || thisApp === app) this.updateApp(thisApp)
+		})
 
 		this.startAnalysis(analysisSet)
 		for (let key in this.atlas.settings.analysis) {
@@ -1469,7 +1465,7 @@ export class Session {
 		if (app) {
 			this.deviceStreams.forEach(d => {
 				if (d.info.events) {
-					d.info.events.addApp(app.props.id, app.controls)
+					d.info.events.addApp(app)
 					d.info.events.updateRouteDisplay()
 				}
 			})
@@ -1477,25 +1473,29 @@ export class Session {
 	}
 
 	async registerApp(app) {
-		this.info.apps[app.props.id] = app
-		return this.info.apps[app.props.id]
+		this.info.apps.push(app)
+		return app
 	}
 
-	removeApp(appId) {
+	removeApp(app) {
 		// let info = this.graph.remove(appId)
-		if (this.info.apps[appId]) {
+		this.info.apps.find((a,i) => {
 			this.updateApps()
 
-			// Update Routing UI
-			this.deviceStreams.forEach(d => {
-				if (d.info.events) {
-					d.info.events.removeApp(appId)
-					d.info.events.updateRouteDisplay()
-				}
-			})
+			if (a === app) {
+				this.updateApps()
 
-			delete this.info.apps[appId]
-		}
+				// Update Routing UI
+				this.deviceStreams.forEach(d => {
+					if (d.info.events) {
+						d.info.events.removeApp(app)
+						d.info.events.updateRouteDisplay()
+					}
+				})
+
+				this.info.apps.splice(i,1)
+			}}
+		)
 	}
 
 

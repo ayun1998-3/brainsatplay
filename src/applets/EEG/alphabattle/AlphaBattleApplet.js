@@ -348,7 +348,7 @@ export class AlphaBattleApplet {
         })
         this.sketch.remove()
         this.AppletHTML.deleteNode();
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
 
         // window.cancelAnimationFrame(this.animation)
     }

@@ -184,7 +184,7 @@ export class AudioApplet {
         this.looping = false;
         this.stopAudio();
         this.AppletHTML.deleteNode();
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
     }
 

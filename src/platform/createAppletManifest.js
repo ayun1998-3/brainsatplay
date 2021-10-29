@@ -19,7 +19,6 @@ decoded.forEach(info => {
 
   if (!('categories' in info)) info.categories = []
   let found = info.categories.find(c => c === 'External')
-  console.log(found)
   if (!found) info.categories.push("External")
 
   appletDict[info.name] = info

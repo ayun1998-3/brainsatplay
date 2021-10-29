@@ -92,7 +92,7 @@ export class ConnectomeApplet {
     deinit() {
         this.sketch.remove()
         this.AppletHTML.deleteNode();
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
     }
 

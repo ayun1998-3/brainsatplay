@@ -9,7 +9,7 @@ export class EventRouter{
         this.routes = {
             registry: {},
             reserve: {
-                apps: {},
+                apps: [],
                 pool: []
             }
         }
@@ -215,7 +215,7 @@ export class EventRouter{
             let routes = this.routes.registry[key]
             for (let i = routes.length - 1; i > -1; i--){
                 if ('manager' in routes[i]){
-                    Array.from(sources).find(o => {
+                    sources.find(o => {
                         if (routes[i].label === o.label) {
                             routes[i] = {}
                             return true
@@ -227,34 +227,11 @@ export class EventRouter{
 
     }
 
-    updateRouteReserve = (id, controls=false) => {
-        if (controls === false){
-            this.removeMatchingRoutes(this.routes.reserve.apps[id]?.sources)
-            delete this.routes.reserve.apps[id]
-        } else {
-            if (!(id in this.routes.reserve.apps)) this.routes.reserve.apps[id] = {
-                // count: 0, 
-                sources: new Set()}
-                
-            let oldSources = this.routes.reserve.apps[id].sources
-            this.routes.reserve.apps[id].sources = new Set()
-
-            controls.forEach(c => {
-                // c.manager = controls.manager
-                this.routes.reserve.apps[id].sources.add(c)
-                oldSources.delete(c)
-            })
-
-            this.removeMatchingRoutes(oldSources)
-
-            // this.routes.reserve.apps[id].count++
-        }
-
+    updateRouteReserve = () => {
         this.routes.reserve.pool = []
-        for (let id in this.routes.reserve.apps){
-            let sources = this.routes.reserve.apps[id].sources
-            this.routes.reserve.pool.push(...sources)
-        }
+        this.routes.reserve.apps.forEach(a => {
+            this.routes.reserve.pool.push(...a?.controls)
+        })
     }
 
     addControls = (parentNode=document.body) => {
@@ -309,13 +286,20 @@ export class EventRouter{
         }
     }
 
-    addApp(id,controls){
-        console.log('adding',id, controls)
-        this.updateRouteReserve(id,controls)
+    addApp(app){
+        this.routes.reserve.apps.push(app)
+        this.updateRouteReserve()
     }
 
-    removeApp(id){
-        this.updateRouteReserve(id)
+    removeApp(app){
+        this.removeMatchingRoutes(app?.controls)
+        this.routes.reserve.apps.find((a,i) => {
+            if (a === app){
+                this.routes.reserve.apps.splice(i,1)
+            }
+        })
+
+        this.updateRouteReserve()
     }
 
     updateRouteDisplay(autoroute=true){

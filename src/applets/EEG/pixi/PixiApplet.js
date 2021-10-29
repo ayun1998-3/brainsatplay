@@ -156,7 +156,7 @@ export class PixiApplet {
     //Delete all event listeners and loops here and delete the HTML block
     deinit() {
         this.AppletHTML.deleteNode();
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
     }
 

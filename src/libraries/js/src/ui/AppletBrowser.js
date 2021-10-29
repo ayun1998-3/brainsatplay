@@ -70,7 +70,7 @@ export class AppletBrowser {
 
                 this._createTraining()
         
-                // Create App Library Section (dependent on platform)
+                // Create Library Section (dependent on platform)
                 let onclickInternal = (element, settings) => {
                         let selector = document.getElementById(`applet${0}`) // this.appletToReplace
                         selector.value = settings.name
@@ -78,7 +78,7 @@ export class AppletBrowser {
                         selector.onchange()
                 }
                 
-                this._createSection('App Library', this.props.applets, onclickInternal)
+                this._createSection('Library', this.props.applets, onclickInternal)
 
                 // Create Community Section
                let createCommunitySection = async () => {
@@ -170,7 +170,6 @@ export class AppletBrowser {
 
     _createSection = async (header, apps, onclick=()=>{}) => {
 
-        console.log(apps)
         let filter
         let appletInfo = await createCards(apps, filter, onclick)
 
