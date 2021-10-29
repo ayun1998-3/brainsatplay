@@ -16,6 +16,12 @@ let external = fs.readFileSync(path.join(appletDir,'external.js'))
 let decoded = eval(external.toString('utf-8'))
 
 decoded.forEach(info => {
+
+  if (!('categories' in info)) info.categories = []
+  let found = info.categories.find(c => c === 'External')
+  console.log(found)
+  if (!found) info.categories.push("External")
+
   appletDict[info.name] = info
 })
 
@@ -63,7 +69,6 @@ categories.forEach((category,indOut) => {
           let eventreg1 =  /class:\s*['"]Event['"]/g;
           match = eventreg1.exec(decoded);
           dict.controls = (match == null) ? undefined : true
-          console.log(dict.controls)
 
           let imagereg1 =  /from ['"](.+.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF))['"]/g;
           match = imagereg1.exec(decoded);

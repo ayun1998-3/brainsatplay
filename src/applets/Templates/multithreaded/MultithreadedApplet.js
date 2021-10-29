@@ -35,6 +35,7 @@ export class MultithreadedApplet {
         this.ctx = null;
         this.angle = 0;
         this.angleChange = 0.001;
+        this.bgColor = 'black'
     }
 
     //---------------------------------
@@ -57,6 +58,7 @@ export class MultithreadedApplet {
         let setupHTML = (props=this.props) => {
             this.canvas = document.getElementById(props.id+"canvas");
             this.ctx = this.canvas.getContext('2d');
+            this.canvasWorker = new ThreadedCanvas(this.canvas);    // This also gets a worker
             this.draw();
         }
 
@@ -78,7 +80,6 @@ export class MultithreadedApplet {
 
         this.worker1Id = window.workers.addWorker(); // Thread 1
         this.worker2Id = window.workers.addWorker(); // Thread 2
-        this.canvasWorker = new ThreadedCanvas();    // This also gets a worker
 
         //Add whatever else you need to initialize
         this.looping = true;
@@ -150,7 +151,7 @@ export class MultithreadedApplet {
         gradient.addColorStop(0,"purple");
         gradient.addColorStop(0.25,"dodgerblue");
         gradient.addColorStop(0.32,"skyblue");
-        gradient.addColorStop(1,this.bgColor);
+        gradient.addColorStop(1,this.bgColor ?? 'black');
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0,0,cWidth,cHeight);
         

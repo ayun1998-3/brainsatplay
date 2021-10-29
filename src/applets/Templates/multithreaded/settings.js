@@ -1,4 +1,3 @@
-import featureImg from './img/feature.png'
 
 export const settings = {
     "name": "Multithreaded",
@@ -7,7 +6,6 @@ export const settings = {
     "description": "*Hard flex*",
     "categories": ["train"],
     "module": "MultithreadedApplet",
-    "image":  featureImg,
 		"instructions":`
       Showing off multithreading library support and the flexibility of our tools. 
       `,

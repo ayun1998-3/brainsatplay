@@ -29,7 +29,7 @@
         devices: ["EEG"],
         author: "Juris Zebneckis",
         description: "",
-        categories: ["External"],
+        categories: [],
         link: 'https://brainsatplay.com/unity'
     },
 
@@ -38,7 +38,7 @@
         devices: ["EEG"],
         author: "Eli Kinney-Lang",
         description: "",
-        categories: ["External"],
+        categories: [],
         link: 'https://brainsatplay.com/unity-p300'
     }, // unity
 

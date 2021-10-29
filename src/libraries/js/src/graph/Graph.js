@@ -836,7 +836,14 @@ export class Graph {
             //     this.ports.element.data.style.right = 0
             // }
             this.updateParams({debug: true})
-            if (container) container.insertAdjacentElement('beforeend', this.ports.element.data)
+            // if (container) this.ui.element.insertAdjacentElement('beforeend', this.ports.element.data)
+            if (container) {
+                // let button = document.createElement('button')
+                // button.style = "position: absolute; top: 0; right: 0;"
+                // button.onclick = this.app.editor.toggleDisplay
+                // document.body.insertAdjacentElement('beforeend', button)
+                container.insertAdjacentElement('beforeend', this.ports.element.data)
+            }
         }
     }
 

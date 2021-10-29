@@ -34,6 +34,7 @@ export class VanillaApplet {
         this.ctx = null;
         this.angle = 0;
         this.angleChange = 0.001;
+        this.bgColor = 'black'
     }
 
     //---------------------------------
@@ -139,10 +140,11 @@ export class VanillaApplet {
         let cHeight = this.canvas.height;
            // style the background
         let gradient = this.ctx.createRadialGradient(cWidth*0.5,cHeight*0.5,2,cWidth*0.5,cHeight*0.5,100*this.angle*this.angle);
+        console.log(this.bgColor)
         gradient.addColorStop(0,"purple");
         gradient.addColorStop(0.25,"dodgerblue");
         gradient.addColorStop(0.32,"skyblue");
-        gradient.addColorStop(1,this.bgColor);
+        gradient.addColorStop(1,this.bgColor ?? 'black');
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0,0,cWidth,cHeight);
         

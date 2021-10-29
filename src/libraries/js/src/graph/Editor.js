@@ -329,7 +329,6 @@ export class Editor{
             try {
                 let settings = appletManifest[key]
                 if (settings.graphs || settings.zip) {
-                    console.log(settings)
                     if (settings.categories.includes('templates')) this.insertProject({destination: 'Templates', settings})
                     else this.insertProject({destination: 'Library', settings})
                 }
