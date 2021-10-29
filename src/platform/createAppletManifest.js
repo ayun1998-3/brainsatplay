@@ -53,23 +53,17 @@ categories.forEach((category,indOut) => {
         // Booleans
         let boolwords = ['graphs?', 'canTrain']
         boolwords.forEach(k => {
-          let regex = new RegExp(`['"]?${k}['"]?:\s*([^\{\,]+)`, 'g')
-          let match = regex.exec(decoded)
-          try {
-            dict[k] = (match == null) ? undefined : true
-          } catch (e) {}
+        let regexgraphs = new RegExp(`['"]?${k}['"]?:\s*`, 'g')
+        let match = regexgraphs.exec(decoded)
+        try {
+          dict[k.replace('?','')] = (match == null) ? undefined : true
+        } catch (e) {}
+
         })
-
-        
-
-
-          let graphreg1 =  /['"]?graphs?['"]?:\s*([\{\[][^\]\}]+[\}\]])}/g;
-          match = graphreg1.exec(decoded);
-          dict.graphs = (match == null) ? undefined : true
-
-          let eventreg1 =  /brainsatplay.plugins.Event/g;
+          let eventreg1 =  /class:\s*['"]Event['"]/g;
           match = eventreg1.exec(decoded);
           dict.controls = (match == null) ? undefined : true
+          console.log(dict.controls)
 
           let imagereg1 =  /from ['"](.+.(jpg|jpeg|png|gif|JPG|JPEG|PNG|GIF))['"]/g;
           match = imagereg1.exec(decoded);

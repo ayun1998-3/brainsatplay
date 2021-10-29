@@ -491,7 +491,6 @@ app.init()`)
                             ? c.split('export')[1] // beginning export
                             : c.split('export')[0] // end export
 
-                            console.log(toEval)
                             try{
                                 c = eval(`(${toEval})`) 
                             } catch (e) {
