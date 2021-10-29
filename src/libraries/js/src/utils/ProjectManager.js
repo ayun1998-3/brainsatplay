@@ -468,39 +468,40 @@ app.init()`)
         return new Promise(async (resolve, reject) => {
             try {
                 if (files.length > 0) {
-                    let info = await new Promise(async resolve => {
-                        let info = {
-                            settings: null,
-                            classes: []
-                        }
 
-                        files.forEach(async (o, i) => {
-                            if (o.filename.includes('settings.js')) {
-                                info.settings = o.content
-                            }
+                    let info = {
+                        settings: null,
+                        classes: []
+                    }
+
+                    await Promise.all(files.map(async (o, i) => {
+                            if (o.filename.includes('settings.js')) info.settings = o.content
                             else {
-                                info.classes.push(o.content)
+                                let isClass = o.content.match(/export/)
+                                if (isClass) info.classes.push(o.content)
+                                else console.error(`${o.filename} not loaded`)
                             }
-                            if (i == files.length - 1) resolve(info)
-                        })
-                    })
+                        }))
 
                     let classes = {}
                     let thrown = false
                     info.classes.forEach(c => {
-                        let toEval = (c.trim().slice(0,6) === 'export') 
-                        ? c.split('export')[1] // beginning export
-                        : c.split('export')[0] // end export
-                        try{
-                            c = eval(`(${toEval})`) 
-                        } catch (e) {
+                        
+                            let toEval = (c.trim().slice(0,6) === 'export') 
+                            ? c.split('export')[1] // beginning export
+                            : c.split('export')[0] // end export
 
-                            if (alert && !thrown) alert(`Application cannot be loaded.`)
-                            
-                            resolve(false)
-                            thrown = true
-                        }
-                        classes[c.name] = c
+                            console.log(toEval)
+                            try{
+                                c = eval(`(${toEval})`) 
+                            } catch (e) {
+
+                                if (alert && !thrown) alert(`Application cannot be loaded.`)
+                                
+                                resolve(false)
+                                thrown = true
+                            }
+                            classes[c.name] = c
                     })
 
                     // Replace Class Imports with Random Ids (to avoid stringifying)

@@ -1388,21 +1388,29 @@ export class Session {
 	// App Management
 	getSettings = async (info) => {
 
-		return new Promise(resolve => {
+		return new Promise((resolve, reject)=> {
 			
 			// Load Zip
 			if (info.zip){
 				if (!info.zip.includes('.zip')) info.zip = info.zip + '/app.zip'
 
+				console.log(info)
 				fetch(info.zip).then((res) => {
 					this.projects.helper.loadAsync(res.blob())
 					.then(async (file) => {
 						let fileArray = await this.projects.getFilesFromZip(file)
+						console.log(fileArray)
 						let loadedInfo = await this.projects.load(fileArray, false)
+						console.log(loadedInfo)
 						if (!loadedInfo){
 							console.log(`falling back to link: ${info.link}`)
 							if (info.link) {
-								window.open(info.link, "_blank");
+								window.open(info.link, "_blank"); // redirect
+
+								// Back to Home
+								// window.history.pushState({ additionalInformation: 'Updated URL to Applet Browser' }, '', `${window.location.origin}`)
+								// document.getElementById("preset-selector").value = 'default'
+
 								reject('Redirected to external location')
 							} else reject('Required information not provided')
 						} else {

@@ -6,7 +6,8 @@
         author: "Garrett Flynn",
         description: "Get started building a multiplayer neurofeedback app!",
         categories: ["learn", "templates"],
-        zip: 'https://brainsatplay.com/multiplayer/App.zip'
+        zip: 'https://brainsatplay.com/multiplayer/App.zip',
+        link: 'https://brainsatplay.com/multiplayer' // Fallback
     },
 
     // -------------------- Examples -------------------- 
@@ -17,7 +18,8 @@
         description: "A staring contest (with yourself...)",
         categories: ["train"],
         image: 'https://github.com/brainsatplay/blink/blob/main/app/img/feature.png?raw=true', // Github Image Example
-        zip: 'https://brainsatplay.com/blink/app.zip' // Github Pages Zip Example
+        zip: 'https://brainsatplay.com/blink/app.zip', // Github Pages Zip Example
+        link: 'https://brainsatplay.com/blink' // Fallback
     },
 
     // -------------------- Community Contributions -------------------- 
