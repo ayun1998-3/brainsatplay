@@ -1,8 +1,8 @@
 import {appletManifest} from '../../../../../platform/appletManifest'
 // import {App} from '../../App'
-import * as brainsatplay from '../../../brainsatplay'
 
 export let dynamicImport = async (url) => {
+    console.log(url)
     let module = await import(url);
     return module;
 }

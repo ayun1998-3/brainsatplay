@@ -169,6 +169,8 @@ export class AppletBrowser {
     }
 
     _createSection = async (header, apps, onclick=()=>{}) => {
+
+        console.log(apps)
         let filter
         let appletInfo = await createCards(apps, filter, onclick)
 

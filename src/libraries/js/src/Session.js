@@ -1426,7 +1426,6 @@ export class Session {
 
 	async createApp(info, parentNode = document.body, session = this, config = []) {
 		info = await this.getSettings(info)
-		console.log(info)
 		return new App(info, parentNode, session, config)
 	}
 
