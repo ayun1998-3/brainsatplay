@@ -530,7 +530,7 @@ class Math3D { //some stuff for doing math in 3D
                     newNeighborj.position = positions[i];
                     newNeighborj.dist = dist;
                     newNeighborj.idx = tree[i].idx;
-                    tree[j].neighbors.push(newNeighbori);
+                    tree[j].neighbors.push(newNeighborj);
                 }
             }
             tree[i].neighbors.sort(function(a,b) {return a.dist - b.dist}); //Sort by distance
