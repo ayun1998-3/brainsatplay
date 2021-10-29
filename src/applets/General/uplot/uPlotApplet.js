@@ -209,7 +209,7 @@ export class uPlotApplet {
       
       this.AppletHTML.deleteNode();
       //Be sure to unsubscribe from state if using it and remove any extra event listeners
-      this.session.removeApp(this.props.id)
+      this.session.removeApp(this)
     }
 
     responsive() {

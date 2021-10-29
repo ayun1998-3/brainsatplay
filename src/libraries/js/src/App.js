@@ -133,7 +133,8 @@ export class App {
             this.props.ready = true
 
             // Multiplayer Configuration
-            this.session.startApp(this, sessionInfo?.id ?? this.props.id)
+            this.sessionID = sessionInfo?.id
+            this.session.startApp(this)
 
             // Run Specified Edge Onstart Callbacks
             this.graphs.forEach(async g => {
@@ -178,7 +179,6 @@ export class App {
         if (this.AppletHTML) {
             // Soft Deinit
             if (soft) {
-                this.session.removeApp(this.props.id)
                 if (this.intro?.deleteNode instanceof Function) this.intro.deleteNode()
                 // this._removeAllFragments()
                 this.editor.init()
@@ -191,6 +191,8 @@ export class App {
                 this.AppletHTML.deleteNode();
                 this.AppletHTML = null
             }
+
+            this.session.removeApp(this)
             this.props.elements.forEach(el => {
                 if (el) el.remove()
             })

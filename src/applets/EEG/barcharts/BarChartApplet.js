@@ -156,7 +156,7 @@ export class BarChartApplet {
         this.looping = false;
         this.chart.deInit();
         this.AppletHTML.deleteNode();
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
 
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
     }

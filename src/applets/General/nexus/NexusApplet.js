@@ -501,7 +501,7 @@ this.three.getGeolocation = () => {
         this.three.renderer.setAnimationLoop( null );
         this.clearThree()
         this.AppletHTML.deleteNode();
-        this.session.removeApp(this.props.id)
+        this.session.removeApp(this)
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
     }
 
