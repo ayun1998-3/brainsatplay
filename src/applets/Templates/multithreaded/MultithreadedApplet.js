@@ -58,8 +58,7 @@ export class MultithreadedApplet {
         let setupHTML = (props=this.props) => {
             this.canvas = document.getElementById(props.id+"canvas");
             this.ctx = this.canvas.getContext('2d');
-            this.canvasWorker = new ThreadedCanvas(this.canvas);    // This also gets a worker
-            this.draw();
+            this.canvasWorker = new ThreadedCanvas(this.canvas,this.draw().toString());    // This also gets a worker
         }
 
         this.AppletHTML = new DOMFragment( // Fast HTML rendering container object
@@ -108,7 +107,7 @@ export class MultithreadedApplet {
         this.canvas.style.width = this.AppletHTML.node.clientWidth;
         this.canvas.style.height = this.AppletHTML.node.clientHeight;
 
-        this.draw();
+        //this.draw();
     }
 
     configure(settings=[]) { //For configuring from the address bar or saved settings. Expects an array of arguments [a,b,c] to do whatever with for setup

@@ -878,11 +878,9 @@ class Physics {
         
         /*
         How to make dynamic bounding volume tree:
-
         1. Find the bounding volume of all of the objects combined.
         2. Now subdivide bounding volumes by whatever magnitude until you have groups of 2-5 objects close to each other.
         3. Use box collision checks on the tree to find the best candidates to search for collisions
-        
         */
 
         let maxX, maxY, maxZ;
@@ -965,7 +963,7 @@ class Physics {
             return head;
         }
         else {
-            let tree = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
+            let tree = Math3D.nearestNeighborSearch(positions,Math.max(...boxdims));
 
             /**
             let node = { //all positions
