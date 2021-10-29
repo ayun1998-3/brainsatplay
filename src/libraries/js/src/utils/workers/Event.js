@@ -40,15 +40,15 @@ export class Events {
     }
 
     //add an event name, can optionally add them to any threads too from the main thread
-    addEvent(eventName,origin=undefined,foo=undefined,workerIdx=undefined) {
+    addEvent(eventName,origin=undefined,foo=undefined,workerId=undefined) {
         this.state.setState({[eventName]:undefined});
         if(this.workermanager) {
             if(origin) {
-                if(workerIdx) {
-                    this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},i);
+                if(workerId) {
+                    this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},workerId);
                 } else {
-                    this.workermanager.workers.forEach((w,i)=>{
-                        this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},i); //add it to all of them since we're assuming we're rotating threads
+                    this.workermanager.workers.forEach((w)=>{
+                        this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},w.id); //add it to all of them since we're assuming we're rotating threads
                     });
                 }
             }
@@ -61,7 +61,7 @@ export class Events {
     }
 
     //use this to set values by event name, will post messages on threads too
-    emit(eventName, input, workerIdx=undefined) {
+    emit(eventName, input, workerId=undefined) {
         let output = input;
         if(typeof output === 'object') {
             output.eventName = eventName;
@@ -71,7 +71,7 @@ export class Events {
         }
 
         if (this.workermanager) { //when emitting values for workers, input should be an object like {input:0, foo'abc', origin:'here'} for correct worker callback usage
-            this.workermanager.postToWorker(output,workerIdx);
+            this.workermanager.postToWorker(output,workerId);
         } else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         // run this in global scope of window or worker. since window.self = window, we're ok
             postMessage(output); //thread event 

@@ -791,6 +791,7 @@ class Physics {
     constructor(nBodies = 10) {
 
         this.physicsBodies = [];
+        this.boundingTree = [];
 
         this.globalSettings = {
             maxDistCheck: 1000,
@@ -807,7 +808,7 @@ class Physics {
                 collisionBoundsScale: [1,1,1], //radius of bounding box
                 position:{x:0,y:0,z:0} //center of bounds
             },
-            tree:{}
+            tree:{} //head will be a hard copy of the prototype and so on
         };
 
         this.bodySettings = {
@@ -846,7 +847,32 @@ class Physics {
         }
     }
 
-    generateBoundingVolumeTree(bodies=this.physicsBodies) {
+    addBody(settings={},bodies=this.physicsBodies) {
+        let newbody = JSON.parse(JSON.stringify(this.bodySettings));
+        Object.assign(newbody, settings);
+        bodies[i].index = bodies.length;
+        bodies.push(newbody); 
+
+        return newbody;
+    }
+
+    removeBody(index,bodies=this.physicsBodies) {
+        if(!index) return false;
+        if(index > bodies.length - 1) return false;
+        bodies.splice(index,1);
+        bodies.map((o) => {if(o.index > index) o.index--;});
+
+        return true;
+    }
+
+    newBoundingVolume(settings={}) {
+        let newvolume = JSON.parse(JSON.stringify(this.dynamicBoundingVolumeTree.proto));
+        Object.assign(newvolume, settings);
+
+        return newvolume;
+    }
+
+    generateBoundingVolumeTree(bodies=this.physicsBodies, octree=false) {
         
         /*
         How to make dynamic bounding volume tree:
@@ -858,8 +884,9 @@ class Physics {
         */
 
         let boundX, boundY, boundZ;
-
         let minX, minY, minZ;
+        let positions = [];
+        let minRadius = this.globalSettings.maxDistCheck;
 
         bodies.forEach((body)=>{
 
@@ -875,20 +902,69 @@ class Physics {
             minY = Math.min(minY,yy);
             minZ = Math.min(minZ,zz);
 
+            minRadius = Math.min(body.collisionRadius,minRadius);
+
+            positions.push(body.position[0],body.position[1],body.position[2]);
+
         });
 
         let head = JSON.parse(JSON.stringify(this.dynamicBoundingVolumeTree.proto));
 
-        let boxdims = [maxX-minX,maxY-minY,maxZ-minZ];
-        let boxpos = {x:boxdims[0]*.5,y:boxdims[1]*.5,z:boxdims[2]*.5};
+        let boxdims = [maxX-minX,maxY-minY,maxZ-minZ]; //height, width, depth 
+        let boxpos = {x:boxdims[0]*.5,y:boxdims[1]*.5,z:boxdims[2]*.5}; //center of box
         
         head.position = boxpos;
-        head.collisionBoundsScale = [boxdims[0]*.5,boxdims[1]*.5,boxdims[2]*.5];
+        head.collisionBoundsScale = [boxdims[0]*.5,boxdims[1]*.5,boxdims[2]*.5]; //radius to centers of each sides i.e. distance from center
 
         head.bodies = bodies;
         
         this.dynamicBoundingVolumeTree.tree = head;
 
+        let halfradius = head.collisionBoundsScale[0]*0.5; //divide by half each time for the search radii
+        minRadius *= 2;
+
+        if(octree === true) {
+            function genOct(parentPos,halfRadius) { //return center positions of child octree cubes, radius = parent half radius
+                let oct1 = [parentPos[0]+halfRadius,parentPos[1]+halfRadius,parentPos[2]+halfRadius]; //+x+y+z
+                let oct2 = [parentPos[0]-halfRadius,parentPos[1]+halfRadius,parentPos[2]+halfRadius]; //-x+y+z
+                let oct3 = [parentPos[0]+halfRadius,parentPos[1]-halfRadius,parentPos[2]+halfRadius]; //+x-y+z
+                let oct4 = [parentPos[0]+halfRadius,parentPos[1]+halfRadius,parentPos[2]-halfRadius]; //+x+y-z
+                let oct5 = [parentPos[0]-halfRadius,parentPos[1]-halfRadius,parentPos[2]+halfRadius]; //-x-y+z
+                let oct6 = [parentPos[0]-halfRadius,parentPos[1]+halfRadius,parentPos[2]-halfRadius]; //-x+y-z
+                let oct7 = [parentPos[0]+halfRadius,parentPos[1]-halfRadius,parentPos[2]-halfRadius]; //+x-y-z
+                let oct8 = [parentPos[0]-halfRadius,parentPos[1]-halfRadius,parentPos[2]-halfRadius]; //-x-y-z
+
+                return [oct1,oct2,oct3,oct4,oct5,oct6,oct7,oct8,oct9];
+            }
+
+            function genOctTree(head) {                
+                let octPos = genOct(head.position,head.collisionRadius*.5);
+                let check = [...head.bodies];
+                for(let i = 0; i < 8; i++) {
+                    let newvolume = this.newBoundingVolume({position:octPos[i],collisionRadius:halfradius});
+                    newvolume.parent = head;
+                    //now check if any of the bodies are within these and eliminate from the check array
+                    for(let j = check.length-1; j >= 0; j++) {
+                        let collided = this.collisionCheck(check[j],newvolume);
+                        if(collided) {
+                            newvolume.bodies.push(check[j]);
+                            check.splice(j,1);
+                        }
+                    } //recursively check each oct for bodies until only 3 bodies are contained
+                    if(newvolume.bodies > 2) {
+                        head.children.push(newvolume);
+                        if(newvolume.bodies > 3 && newvolume.collisionRadius*0.5 > minRadius) {genOctBody(newvolume);}
+                    }
+                }
+            }
+
+            genOctTree(head);
+            
+            return head;
+        }
+        else {
+            let neighbors = Math3D.nearestNeighborSearch(positions,radius);
+        }
         /*
             Now search children recursively till you have small enough groups to speed up collision checking
 
@@ -898,11 +974,11 @@ class Physics {
             bodies will be referenced in each 
         */
 
-        
+        return boundingTree;
 
     }
 
-    timeStep(dt) { //dt in seconds
+    timeStep(dt, bodies=this.physicsBodies) { //dt in seconds
 
         /* //Nearest neighbor search optimization for collision detection (to cut down array searching), can make this only fire every n-milliseconds for speed
         var neighborTree = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
@@ -916,12 +992,12 @@ class Physics {
         });
         */
 
-        this.physicsBodies.forEach((body,i) => {
+        bodies.forEach((body,i) => {
 
             //var positions = new Array(this.physicsBodies.length);
 
-            for(var j = i+1; j < this.physicsBodies.length; j++) {
-                var otherBody = this.physicsBodies[j];
+            for(var j = i+1; j < bodies.length; j++) {
+                var otherBody = bodies[j];
 
                 //Collision Check
                 var isColliding = this.collisionCheck(body,otherBody);
@@ -932,7 +1008,7 @@ class Physics {
 
                 //Gravity check
                 if(body.attractor === true && otherBody.attractor === true) {
-                    this.resolveAttractor(body,otherBody)
+                    this.resolveAttractor(body,otherBody);
                 }
 
             }
@@ -944,7 +1020,9 @@ class Physics {
             body.acceleration[0] += forceImpulse[1]/body.mass - body.acceleration[1]*drag;
             body.acceleration[0] += forceImpulse[2]/body.mass - body.acceleration[2]*drag - this.globalSettings.gravity*dt;
 
-            body.forceImpulse = [0,0,0];
+            body.forceImpulse[0] = 0;
+            body.forceImpulse[1] = 0;
+            body.forceImpulse[2] = 0;
 
             body.velocity[0] += body.acceleration[0]*dt;
             body.velocity[1] += body.acceleration[1]*dt;
@@ -954,19 +1032,6 @@ class Physics {
             body.position[0] += body.velocity[0]*dt;
             body.position[1] += body.velocity[1]*dt;
             body.position[2] += body.velocity[2]*dt;
-        });
-    }
-
-    addBody(child = null) {
-        this.physicsBodies.push(new this.bodySettings);
-        this.physicsBodies[this.physicsBodies.length - 1].index = this.physicsBodies.length - 1;
-        this.physicsBodies[this.physicsBodies.length - 1].child = child;
-    }
-
-    removeBody(idx) {
-        this.physicsBodies.splice(idx, 1);
-        this.physicsBodies.forEach((body,i) => {
-            body.index = i;
         });
     }
 
@@ -1034,9 +1099,11 @@ class Physics {
 
             //Apply Friction
         }
+        return;
     };
 
     resolveAttractor(body1,body2) {
+        if(body1.mass == 0 && body2.mass === 0) return;
         //Gravitational pull of nBodies
         var dist = Math3D.distance(body1.position,body2.position);
         var vec1 = Math3D.normalize(Math3D.makeVec(body1.position,body2.position)); // a to b
@@ -1056,7 +1123,7 @@ class Physics {
         body2.forceImpulse[0] += FgOnBody2[0];
         body2.forceImpulse[1] += FgOnBody2[1];
         body2.forceImpulse[2] += FgOnBody2[2];
-
+        return;
     }
 
     //Checks if two bodies are colliding based on their collision setting
@@ -1068,18 +1135,18 @@ class Physics {
             //Do collision check
             let isColliding = false;
             if(body1.collisionType === "Sphere") {
-                if(body2.collisionType === "Sphere") { isColliding = this.sphericalCollisionCheck(body1.idx,body2.idx);}
-                if(body2.collisionType === "Box") { isColliding = this.sphereBoxCollisionCheck(body1Idx,body2Idx);}
-                if(body2.collisionType === "Point") { isColliding = this.isPointInsideSphere(body2.position,body1.idx);}
+                if(body2.collisionType === "Sphere") { isColliding = this.sphericalCollisionCheck(body1,body2);}
+                if(body2.collisionType === "Box") { isColliding = this.sphereBoxCollisionCheck(body1,body2);}
+                if(body2.collisionType === "Point") { isColliding = this.isPointInsideSphere(body2.position,body1);}
             }
             else if(body1.collisionType === "Box" ) {
-                if(body2.collisionType === "Sphere") { isColliding = this.sphereBoxCollisionCheck(body2.idx,body1.idx);}
-                if(body2.collisionType === "Box") { isColliding = this.boxCollisionCheck(body1.idx,body2.idx);}
-                if(body2.collisionType === "Point") { isColliding = this.isPointInsideBox(body1.position,body1.idx); }
+                if(body2.collisionType === "Sphere") { isColliding = this.sphereBoxCollisionCheck(body2,body1);}
+                if(body2.collisionType === "Box") { isColliding = this.boxCollisionCheck(body1,body2);}
+                if(body2.collisionType === "Point") { isColliding = this.isPointInsideBox(body1.position,body1); }
             }
             else if (body1.collisionType === "Point") {
-                if(body2.collisionType === "Sphere") { isColliding = this.isPointInsideSphere(body1.position,body2.idx); }
-                if(body2.collisionType === "Box") { isColliding = this.isPointInsideBox(body1.position,body2.idx); }
+                if(body2.collisionType === "Sphere") { isColliding = this.isPointInsideSphere(body1.position,body2); }
+                if(body2.collisionType === "Box") { isColliding = this.isPointInsideBox(body1.position,body2); }
             }
 
             return isColliding;
@@ -1090,17 +1157,14 @@ class Physics {
     }
 
     //Check if point is inside the spherical volume
-    isPointInsideSphere(point,body2Idx) {
-        let body = this.physicsBodies[bodyIdx];
-        let dist = Math3D.distance(point1,body.position);
+    isPointInsideSphere(point=[0,0,0],body) {
+        let dist = Math3D.distance(point,body.position);
 
         return dist < body.collisionRadius;
     }
 
     //Collision between two spheres
-    sphericalCollisionCheck(sphere1Idx,sphere2Idx) {
-        let body1 = this.physicsBodies[sphere1Idx];
-        let body2 = this.physicsBodies[sphere2Idx];
+    sphericalCollisionCheck(body1,body2) {
 
         let dist = Math3D.distance(body1.position,body2.position);
 
@@ -1108,9 +1172,8 @@ class Physics {
     }
 
     //Check if point is inside the box volume
-    isPointInsideBox(point,boxIdx) {
+    isPointInsideBox(point,body1) {
 
-        let body1 = this.physicsBodies[boxIdx];
         //should precompute these for speed with Box objects as reference
         let body1minX = (body1.position[0]-body1.collisionRadius)*body1.collisionBoundsScale[0];
         let body1maxX = (body1.position[0]+body1.collisionRadius)*body1.collisionBoundsScale[0];
@@ -1126,10 +1189,7 @@ class Physics {
     }
 
     //Collision between two axis-aligned boxes. TODO: account for rotation with simple trig modifiers
-    boxCollisionCheck(box1idx,box2idx) {
-
-        let body1 = this.physicsBodies[box1idx];
-        let body2 = this.physicsBodies[box2idx];
+    boxCollisionCheck(body1,body2) {
 
         let body1minX = (body1.position[0]-body1.collisionRadius)*body1.collisionBoundsScale[0];
         let body1maxX = (body1.position[0]+body1.collisionRadius)*body1.collisionBoundsScale[0];
@@ -1152,10 +1212,8 @@ class Physics {
                 );
     }
 
-    sphereBoxCollisionCheck(sphereBodyIdx, boxBodyIdx) {
-        let sphere = this.physicsBodyIdx[sphereBodyIdx];
-        let box = this.physicsBodyIdx[boxBodyIdx];
-
+    sphereBoxCollisionCheck(sphere, box) {
+        
         let boxMinX = (box.position[0]-box.collisionRadius)*box.collisionBoundsScale[0];
         let boxMaxX = (box.position[0]+box.collisionRadius)*box.collisionBoundsScale[0];
         let boxMinY = (box.position[1]-box.collisionRadius)*box.collisionBoundsScale[1];
