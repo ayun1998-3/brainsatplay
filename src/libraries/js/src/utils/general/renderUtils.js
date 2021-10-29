@@ -1,4 +1,4 @@
-//A bunch of untested utilities for WebGL render prep. Contains 3D math, graphnodes, a physics system, and camera matrics. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix) or some other math utility
+//A bunch of *UNTESTED* utilities for WebGL render prep. Contains 3D math, graphnodes, a physics system, and camera matrics. For super optimal matrix math use glMatrix (https://github.com/toji/gl-matrix) or some other math utility
 //TODO: lighting, quick geometry buffering functions, demonstrate physics, maybe scrap the 2D matrix math for typical quicker 1D array based matrix math.
 //By Joshua Brewster (MIT License)
 class Math3D { //some stuff for doing math in 3D
@@ -874,7 +874,7 @@ class Physics {
     }
 
     //dynamic AABB trees or octrees
-    generateBoundingVolumeTree(bodies=this.physicsBodies, octree=false) {
+    generateBoundingVolumeTree(bodies=this.physicsBodies, octree=true) {
         
         /*
         How to make dynamic bounding volume tree:
@@ -912,37 +912,38 @@ class Physics {
         let head = JSON.parse(JSON.stringify(this.dynamicBoundingVolumeTree.proto));
 
         let boxdims = [maxX-minX,maxY-minY,maxZ-minZ]; //height, width, depth 
-        let boxpos = {x:boxdims[0]*.5,y:boxdims[1]*.5,z:boxdims[2]*.5}; //center of box
+        let boxbounds = [boxdims[0]*0.5,boxdims[1]*0.5,boxdims[2]*0.5]
+        let boxpos = {x:boxbounds[0]+minX,y:boxbounds[1]+minY,z:boxbounds[2]+minZ}; //center of box
         
         head.position = boxpos;
-        head.collisionBoundsScale = [boxdims[0]*.5,boxdims[1]*.5,boxdims[2]*.5]; //radius to centers of each sides i.e. distance from center
+        head.collisionBoundsScale = boxbounds; //radius to centers of each sides i.e. distance from center
 
         head.bodies = bodies;
         
         this.dynamicBoundingVolumeTree.tree = head;
 
-        let halfradius = head.collisionBoundsScale[0]*0.5; //divide by half each time for the search radii
         minRadius *= 2;
 
         if(octree === true) {
-            function genOct(parentPos,halfRadius) { //return center positions of child octree cubes, radius = parent half radius
-                let oct1 = [parentPos[0]+halfRadius,parentPos[1]+halfRadius,parentPos[2]+halfRadius]; //+x+y+z
-                let oct2 = [parentPos[0]-halfRadius,parentPos[1]+halfRadius,parentPos[2]+halfRadius]; //-x+y+z
-                let oct3 = [parentPos[0]+halfRadius,parentPos[1]-halfRadius,parentPos[2]+halfRadius]; //+x-y+z
-                let oct4 = [parentPos[0]+halfRadius,parentPos[1]+halfRadius,parentPos[2]-halfRadius]; //+x+y-z
-                let oct5 = [parentPos[0]-halfRadius,parentPos[1]-halfRadius,parentPos[2]+halfRadius]; //-x-y+z
-                let oct6 = [parentPos[0]-halfRadius,parentPos[1]+halfRadius,parentPos[2]-halfRadius]; //-x+y-z
-                let oct7 = [parentPos[0]+halfRadius,parentPos[1]-halfRadius,parentPos[2]-halfRadius]; //+x-y-z
-                let oct8 = [parentPos[0]-halfRadius,parentPos[1]-halfRadius,parentPos[2]-halfRadius]; //-x-y-z
+            function genOct(parentPos,halfbounds) { //return center positions of child octree cubes, radius = parent half radius
+                let oct1 = [parentPos[0]+halfbounds[0],parentPos[1]+halfbounds[1],parentPos[2]+halfbounds[2]]; //+x+y+z
+                let oct2 = [parentPos[0]-halfbounds[0],parentPos[1]+halfbounds[1],parentPos[2]+halfbounds[2]]; //-x+y+z
+                let oct3 = [parentPos[0]+halfbounds[0],parentPos[1]-halfbounds[1],parentPos[2]+halfbounds[2]]; //+x-y+z
+                let oct4 = [parentPos[0]+halfbounds[0],parentPos[1]+halfbounds[1],parentPos[2]-halfbounds[2]]; //+x+y-z
+                let oct5 = [parentPos[0]-halfbounds[0],parentPos[1]-halfbounds[1],parentPos[2]+halfbounds[2]]; //-x-y+z
+                let oct6 = [parentPos[0]-halfbounds[0],parentPos[1]+halfbounds[1],parentPos[2]-halfbounds[2]]; //-x+y-z
+                let oct7 = [parentPos[0]+halfbounds[0],parentPos[1]-halfbounds[1],parentPos[2]-halfbounds[2]]; //+x-y-z
+                let oct8 = [parentPos[0]-halfbounds[0],parentPos[1]-halfbounds[1],parentPos[2]-halfbounds[2]]; //-x-y-z
 
                 return [oct1,oct2,oct3,oct4,oct5,oct6,oct7,oct8,oct9];
             }
 
-            function genOctTree(head) {                
-                let octPos = genOct(head.position,head.collisionRadius*.5);
+            function genOctTree(head) {           
+                let halfbounds = [head.collisionBoundsScale[0]*0.5,head.collisionBoundsScale[1]*0.5,head.collisionBoundsScale[2]*0.5];     
+                let octPos = genOct(head.position,halfbounds);
                 let check = [...head.bodies];
                 for(let i = 0; i < 8; i++) {
-                    let newvolume = this.newBoundingVolume({position:octPos[i],collisionRadius:halfradius});
+                    let newvolume = this.newBoundingVolume({position:octPos[i],collisionBoundsScale:bounds});
                     newvolume.parent = head;
                     //now check if any of the bodies are within these and eliminate from the check array
                     for(let j = check.length-1; j >= 0; j++) {
@@ -954,7 +955,7 @@ class Physics {
                     } //recursively check each oct for bodies until only 3 bodies are contained
                     if(newvolume.bodies > 2) {
                         head.children.push(newvolume);
-                        if(newvolume.bodies > 3 && newvolume.collisionRadius*0.5 > minRadius) {genOctBody(newvolume);}
+                        if(newvolume.bodies > 3 && newvolume.collisionRadius*0.5 > minRadius) {genOctTree(newvolume);}
                     }
                 }
             }
@@ -964,8 +965,45 @@ class Physics {
             return head;
         }
         else {
-            let neighbors = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
-            
+            let tree = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
+
+            /**
+            let node = { //all positions
+                idx: null,
+                position: [0,0,0],
+                neighbors: []
+            };
+
+            let neighbor = {
+                idx: null, //position index
+                position: [0,0,0],
+                dist: null
+            };
+             */
+
+            let index = Math.floor(Math.random()*tree.length); //beginning with random node
+            let searching = true; 
+            let count = 0;
+            while(searching && count < tree.length) { 
+                let node = tree[index]; 
+                let i = node.neighbors.length-1; //starting with the farthest neighbor in the node
+                let ux = 0, uy = 0, uz = 0, mx = 0, my = 0, mz = 0;
+                while(i >= 0 && node.neighbors[i]) { //make a box around the farthest 3 neighbors 
+                    if(ux > positions[node.neighbors[i].idx][0]) ux = positions[node.neighbors[i].idx][0];
+                    if(mx < positions[node.neighbors[i].idx][0]) mx = positions[node.neighbors[i].idx][0];
+                    if(uy > positions[node.neighbors[i].idx][1]) uy = positions[node.neighbors[i].idx][1];
+                    if(my < positions[node.neighbors[i].idx][1]) my = positions[node.neighbors[i].idx][1];
+                    if(uz > positions[node.neighbors[i].idx][2]) uz = positions[node.neighbors[i].idx][2];
+                    if(mz < positions[node.neighbors[i].idx][2]) mz = positions[node.neighbors[i].idx][2];
+                }
+                let bounds = [mx*0.5,my*0.5,mz*0.5];
+                let pos = [bounds[0]+ux,bounds[1]+uy,bounds[2]+uz]
+                let newvolume = this.newBoundingVolume({position:[mx*.5,my*.5,mz*.5],collisionBoundsScale:[]})
+                //then walk to the farthest unchecked node and make a box around the 
+                // 3 farthest unchecked neighbors (which were nearer than the parent group)
+                // then continue till you run out of nodes to check. Shoud be left with a bounding tree with larger to smaller boxes
+                count++;
+            }
 
             return head;
         }
