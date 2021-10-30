@@ -1,7 +1,8 @@
 
 import {CallbackManager} from './workerCallbacks'
 
-let manager = new CallbackManager()
+let manager = new CallbackManager();
+let id = `worker_${Math.floor(Math.random()*10000000000)}`;
 let canvas = manager.canvas; 
 let ctx = manager.canvas.context;
 let context = ctx; //another common reference
@@ -32,7 +33,7 @@ self.onmessage = (event) => {
     output = manager.checkCallbacks(event);  // output some results!
     counter++; //just tracks the number of calls made to the worker
   
-    dict = {output: output, foo: input.foo, origin: input.origin}
+    dict = {output: output, foo: input.foo, origin: input.origin, id:self.id, counter:counter};
   
     if(eventSetting) manager.events.emit(eventSetting.eventName,dict); //if the origin and foo match an event setting on the thread, this emits output as an event
     else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
@@ -59,3 +60,4 @@ if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScop
     addEventListener('message', self.onmessage);
 } 
 
+manager.events.emit('newWorker',id);

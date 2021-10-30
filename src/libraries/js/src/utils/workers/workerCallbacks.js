@@ -1,7 +1,7 @@
 import { gpuUtils } from '../gpu/gpuUtils.js';
 import { Math2 } from '../mathUtils/Math2';
 import { Events } from './Event.js';
-import 'regenerator-runtime/runtime' 
+import 'regenerator-runtime/runtime'; 
 
 let dynamicImport = async (url) => {
   let module = await import(url);
@@ -68,10 +68,14 @@ export class CallbackManager{
         this.animation = undefined;
         this.animtionFunc = undefined;
         this.animating = false;
+        this.ANIMFRAMETIME = Date.now(); //ms based on UTC stamps
         this.threeWorker = undefined;
         
 
         this.callbacks = [
+          {case:'ping',callback:(args)=>{
+            return 'pong';
+          }},
           {case:'list',callback:(args)=>{
             let list = [];
             this.callbacks.forEach((obj)=>{
@@ -84,9 +88,9 @@ export class CallbackManager{
           
             let newCallback = {case:args[0],callback:newFunc};
           
-            let found = self.callbacks.findIndex(c => {if (c.case === newCallback.case) return c})
-            if (found != -1) self.callbacks[found] = newCallback
-            else self.callbacks.push(newCallback);
+            let found = this.callbacks.findIndex(c => {if (c.case === newCallback.case) return c});
+            if (found != -1) this.callbacks[found] = newCallback;
+            else this.callbacks.push(newCallback);
             return true;
           }},
           {case:'addgpufunc',callback:(args)=>{ //arg0 = gpu in-thread function string
@@ -157,14 +161,23 @@ export class CallbackManager{
             } else return false;
           }},
           {case:'setAnimation',callback:(args)=>{ //pass a draw function to be run on an animation loop. Reference this.canvas and this.context or canvas and context. Reference values with this.x etc. and use setValues to set the values from another thread
-
             this.animationFunc = parseFunctionFromText(args[0]);
             return true;
           }},
-          {case:'startAnimation',callback:(args)=>{
+          {case:'startAnimation',callback:(args,origin)=>{
             let anim = () => {
               if(this.animating) {
+                this.ANIMFRAMETIME = Date.now();
                 this.animationFunc();
+                let emitevent = this.checkEvents(undefined,'origin');
+                let dict = {foo:'render',output:this.ANIMFRAMETIME,id:self.id,origin:origin};
+                if(emitevent) {
+                  this.events.emit('render',dict);
+                }
+                else {
+                  this.ANIMFRAMETIME = Date.now() - this.ANIMFRAMETIME;
+                  postMessage(dict);
+                }
                 requestAnimationFrame(anim);
               }
             }
@@ -189,6 +202,12 @@ export class CallbackManager{
               cancelAnimationFrame(this.animation);
               return true;
             } else return false;
+          }},
+          {case:'render',callback:(args)=>{ //runs the animation function
+            this.ANIMFRAMETIME = Date.now();
+            this.animationFunc();
+            this.ANIMFRAMETIME = Date.now() - this.ANIMFRAMETIME;
+            return this.ANIMFRAMETIME;
           }},
           {case:'xcor', callback:(args)=>{return Math2.crosscorrelation(...args);}},
           {case:'autocor', callback:(args)=>{return Math2.autocorrelation(args);}},
@@ -285,12 +304,14 @@ export class CallbackManager{
 
     checkEvents(foo,origin) {
       return this.eventSettings.find((o)=>{
-        if(o.origin === origin) {
-          if(o.foo) {
-            if(o.foo === foo) return true;
-            else return false;
-          } else return true;
-        }
+        if(o.origin && origin) {
+          if(o.origin === origin) {
+            if(o.foo && foo) {
+              if(o.foo === foo) return true;
+              else return false;
+            } else return true;
+          } else return false;
+        } else return false;
       });
     }
 

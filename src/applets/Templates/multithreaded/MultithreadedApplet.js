@@ -38,8 +38,15 @@ export class MultithreadedApplet {
         this.bgColor = 'black'
 
         this.worker1Id;
+        this.worker1Waiting = false;
         this.worker2Id;
+        this.worker2Waiting = false;
         this.canvasWorkerId;
+        this.canvasWorkerWaiting = false;
+
+        this.thread1lastoutput = 1;
+        this.increment = 0.001;
+
     }
 
     //---------------------------------
@@ -52,8 +59,11 @@ export class MultithreadedApplet {
         //HTML render function, can also just be a plain template string, add the random ID to named divs so they don't cause conflicts with other UI elements
         let HTMLtemplate = (props=this.props) => { 
             return `
-            <div id=`+props.id+`>
-                <canvas id='`+props.id+`canvas' style='z-index:1;'></canvas>
+            <div id=${props.id}>
+                <div style='position:absolute;'>
+                    <button id='${props.id}input'>Increment</button>
+                </div>
+                <canvas id='${props.id}canvas' style='z-index:1;'></canvas>
             </div>
             `;
         }
@@ -62,13 +72,24 @@ export class MultithreadedApplet {
         let setupHTML = (props=this.props) => {
             this.canvas = document.getElementById(props.id+"canvas");
             this.ctx = this.canvas.getContext('2d');
+
+            document.getElementById(props.id+'input').onclick = () => {
+                
+                if(this.canvasWorkerWaiting === false) { 
+                    window.workers.postToWorker({foo:'add',input:[this.increment,0.001]});
+                }
+            };
+
             this.canvasWorker = new ThreadedCanvas(
                 this.canvas,
                 '2d',
                 this.draw().toString(),
-                {angle:0,angleChange:0.001,bgColor:'black'}, //'this' values, canvas and context are also available under 'this'
+                {angle:0,angleChange:0.000,bgColor:'black'}, //'this' values, canvas and context are also available under 'this'
                 this.canvasWorkerId
             );    // This also gets a worker
+
+            this.canvasWorker.startAnimation();
+
         }
 
         this.AppletHTML = new DOMFragment( // Fast HTML rendering container object
@@ -94,16 +115,26 @@ export class MultithreadedApplet {
         window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
         window.workers.events.addEvent('thread2process',this.origin,undefined,this.worker2Id);
 
-
+        window.workers.postToWorker({foo:'addfunc',input:['add',function add(a,b){return a+b;}.toString()],origin:this.origin},this.worker1Id);
+        window.workers.postToWorker({foo:'addfunc',input:['mul',function mul(a,b){return a*b;}.toString()],origin:this.origin},this.worker1Id);
         //on input event send to thread 1
 
-        window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
-            console.log('thread1',res);
-            
-        })
-        window.workers.events.subEvent('thread2process',(res) => { //send thread2 result to canvas thread to update visual settings
-            console.log('thread2',res);
-        })
+        window.workers.events.subEvent('thread1process',(output) => { //send thread1 result to thread 2
+            console.log('thread1',output);
+            this.canvasWorkerWaiting = true;
+            window.workers.postToWorker({foo:'mul',input:[increment,2]},this.worker2Id);
+            this.increment = output;
+        });
+
+        window.workers.events.subEvent('thread2process',(output) => { //send thread2 result to canvas thread to update visual settings
+            console.log('thread2',output);
+            window.workers.postToWorker({foo:'setValues',input:{angleChange:output}},this.canvasWorkerId);
+        });
+
+        window.workers.events.subEvent('render',(output)=>{
+            console.log('output',output);
+            this.canvasWorkerWaiting = false;
+        });
 
         //Add whatever else you need to initialize
         this.looping = true;

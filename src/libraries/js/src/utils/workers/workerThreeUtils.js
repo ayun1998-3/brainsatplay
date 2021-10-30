@@ -19,6 +19,7 @@ export class threeUtil {
             camera:undefined,
             scene:undefined
         };
+        this.ANIMFRAMETIME = 0;
 
     }
 
@@ -28,7 +29,20 @@ export class threeUtil {
 
     draw = () => { //frame draw function
         //do something
+        this.ANIMFRAMETIME = Date.now();
         this.defaultDraw();
+        this.ANIMFRAMETIME = Date.now() - this.ANIMFRAMETIME;
+        this.finished();
+    }
+
+    finished = () => {
+        let dict = {foo:'render',output:this.ANIMFRAMETIME,id:self.id};
+        if(emitevent && self.manager) {
+            self.manager.events.emit('render',dict);
+        }
+        else {
+            postMessage(dict);
+        }
     }
 
     clear = () => {

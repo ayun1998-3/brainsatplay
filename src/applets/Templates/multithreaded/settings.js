@@ -3,7 +3,7 @@ export const settings = {
     "name": "Multithreaded",
     "author": "Joshua Brewster",
     "devices": ["HEG","EEG"],
-    "description": "*Hard flex*",
+    "description": "WIP Multithreading tests... *Hard flex*",
     "categories": ["train"],
     "module": "MultithreadedApplet",
 		"instructions":`

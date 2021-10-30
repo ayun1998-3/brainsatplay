@@ -62,7 +62,7 @@ export class Events {
 
     //use this to set values by event name, will post messages on threads too
     emit(eventName, input, workerId=undefined) {
-        let output = {eventName:eventName, output:output};;
+        let output = {eventName:eventName, output:input};;
         if(!input || !eventName) return;
 
         if (this.workermanager !== undefined) { //when emitting values for workers, input should be an object like {input:0, foo'abc', origin:'here'} for correct worker callback usage
@@ -73,7 +73,7 @@ export class Events {
             postMessage(output); //thread event 
         }
 
-        this.state.setState({[eventName]:val}); //local event 
+        this.state.setState({[eventName]:input}); //local event 
     }
 
     workerCallback = (msg) => {
@@ -85,6 +85,6 @@ export class Events {
     }
 
     export = () => {
-        return this
+        return this;
     }
 }

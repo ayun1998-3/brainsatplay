@@ -542,8 +542,8 @@ class Math3D { //some stuff for doing math in 3D
 }
 
 
-
-class graphNode { //Use this to organize 3D models hierarchically if needed and apply transforms (not very optimal for real time)
+//Use this to organize 3D models hierarchically if needed and apply transforms (not very optimal for real time)
+class graphNode { 
     constructor(parent=null, children=[null], id=null) {
         this.id = id;
         this.parent = parent; //Access/inherit parent object
@@ -839,7 +839,8 @@ class Physics {
             trigger: false,
             triggerFunc: null,
 
-            child: null, //Child object class instance (for modifying parameters)
+            parent:null,
+            children: null, //Child object class instance (for modifying parameters)
         }
 
         for (let i = 0; i < nBodies; i++) {
@@ -953,6 +954,7 @@ class Physics {
                     } //recursively check each oct for bodies until only 3 bodies are contained
                     if(newvolume.bodies > 2) {
                         head.children.push(newvolume);
+                        newvolume.parent = head;
                         if(newvolume.bodies > 3 && newvolume.collisionRadius*0.5 > minRadius) {genOctTree(newvolume);}
                     }
                 }
@@ -1002,6 +1004,7 @@ class Physics {
                         if(uz > positions[node.neighbors[i].idx][2]-volumes[node.neighbors[i].idx].collisionBoundsScale[2]) uz = positions[node.neighbors[i].idx][2]-volumes[node.neighbors[i].idx].collisionBoundsScale[2];
                         if(mz < positions[node.neighbors[i].idx][2]+volumes[node.neighbors[i].idx].collisionBoundsScale[2]) mz = positions[node.neighbors[i].idx][2]+volumes[node.neighbors[i].idx].collisionBoundsScale[2];
                         newvolume.children.push(volumes[node.neighbors[i].idx]);
+                        volumes[node.neighbors[i].idx].parent = newvolume;
                         tree.splice(node.neighbors[i].idx,1);
                         foundidxs.push(node.neighbors[i].idx);
                         i++; j++;
