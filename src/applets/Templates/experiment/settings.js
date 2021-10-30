@@ -4,6 +4,7 @@ import {Manager} from './Manager'
 // import {Results} from './Results'
 import audioCue from './audioCue.mp3'
 import {BarChart} from '../../../libraries/js/src/plugins/displays/BarChart'
+import {Lda2} from '../../../libraries/js/src/plugins/machinelearning/Lda2'
 
 let button = document.createElement('button')
 button.innerHTML = 'Connect EEG'
@@ -51,13 +52,14 @@ export const settings = {
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
-            duration: 1,
+            duration: 5,
             interTrialInterval: 1,
             allowConsecutive: false,
             start: false
           }},
 
         {id:'barchart', class: BarChart},
+        {id:'lda', class: Lda2},
 
         {id: 'audioCue', class: brainsatplay.plugins.audio.Audio, params: {file: audioCue}},
         {id: 'data', class: brainsatplay.plugins.utilities.DataManager},
@@ -184,11 +186,17 @@ export const settings = {
 
         {
           source: 'manager:done',
-          target: 'manager:learn'
+          target: 'lda:learn'
         },
 
         {
+          source: 'lda:learn',
+          target: 'manager:model'
+        },
 
+        {
+          source: 'eeg:atlas',
+          target: 'manager:predict'
         },
         
         //barchart visualization

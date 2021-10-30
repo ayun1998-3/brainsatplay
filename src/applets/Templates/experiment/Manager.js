@@ -1,7 +1,7 @@
 import bci from 'bcijs/browser.js'
-import {Plugin} from '../../../libraries/js/src/plugins/Plugin'
+import { Plugin } from '../../../libraries/js/src/plugins/Plugin'
 
-export class Manager extends Plugin{
+export class Manager extends Plugin {
 
     static id = String(Math.floor(Math.random() * 1000000))
 
@@ -19,7 +19,8 @@ export class Manager extends Plugin{
             experiment: document.createElement('div'),
             cross: document.createElement('p'),
             start: document.createElement('div'),
-            startButton: null
+            startButton: null,
+            model: null
         }
 
         this.props.container.id = this.props.id
@@ -125,25 +126,8 @@ export class Manager extends Plugin{
                     // console.log(this.ports.element.output)
                     let alphaMeans = {}
 
-                    let nIntervals = 6;
+                    let nIntervals = 8;
 
-                    // // Training set
-                    // let class1 = [[0, 0, 0, 0, 0], [1, 2, 1, 2, 0], [2, 2, 5, 2, 0]];
-                    // let class2 = [[8, 8, 10, 12, 9], [9, 10, 10, 20, 21], [7, 8, 9, 10, 16]];
-
-                    // // Learn an LDA classifier
-                    // let ldaParams1 = bci.ldaLearn(class1, class2);
-                    // console.log(ldaParams1)
-
-                    // let testClass1 = [[1, 1, 1, 2, 1, 1], [2, 1, 3, 4, 1, 0]]
-                    // let testClass2 = [[10, 10, 10, 10, 10, 12], [21, 21, 23, 24, 15, 12]]
-
-                    // for (let i = 0; i < testClass1.length; i++) {
-                    //     let pred = bci.ldaProject(ldaParams1, testClass1[i])
-                    //     let pred2 = bci.ldaProject(ldaParams1, testClass2[i])
-                    //     console.log(pred, pred2)
-                    // }
-                    
 
                     console.log(this.props.states)
                     Object.keys(this.props.states).forEach(key => {
@@ -173,13 +157,11 @@ export class Manager extends Plugin{
                                     console.log(a)
                                     alphaMeans[key][coord.tag].push(a)
                                 }
-                                // let a1 = coord.means.alpha1.slice(i1, i2)
-                                // let a2 = coord.means.alpha2.slice(i1, i2)
-                                // let a = (this.session.atlas.mean(a1) + this.session.atlas.mean(a2)) / 2
-                                // alphaMeans[key][coord.tag] = a
                             })
                         }
                     })
+
+                    console.log(alphaMeans)
 
                     this.props.start.style.display = 'flex'
                     this.props.start.innerHTML = ''
@@ -195,7 +177,6 @@ export class Manager extends Plugin{
                             div.innerHTML += `<i style="font-size: 80%">Alpha</i>`
                             div.innerHTML += `<h2 style="margin: 0px">${condition}</h2>`
                             for (let tag in alphaMeans[condition]) {
-                                // div.innerHTML += `<p style="font-size: 80%">${tag}: ${alphaMeans[condition][tag].toFixed(4)}</p>`
                             }
                             this.props.start.insertAdjacentElement('beforeend', div)
                             // this.props.start.insertAdjacentElement('beforeend', this.props.chart)
@@ -203,6 +184,7 @@ export class Manager extends Plugin{
                         }
                     }
 
+                    console.log(alphaMeans)
 
                     delete alphaMeans[""]
                     for (let state in alphaMeans) { // change channel names to indices, transpose alphaMeans
@@ -216,20 +198,25 @@ export class Manager extends Plugin{
                             }
                             tAlphaMeans.push(temp)
                         }
+
+                        // for (let channel in alphaMeans[state]){
+                        //     tAlphaMeans.push(alphaMeans[state][channel])
+                        // }
                         alphaMeans[state] = tAlphaMeans;
 
                     }
 
-                    for (let i = 0; i < alphaMeans["Eyes Closed"][0].length; i++) {
-                        console.log(alphaMeans["Eyes Closed"][0][i] += 10);
+                    for (let i = 0; i < alphaMeans["Eyes Closed"].length; i++) { //add distinction to second-channel eyes-closed data
+                        console.log(alphaMeans["Eyes Closed"][i][1] += 20);
                     }
 
 
                     this.props.experiment.style.display = 'none'
+
                     console.log(alphaMeans)
                     return { data: alphaMeans }
 
-                    
+
 
                 }
             },
@@ -242,7 +229,7 @@ export class Manager extends Plugin{
                         return user
                     }
                 }
-            }, 
+            },
 
             button: {
                 data: null,
@@ -254,78 +241,70 @@ export class Manager extends Plugin{
             buttonToggle: {
                 onUpdate: (user) => {
                     console.log('START')
-                    if (user.data){
+                    if (user.data) {
                         // this.props.startButton.classList.toggle('disabled')
                     }
                 }
             },
 
-            learn: {
+            model: {
                 input: { type: undefined },
-                output: { type: 'number' },
+                output: { type: null },
                 onUpdate: (user) => {
-
-                    let openTraining = user.data['Eyes Open'].slice(0, 4)
-                    let closedTraining = user.data['Eyes Closed'].slice(0, 4)
-                    let openTesting = user.data['Eyes Open'].slice(4)
-                    let closedTesting = user.data['Eyes Closed'].slice(4)
-                    console.log(openTraining, openTesting, closedTraining, closedTesting)
-
-                    // let reshape = (data) => {
-                    //     let nData = data.map(value => { //adds dimension
-                    //         let temp = [];
-                    //         temp.push(value)
-                    //         return temp
-                    //     })
-                    //     return nData
-                    // }
-
-                    // openData = reshape(openData)
-                    // closedData = reshape(closedData)
-
-                    let ldaParams = bci.ldaLearn(openTraining, closedTraining); // something not working witht he ldaParams, gives me huge theta values
-
-                    console.log(ldaParams)
-
-                    let classify = (feature) => {
-                        let prediction = bci.ldaProject(ldaParams, feature);
-                        console.log(prediction)
-                        return (prediction < 0) ? 0 : 1;
-                    }
-                    // Classify testing data
-
-
-                    let openPredictions = openTesting.map(classify);
-                    let closedPredictions = closedTesting.map(classify);
-                    console.log(openPredictions, closedPredictions)
-
-                    // Evaluate the classifer
-                    let openActual = new Array(openPredictions.length).fill(0);
-                    let closedActual = new Array(closedPredictions.length).fill(1);
-                    console.log(openActual, closedActual)
-
-                    let predictions = openPredictions.concat(closedPredictions);
-                    let actual = openActual.concat(closedActual);
-                    console.log(predictions, actual)
-
-                    let confusionMatrix = bci.confusionMatrix(predictions, actual);
-
-                    let bac = bci.balancedAccuracy(confusionMatrix);
-                    console.log(bac)
-                    console.log('confusion matrix');
-                    console.log(bci.toTable(confusionMatrix));
-                    console.log('balanced accuracy');
-                    console.log(bac);
+                    this.props.model = user.data
+                    console.log(this.props.model)
                 }
 
             },
 
-            test: {
-                input: { type: undefined },
-                output: { type: 'number' },
+            predict: {
+                input: { type: undefined }, 
+                output: { type: null },
                 onUpdate: (user) => {
-                    let ldaParams = user.data
 
+                    if (this.props.model) {
+
+                        let ldaParams = this.props.model
+                        let predictData = []
+
+                        this.props.lastAtlas.eeg.forEach(coord => {
+
+                            let a1 = coord.means.alpha1
+                            let a2 = coord.means.alpha2
+                            let a = (this.session.atlas.mean(a1) + this.session.atlas.mean(a2)) / 2
+                            predictData.push(a)
+
+                        })
+                        console.log(predictData)
+
+                        let classify = (feature) => {
+                            let prediction = bci.ldaProject(ldaParams, feature);
+                            console.log(prediction)
+                            return (prediction < 0) ? 0 : 1;
+                        }
+
+                        let prediction = classify(predictData)
+                        console.log(prediction)
+
+                        let div = document.createElement('div')
+                        div.style.padding = '80px'
+                        div.style.textAlign = 'left'
+
+
+                        div.innerHTML += `<h2 style="margin: 0px">Hello</h2>`
+                        this.props.start.insertAdjacentElement('beforeend', div)
+
+
+
+                        if (prediction === 0) {
+                            console.log("Eyes Closed")
+                        }
+                        else {
+                            console.log("Eyes Open")
+                        }
+
+                        // display results onto screen
+                    }
                 }
             },
 
@@ -340,7 +319,7 @@ export class Manager extends Plugin{
 
         this.ports.button.data.classList.add('brainsatplay-default-button')
 
-        this.props.start.insertAdjacentElement('beforeend', this.ports.button.data )
+        this.props.start.insertAdjacentElement('beforeend', this.ports.button.data)
     }
 
     deinit = () => { }
