@@ -29,6 +29,8 @@ export class App {
 
         this._setCoreAttributes(info, parent, session, settings)
 
+        this.uuid = String(Math.floor(Math.random()*1000000)),
+
         this.graphs = new Map() // graph execution
         this.devices = []
         this.state = new StateManager({}); // app-specific state maanger
