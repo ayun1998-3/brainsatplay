@@ -87,24 +87,26 @@ export class CallbackManager{
             let found = self.callbacks.findIndex(c => {if (c.case === newCallback.case) return c})
             if (found != -1) self.callbacks[found] = newCallback
             else self.callbacks.push(newCallback);
+            return true;
           }},
           {case:'addgpufunc',callback:(args)=>{ //arg0 = gpu in-thread function string
-            this.gpu.addFunction(parseFunctionFromText(args[0]));
+            return this.gpu.addFunction(parseFunctionFromText(args[0]));
           }},
           {case:'addkernel',callback:(args)=>{ //arg0 = kernel name, arg1 = kernel function string
-            this.gpu.addKernel(args[0],parseFunctionFromText(args[1]));
+            return this.gpu.addKernel(args[0],parseFunctionFromText(args[1]));
           }},
           {case:'callkernel',callback:(args)=>{ //arg0 = kernel name, args.slice(1) = kernel input arguments
             return this.gpu.callKernel(args[0],args.slice(1)); //generalized gpu kernel calls
           }},
           {case:'addevent',callback:(args,origin)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
             this.eventSettings.push({eventName:args[0],case:args[1],origin:origin});
+            return true;
           }},
           {case:'subevent',callback:(args)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
-            this.events.subEvent(args[0],parseFunctionFromText(args[1]))
+            return this.events.subEvent(args[0],parseFunctionFromText(args[1]))
           }},
           {case:'unsubevent',callback:(args)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
-            this.events.unsubEvent(args[0],args[1]);
+            return this.events.unsubEvent(args[0],args[1]);
           }},
           {case:'resizecanvas',callback:(args)=>{
             this.canvas.width = args[0];
