@@ -21,17 +21,19 @@ export class Blink {
 
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
-            looping: false,
             blinkData: {},
             tags: {
                 left: ['AF7','FP1'],
                 right: ['AF8','FP2']
             },
-            container: document.createElement('div')
+            container: document.createElement('div'),
+            ctx: null,
+            canvas: null
         }
 
+        this.props.container.innerHTML = '<small style="position: absolute; top: 15px; left: 15px;">Blink</small>'
         this.props.container.id = this.props.id
-        this.props.container.style = 'display: flex; align-items: center; justify-content: center; width: 100%; height: 150px; padding: 10px; box-sizing: content-box;'
+        this.props.container.style = 'position: relative; display: block; align-items: center; justify-content: center; width: 100%; aspect-ratio: 2/1; box-sizing: content-box;'
 
         this.ports = {
             default: {
@@ -59,7 +61,7 @@ export class Blink {
                 }
             },
 
-            element: {
+            debug: {
                 data: this.props.container,
                 input: {type: null},
                 output: {type: Element},
@@ -73,8 +75,6 @@ export class Blink {
                     // 'CNN'
                 ]
             }, 
-
-            debug: {data: false},
 
             blinkWindow: {
                 data: 25,
@@ -115,38 +115,33 @@ export class Blink {
     }
 
     init = async () => {
-        this.props.looping = true
-
         this.props.dataquality = this.getNode('dataquality')
         this.props.canvas = this.getNode('canvas')
         this.props.container.insertAdjacentElement('beforeend', this.props.canvas.props.container)
 
 
+        // ANIMATE ONLY WHEN NEW CALCULATION IS DONE
         this.props.canvas.update('draw', 
             {  
                 forceUpdate: true,
-                data: {active: true, function: (ctx) => {
-                    if (this.props.looping){
-                        if (this.ports.debug.data){
-                            this.props.container.style.display = 'block'
-                            this._drawSignal(ctx)
-                        } else {
-                            this.props.container.style.display = 'none'
-                            // this.props.container.style.pointerEvents = 'none'
-                        }
-                    }
+                data: {active: true, onload: (canvas) => {
+                        this.props.canvas = canvas
+                        this.props.context = canvas.getContext("2d");
+                        this._clearCanvas()
                 }}
             }
-        )
+        )    
     }
 
     deinit = () => {
-        this.props.looping = false
         // this.props.canvas.deinit()
         // this.props.dataquality.deinit()
     }
 
-    _drawSignal = (ctx) => {
+    _animate = () => {
+        let ctx = this.props.context
+        if (ctx) {
+            this._clearCanvas()
         let scale = 0.1
         let yInt = 0.5
         let weight = 2
@@ -155,9 +150,9 @@ export class Blink {
         let sideLength = width / 2
 
         let keys = Object.keys(this.props.blinkData)
-        if (keys.length > 0){
-            // Display
-            this.props.container.style.display = 'block'
+        // if (keys.length > 0){
+        //     // Display
+        //     this.props.container.style.display = 'block'
 
 
             // Grab Data From First Tag
@@ -206,11 +201,7 @@ export class Blink {
             ctx.lineWidth = Number.parseFloat(2)
             ctx.stroke(); // Draw
         })
-
-
-        } else {
-            this.props.container.style.display = 'none'
-        }
+    }
     }
 
     _calculateBlink = async (user, tags) => {
@@ -233,6 +224,10 @@ export class Blink {
                 }
             }
         })
+
+
+        this._animate()
+
         return blink
     }
 
@@ -268,5 +263,12 @@ export class Blink {
     _getTagSide = (tag) => {
         let sides = Object.keys(this.props.tags)
         return sides.find(s => this.props.tags[s].includes(tag))
+    }
+
+    _clearCanvas = () => {
+        this.props.context.fillStyle = 'black';
+        // this.props.context.strokeStyle = 'white';
+        this.props.context.fillRect(0, 0, this.props.canvas.width, this.props.canvas.height)
+        // this.props.context.strokeRect(0, 0, this.props.canvas.width, this.props.canvas.height)
     }
 }

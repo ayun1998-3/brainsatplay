@@ -13,9 +13,9 @@ import * as dragUtils from '../ui/dragUtils'
 import { Port } from './Port'
 
 export class Editor{
-    constructor(app, parent=document.body) {
+    constructor(session, parent=document.body) {
         // this.manager = manager
-        this.app = app
+        this.session = session
 
         this.parentNode = (typeof parent === 'string') ? document.getElementById(parent) : parent 
 
@@ -44,19 +44,16 @@ export class Editor{
             projectDefaults: null,
             open: false,
             lastClickedProjectCategory: '',
-            galleries: {}
+            galleries: {},
+            currentApp: null
         }
 
+        // Set Shortcuts
+        document.addEventListener('keydown', this.shortcutManager);
+
+        // Create UI
         this.elementTypesToUpdate = ['INPUT', 'SELECT', 'OUTPUT', 'TEXTAREA']
     
-        if (this.app){
-
-            // // Only One Editor (look three levels up)
-            // let existingEditor = this.parentNode.querySelector(`.brainsatplay-node-editor`)
-            // if (!existingEditor && this.parentNode.parentNode) existingEditor = this.parentNode.parentNode.querySelector(`.brainsatplay-node-editor`)
-            // if (!existingEditor && this.parentNode.parentNode.parentNode) existingEditor = this.parentNode.parentNode.parentNode.querySelector(`.brainsatplay-node-editor`)
-            // if (existingEditor) existingEditor.remove()
-
             this.container = document.createElement('div')
             this.container.id = `${this.props.id}GraphEditorMask`
             this.container.classList.add('brainsatplay-default-container')
@@ -70,9 +67,7 @@ export class Editor{
                         </div>
 
                         <div class="brainsatplay-option-type option-type-collapsible">Graphs</div>
-                        <div class="graphs option-type-content">
-
-                        </div>
+                        <div class="graphs option-type-content"></div>
 
                         <div class="brainsatplay-option-type option-type-collapsible">Code</div>
                         <div class="code option-type-content">
@@ -133,6 +128,7 @@ export class Editor{
                     // Set UI Attributes
                     this.filesidebar = {}
                     this.filesidebar.container = this.container.querySelector(`[id="${this.props.id}FileSidebar"]`)
+                    
                     this.filesidebar.graph = this.filesidebar.container.querySelector(`.graphs`)
                     this.addDropdownFunctionality(this.filesidebar.graph.previousElementSibling)
 
@@ -166,8 +162,8 @@ export class Editor{
         // Setup User Interactions
         let publishButton = this.container.querySelector(`[id="${this.props.id}publish"]`)
         publishButton.onclick = () => {
-            this.app.updateGraph()
-            this.app.session.projects.publish(this.app)
+            this.props.currentApp.updateGraph()
+            this.props.currentApp.session.projects.publish(this.props.currentApp)
         }
         publishButton.classList.add('disabled')
 
@@ -175,23 +171,14 @@ export class Editor{
         this.delete.style.display = 'none'
 
         this.download.onclick = () => {
-            this.app.session.projects.download(this.app, undefined, () => {this.download.classList.remove('disabled')}, () => {this.download.classList.add('disabled')})
+            this.session.projects.download(this.props.currentApp, undefined, () => {this.download.classList.remove('disabled')}, () => {this.download.classList.add('disabled')})
         }
 
-        // this.reload.classList.add('disabled')
-        this.reload.onclick = () => {
-            this.app.reload()
-        }
 
-        this.exit.onclick = () => {
-            this.toggleDisplay()
-        }
+        this.exit.onclick = () => {this.toggleDisplay()}
 
         // Create Tab Container
         this.createViewTabs()
-
-        // Add Settings Editor
-        this.createSettingsEditor(this.app.info)
 
         // Insert Node Selector with Right Click
         this.toggleContextMenuEvent(this.editor)
@@ -199,22 +186,49 @@ export class Editor{
         // Search for Plugins
         this.createPluginSearch(this.mainPage)
 
-        this.init()
+        this.setApp()
     }
 
+
+    // Shortcuts
+    shortcutManager = (e) => {
+        if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
+            if (e.key === 'e') { // Toggle Editor
+                e.preventDefault();
+                console.log('togglingopen')
+                this.toggleDisplay()
+            }
+            else if (e.key === 's') { // Save Application
+                if (this.shown){
+                    e.preventDefault();
+                    this.props.currentApp.graphs.forEach(g => g.save())
+                    this.props.currentApp.save()
+                }
+            }
+        }
     }
 
+    // Apps
+    setApp = (app) => {
+        if (app){
+            this.props.currentApp = app
+            this.reload.onclick = app.reload
+            this.init()
+        }
+    }
+
+    // Initialization
     init = async () => {
 
-            this.settings = Object.assign({parentId: this.app.ui.parent.id, show: false, create: true}, this.app.info.editor ?? {})
+            this.settings = Object.assign({parentId: this.props.currentApp?.ui?.parent?.id, show: false, create: true}, this.props.currentApp?.info?.editor ?? {})
 
-            if (!document.getElementById(this.settings.parentId)) this.settings.parentId = this.app.ui.parent.id
+            if (!document.getElementById(this.settings.parentId)) this.settings.parentId = this.props.currentApp?.ui?.parent?.id
 
-            this.filesidebar.header.querySelector('h3').innerHTML = this.app.info.name
+            this.filesidebar.header.querySelector('h3').innerHTML = this.props.currentApp?.info?.name
 
             this.download.classList.add('disabled')
 
-            this.createSettingsEditor(this.app.info)
+            this.createSettingsEditor(this.props.currentApp)
 
             // Setup Presentation Based On Settings
             if (this.settings.style) this.container.style = this.settings.style 
@@ -223,7 +237,7 @@ export class Editor{
         }
 
     setToggle = (toggle = this.settings.toggle) => {
-        this.toggle = (typeof toggle === 'string') ? this.app.ui.container.querySelector(`[id="${toggle}"]`) : toggle
+        this.toggle = (typeof toggle === 'string') ? this.props.currentApp.ui.container.querySelector(`[id="${toggle}"]`) : toggle
         if (this.toggle) this.toggle.addEventListener('click', () => {this.toggleDisplay()})
     }
 
@@ -246,9 +260,7 @@ export class Editor{
                 
 
                 // Import App Only when Necessary
-                console.log(settings)
                 let fullSettings = await getAppletSettings(settings)
-                console.log(fullSettings)
 
                 // Rename Template Projects
                 if (destination !== 'My Project'){
@@ -258,10 +270,10 @@ export class Editor{
 
                 // Create Application
                 if (fullSettings.name === 'Load from File') {
-                    let loadedSettings = await this.app.session.projects.loadFromFile()
+                    let loadedSettings = await this.session.projects.loadFromFile()
                     if (loadedSettings) await this._createApp(loadedSettings)
                 } else {
-                    if (((this.lastSavedProject === this.app.info.name) || this.props.lastClickedProjectCategory == 'My Projects') && destination === 'My Projects' && this.app.info.name === fullSettings.name) await this._createApp(this.app.info)
+                    if (((this.lastSavedProject === this.props.currentApp.info.name) || this.props.lastClickedProjectCategory == 'My Projects') && destination === 'My Projects' && this.props.currentApp.info.name === fullSettings.name) await this._createApp(this.props.currentApp.info)
                     else await this._createApp(fullSettings)
                 }
             // }
@@ -313,13 +325,13 @@ export class Editor{
         this.insertProject({settings: {name: 'Load from File'}, destination: 'Defaults'})
 
         // --------------- Get Project Settings Files --------------- 
-        let projectSet = await this.app.session.projects.list()
+        let projectSet = await this.session.projects.list()
         for (let key in projectSet) projectSet[key] = Array.from(projectSet[key])
 
         // --------------- Local --------------- 
         projectSet.local.map(async str => {
-            let files = await this.app.session.projects.getFilesFromDB(str)
-            await this.app.session.projects.load(files).then(settings => {
+            let files = await this.session.projects.getFilesFromDB(str)
+            await this.session.projects.load(files).then(settings => {
                 this.insertProject({destination: 'My Projects', settings})
             })
         })
@@ -338,10 +350,10 @@ export class Editor{
 
     async _createApp(settings){
         
-        settings = await this.app.session.getSettings(settings) // filter through to get external .zip files
+        settings = await this.session.getSettings(settings) // filter through to get external .zip files
 
         settings.editor = {
-            parentId: this.app.ui.parent,
+            parentId: this.props.currentApp.ui.parent,
             show: true,
             style: `
             position: block;
@@ -349,9 +361,7 @@ export class Editor{
             `,
         }
 
-        console.log(settings)
-
-        this.app.replace(settings)
+        this.props.currentApp.replace(settings)
     }
 
     createViewTabs = () => {
@@ -393,7 +403,9 @@ export class Editor{
             let showGraph = type === 'Graph' && (nodes > 0 || (graphs === 0 && (parentnodes === 0 || parentnodes == undefined)))
             this.createFileElement(this.files[graph.uuid], {graph: showGraph})
             let save = this.container.querySelector(`[id="${this.props.id}save"]`)
-            save.onclick = this.app.save
+            
+            // TODO
+            save.onclick = this.props.currentApp?.save
     }
 
     addCloseIcon(parent, callback){
@@ -505,7 +517,9 @@ export class Editor{
         }, false);
     }
 
-    createSettingsEditor(target){
+    createSettingsEditor(app){
+
+            let target = app.info
             let settingsContainer = this.container.querySelector(`[id="${this.props.id}settings"]`)
             settingsContainer.innerHTML = ''
 
@@ -521,7 +535,7 @@ export class Editor{
                 categories: [],
                 instructions: "",
                 image: null,
-                version: this.app.session.projects.version,
+                version: app.info.version ?? 'experimental', //this.session.projects.version,
 
                 display: {
                   production: false,
@@ -598,10 +612,18 @@ export class Editor{
         }
 
 
-    toggleDisplay(on){
-        // if (this.element){
+    toggleDisplay = (on) => {
 
-            if (on === true || (on != false && this.container.style.display == 'none')){
+        // Set App if not in Existing Apps
+        console.log(this.session.info.apps)
+        if (!this.session.info.apps.find(a => a === this.props.currentApp)) {
+
+             let filteredApps = this.session.info.apps.filter(a => 'graphs' in a.info || 'graph' in a.info)
+            this.setApp(filteredApps[0])
+        }
+
+        // if (this.element){
+            if (on === true || (on != false && this.container?.style?.display == 'none')){
                 this.parentNode.insertAdjacentElement('beforeend', this.container)
                 setTimeout(() => {
                     this.container.style.display = ''
@@ -610,11 +632,11 @@ export class Editor{
                 this.shown = true
 
                 // Move App Into Preview
-                this.preview.appendChild(this.app.ui.container)
+                this.preview.appendChild(this.props.currentApp.ui.container)
                 this.defaultpreview.style.display = 'none'
                 // setTimeout(() => {
                     this.responsive()
-                    this.app.graphs.forEach(g => {
+                    this.props.currentApp.graphs.forEach(g => {
                         g._resizeUI() 
                         if (g === this.graph) {
                             this.graph.resizeAllNodes()
@@ -630,10 +652,10 @@ export class Editor{
                 this.container.style.pointerEvents = 'none'
                 this.shown = false
 
-                this.app.ui.parent.appendChild(this.app.ui.container)
+                this.props.currentApp.ui.parent.appendChild(this.props.currentApp.ui.container)
                 this.defaultpreview.style.display = 'block'
                 this.responsive()
-                this.app.graphs.forEach(g => {
+                this.props.currentApp.graphs.forEach(g => {
                     g._resizeUI() 
                 })
             }
@@ -642,7 +664,7 @@ export class Editor{
 
     removeEdge(e, ignoreManager=false){
         e.parent.removeEdge(e)
-        if (!ignoreManager) this.manager.removeEdge(this.app.props.id, e.structure)
+        if (!ignoreManager) this.manager.removeEdge(this.props.currentApp.props.id, e.structure)
     }
 
 
@@ -1119,7 +1141,7 @@ export class Editor{
             this.matchOptions()
         }
 
-        this.library = await this.app.session.projects.getLibraryVersion(this.app.info.version)
+        this.library = await this.session.projects.getLibraryVersion(this.props.currentApp?.info?.version)
 
         let usedClasses = []
         this.classRegistry = this.library.plugins
@@ -1134,6 +1156,7 @@ export class Editor{
         if (this.graph){
         this.graph.nodes.forEach(async n => {
             if (n.class != null){
+
             let cls = this.classRegistry[n.class.name]
 
             let checkWhere = async (n, cls) => {
@@ -1254,7 +1277,7 @@ export class Editor{
         let name = classInfo?.class?.name ?? classInfo.name
         let label = classInfo.label
 
-        
+        if (type !== undefined){
         let options = this.selectorMenu.querySelector(`.node-options`)
         let contentOfType = options.querySelector(`.option-type-content.nodetype-${type}`)
         if (contentOfType == null) {
@@ -1302,10 +1325,10 @@ export class Editor{
                     })
                 }
 
-
                 if (!('class' in classInfo)) {
-                    let module = await dynamicImport(classInfo.folderUrl)
-                    classInfo.class = module[classInfo.name]
+                    classInfo.class = this.classRegistry[classInfo.name]
+                    // let module = await dynamicImport(classInfo.folderUrl)
+                    // classInfo.class = module[classInfo.name]
                 }
     
                 await this.graph.addNode(classInfo)
@@ -1342,6 +1365,7 @@ export class Editor{
                 }
             } 
         }
+    }
     }
 
     addDropdownFunctionality = (node) => {

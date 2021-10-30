@@ -107,8 +107,8 @@ export class Port {
         this.ui.latency.classList.add('latency-display')
 
 
-        if (this.node.app.editor) {
-            this.ui.gui = this.node.app.editor.createObjectEditor({[this.name]:this}, this.name)
+        if (this.node.session.editor) {
+            this.ui.gui = this.node.session.editor.createObjectEditor({[this.name]:this}, this.name)
         }
     }
 
@@ -264,7 +264,7 @@ export class Port {
         let input = this.ui.gui.input
 
         // Filter for Displayable Inputs
-        if (input && this.node.app.editor.elementTypesToUpdate.includes(input.tagName) && input.type != 'file'){
+        if (input && this.node.session.editor.elementTypesToUpdate.includes(input.tagName) && input.type != 'file'){
             if (input.type === 'checkbox') {
                 oldValue = input.checked
                 input.checked = this.value

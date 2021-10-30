@@ -56,6 +56,9 @@ import { EventRouter } from './EventRouter'
 // Data Manager
 import { DataManager } from './utils/DataManager'
 
+// Editor
+import { Editor } from './graph/Editor'
+
 // Project Manager
 import { App } from './App'
 import { ProjectManager } from './utils/ProjectManager'
@@ -131,8 +134,14 @@ export class Session {
 
 		if (initFS) this.initFS();
 
+		// Create Project Manager
 		this.projects = new ProjectManager(this)
 		this.projects.init()
+
+
+		// Create Session-Level Editor
+		this.editor = new Editor(this)
+        // this.app = new App({}, document.body, this, [])
 	}
 
 	/**
@@ -226,9 +235,9 @@ export class Session {
 
 			onconnect(newStream);
 			this.onconnected();
-			//console.log(this.deviceStreams)
-			//console.log(this.state.data)
-			//console.log(this.atlas)
+
+			// Add Device Stream Graphs to Session Apps
+			if (newStream?.device?.graph) this.editor.addGraph(newStream.device.graph)
 		}
 
 		newStream.ondisconnect = () => {
@@ -259,7 +268,7 @@ export class Session {
 			newStream.configureRoutes(contentChild)
 
 			this.info.apps.forEach(app => {
-				newStream.info.events.addApp(app)
+				newStream.info.events.updateApp(app)
 			})
 
 			newStream.info.events.updateRouteDisplay()
@@ -1394,7 +1403,6 @@ export class Session {
 			if (info.zip){
 				if (!info.zip.includes('.zip')) info.zip = info.zip + '/app.zip'
 
-				console.log(info)
 				fetch(info.zip).then((res) => {
 					this.projects.helper.loadAsync(res.blob())
 					.then(async (file) => {
@@ -1432,18 +1440,18 @@ export class Session {
 		})
 	}
 
-	async createApp(info, parentNode = document.body, session = this, config = []) {
+	createApp = async (info, parentNode = document.body, session = this, config = []) => {
 		info = await this.getSettings(info)
 		return new App(info, parentNode, session, config)
 	}
 
-	startApp(app) {
+	startApp = (app) => {
 		// Update Routing UI
 		this.updateApps(app)
 		return app
 	}
 
-	updateApps(thisApp) {
+	updateApps = (thisApp) => {
 		let analysisSet = new Set()
 
 		// Update Per-App Routes
@@ -1451,6 +1459,8 @@ export class Session {
 			analysisSet.add(...[...app.analysis?.default ?? [], ...app.analysis?.dynamic ?? []])
 			if (thisApp == null || thisApp === app) this.updateApp(thisApp)
 		})
+
+		analysisSet.delete(undefined)
 
 		this.startAnalysis(analysisSet)
 		for (let key in this.atlas.settings.analysis) {
@@ -1461,24 +1471,23 @@ export class Session {
 
 	}
 
-	updateApp(app) {
+	updateApp = (app) => {
 		if (app) {
 			this.deviceStreams.forEach(d => {
 				if (d.info.events) {
-					d.info.events.addApp(app)
+					d.info.events.updateApp(app)
 					d.info.events.updateRouteDisplay()
 				}
 			})
 		}
 	}
 
-	async registerApp(app) {
+	registerApp = async (app) => {
 		this.info.apps.push(app)
 		return app
 	}
 
-	removeApp(app) {
-		// let info = this.graph.remove(appId)
+	removeApp = (app) => {
 		this.info.apps.find((a,i) => {
 			this.updateApps()
 

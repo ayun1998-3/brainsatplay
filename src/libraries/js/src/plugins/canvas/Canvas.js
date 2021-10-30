@@ -8,9 +8,6 @@ export class Canvas {
     
     constructor(info, graph, params={}) {
         
-        
-        
-        
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
             canvas: null,
@@ -33,7 +30,12 @@ export class Canvas {
                 input: {type: Object},
                 output: {type: null},
                 onUpdate: (user) => {
-                    if (user.data.function instanceof Function) this.props.drawObjects.push(user.data)
+                    if (user.data.function instanceof Function) {
+                        this.props.drawObjects.push(user.data)
+                    }
+                    if (user.data.onload instanceof Function) {
+                        user.data.onload(this.props.canvas)
+                    }
                 }
             },
             element: {
@@ -44,7 +46,8 @@ export class Canvas {
                     this.ports.element.data = this.props.container
                     return {data: this.ports.element.data}
                 }
-            }
+            },
+            autoanimate: {data: false}
         }
     }
 
@@ -60,7 +63,7 @@ export class Canvas {
 
         const animate = () => {
 
-            if (this.props.looping){
+            if (this.props.looping && this.ports.autoanimate.data){
                 this._clearCanvas()
 
                 // Manage Draw Objects
@@ -87,7 +90,7 @@ export class Canvas {
 
     _clearCanvas = () => {
         this.props.context.fillStyle = 'black';
-        this.props.context.stokeStyle = 'white';
+        // this.props.context.stokeStyle = 'white';
         this.props.context.fillRect(0, 0, this.props.canvas.width, this.props.canvas.height)
         // this.props.context.strokeRect(0, 0, this.props.canvas.width, this.props.canvas.height)
     }

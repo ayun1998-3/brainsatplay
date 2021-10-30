@@ -2,7 +2,6 @@ import {appletManifest} from '../../../../../platform/appletManifest'
 // import {App} from '../../App'
 
 export let dynamicImport = async (url) => {
-    console.log(url)
     let module = await import(url);
     return module;
 }

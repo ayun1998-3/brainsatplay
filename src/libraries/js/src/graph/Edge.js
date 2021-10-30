@@ -26,7 +26,7 @@ export class Edge {
             this.subscription
             
             // Create UI
-            if (this.parent.app.editor){
+            if (this.parent.app.session.editor){
                 this._createUI()
             }
 

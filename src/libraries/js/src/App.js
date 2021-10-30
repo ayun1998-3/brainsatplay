@@ -4,7 +4,6 @@ import {StateManager} from './ui/StateManager'
 import {Graph} from './graph/Graph'
 
 import './ui/styles/defaults.css'
-import { Editor } from './graph/Editor'
 
 // Utilities
 import { Dropdown } from "./ui/Dropdown";
@@ -43,8 +42,6 @@ export class App {
             elements: [],
         };
 
-        this.editor = new Editor(this, parent)
-
         // Track Data Streams
         this.streams = []
 
@@ -66,22 +63,11 @@ export class App {
 
     shortcutManager = (e) => {
         if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-            if (e.key === 'e' && this.editor) { // Toggle Editor
-                e.preventDefault();
-                this.editor.toggleDisplay()
-            }
-            else if (e.key === 's') { // Save Application
-                if (this.editor.shown){
-                    e.preventDefault();
-                    this.graphs.forEach(g => g.save())
-                    this.save()
-                }
-            }
-            else if (e.key === 'r') { // Reload Application
+            if (e.key === 'r') { // Reload Application
                 e.preventDefault();
                 this.reload()
             }
-            else if (e.key === 'd') { // Open Device Manager
+            else if (e.key === 'd') { // Open Device Manager (FIX: Distinguish between multiple apps)
                 e.preventDefault();
                 this.session.toggleDeviceSelectionMenu(this.info?.connect?.filter)
             }
@@ -118,9 +104,6 @@ export class App {
 
         // Start Graph
         await Promise.all(Array.from(this.graphs).map(async a => await this.startGraph(a[1]))) // parallel
-
-        // if (this.settings?.editor?.show != false) this.editor.toggleDisplay(true)
-
 
         // Register App in Session
         this.session.registerApp(this) // Rename
@@ -163,7 +146,7 @@ export class App {
 
     // Executes after UI is created
     _setupUI = () => {
-        this._createDeviceManager(this.info.connect)
+        this._createDeviceManager(this.info.connect ?? {})
         this.graphs.forEach(g => g._resizeUI())
     }
 
@@ -181,12 +164,12 @@ export class App {
             if (soft) {
                 if (this.intro?.deleteNode instanceof Function) this.intro.deleteNode()
                 // this._removeAllFragments()
-                this.editor.init()
+                // this.editor.init()
             }
 
             // Hard Deinit
             else {
-                this.editor.deinit()
+                // this.editor.deinit()
                 document.removeEventListener('keydown', this.shortcutManager);
                 this.AppletHTML.deleteNode();
                 this.AppletHTML = null
@@ -215,7 +198,7 @@ export class App {
     }
 
     reload = async () => {
-        this.editor.toggleDisplay(false)
+        this.session.editor.toggleDisplay(false)
         this.info.graphs = this.export() // Replace settings
         await this.deinit(true) // soft
         await this.init()
@@ -262,7 +245,7 @@ export class App {
                         }
                     }},
                     {header: 'options-menu', content: `<div class="toggle"><img src="${nodeSVG}"></div><p>Edit</p>`, id:"brainsatplay-visual-editor", onload: (el)=> {    
-                        this.editor.setToggle(el)
+                        this.session.editor.setToggle(el)
                     }, onclick: (el) => {
                         // console.error('toggling')
                     }},
@@ -397,18 +380,20 @@ export class App {
 
                 let dropdown = new Dropdown(container, headers, options, {hidden: true})
 
+                let devices = this.info.devices ?? []
+                let categories = this.info.categories ?? []
                 let htmlString = `
         <div class="brainsatplay-default-applet-mask" style="position: absolute; top:0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.75); opacity: 0; pointer-events: none; z-index: 999; transition: opacity 0.5s; padding: 5%;">
         </div>
         <div class="brainsatplay-default-info-mask" style="position: absolute; top:0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.75); opacity: 0; pointer-events: none; z-index: 999; transition: opacity 0.5s; padding: 5%; overflow: scroll;">
             <div style="display: grid; grid-template-columns: repeat(2, 1fr)">
                 <div>
-                <h1 style="margin-bottom: 0; padding-bottom: 0;">${this.info.name}</h1>
-                <p style="font-size: 69%;">${this.info.description}</p>
+                <h1 style="margin-bottom: 0; padding-bottom: 0;">${this.info?.name}</h1>
+                <p style="font-size: 69%;">${this.info?.description}</p>
                 </div>
                 <div style="font-size: 80%;">
-                    <p>Devices: ${this.info.devices.join(', ')}</p>
-                    <p>Categories: ${this.info.categories.join(' + ')}</p>
+                    <p>Devices: ${devices.join(', ')}</p>
+                    <p>Categories: ${categories.join(' + ')}</p>
                 </div>
             </div>
             <hr>
@@ -504,8 +489,8 @@ export class App {
     // Save
     save = async (e) => {
         this.info.graphs = this.export() // Replace settings
-        await this.session.projects.save(this, () => {this.editor.download.classList.remove('disabled')}, () => {this.editor.download.classList.add('disabled')})
-        this.editor.lastSavedProject = this.name
+        await this.session.projects.save(this, () => {this.session.editor.download.classList.remove('disabled')}, () => {this.session.editor.download.classList.add('disabled')})
+        this.session.editor.lastSavedProject = this.name
     }
 
     // UI Helper
