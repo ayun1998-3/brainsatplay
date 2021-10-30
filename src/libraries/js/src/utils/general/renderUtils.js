@@ -941,7 +941,7 @@ class Physics {
                 let octPos = genOct(head.position,halfbounds);
                 let check = [...head.bodies];
                 for(let i = 0; i < 8; i++) {
-                    let newvolume = this.newBoundingVolume({position:octPos[i],collisionBoundsScale:bounds});
+                    let newvolume = this.newBoundingVolume({position:octPos[i],collisionBoundsScale:halfbounds});
                     newvolume.parent = head;
                     //now check if any of the bodies are within these and eliminate from the check array
                     for(let j = check.length-1; j >= 0; j++) {
@@ -963,45 +963,82 @@ class Physics {
             return head;
         }
         else {
-            let tree = Math3D.nearestNeighborSearch(positions,Math.max(...boxdims));
+            let tree = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
 
             /**
             let node = { //all positions
-                idx: null,
-                position: [0,0,0],
-                neighbors: []
+                idx: null, //index in input position array
+                position: [0,0,0], //copy of position vector
+                neighbors: [] //neighbor nodes within the limit distance
             };
 
             let neighbor = {
-                idx: null, //position index
-                position: [0,0,0],
-                dist: null
+                idx: null, //index in input position array
+                position: [0,0,0], //copy of position vector
+                dist: null //distance from parent
             };
              */
 
             let index = Math.floor(Math.random()*tree.length); //beginning with random node
             let searching = true; 
             let count = 0;
-            while(searching && count < tree.length) { 
-                let node = tree[index]; 
-                let i = node.neighbors.length-1; //starting with the farthest neighbor in the node
-                let ux = 0, uy = 0, uz = 0, mx = 0, my = 0, mz = 0;
-                while(i >= 0 && node.neighbors[i]) { //make a box around the farthest 3 neighbors 
-                    if(ux > positions[node.neighbors[i].idx][0]) ux = positions[node.neighbors[i].idx][0];
-                    if(mx < positions[node.neighbors[i].idx][0]) mx = positions[node.neighbors[i].idx][0];
-                    if(uy > positions[node.neighbors[i].idx][1]) uy = positions[node.neighbors[i].idx][1];
-                    if(my < positions[node.neighbors[i].idx][1]) my = positions[node.neighbors[i].idx][1];
-                    if(uz > positions[node.neighbors[i].idx][2]) uz = positions[node.neighbors[i].idx][2];
-                    if(mz < positions[node.neighbors[i].idx][2]) mz = positions[node.neighbors[i].idx][2];
+
+            let genBoundingBoxLevel = (tree,volumes) => {
+                let newVolumes = [];
+                let volumePositions = [];
+                let foundidxs=[]
+                while(searching && count < tree.length) { 
+                    let node = tree[index]; 
+                    let i = 0; //starting with the farthest neighbor in the node
+                    let j = 0;
+                    let ux = 0, uy = 0, uz = 0, mx = 0, my = 0, mz = 0;
+                    let newvolume = this.newBoundingVolume()
+                    while(i < node.neighbors.length && j < 3) { //make a box around the nearest 3 neighbors 
+                        if(foundidxs.indexOf(node.neighbors[i].idx) > -1) { i++; continue; }
+                        if(ux > positions[node.neighbors[i].idx][0]-volumes[node.neighbors[i].idx].collisionBoundsScale[0]) ux = positions[node.neighbors[i].idx][0]-volumes[node.neighbors[i].idx].collisionBoundsScale[0];
+                        if(mx < positions[node.neighbors[i].idx][0]+volumes[node.neighbors[i].idx].collisionBoundsScale[0]) mx = positions[node.neighbors[i].idx][0]+volumes[node.neighbors[i].idx].collisionBoundsScale[0];
+                        if(uy > positions[node.neighbors[i].idx][1]-volumes[node.neighbors[i].idx].collisionBoundsScale[1]) uy = positions[node.neighbors[i].idx][1]-volumes[node.neighbors[i].idx].collisionBoundsScale[1];
+                        if(my < positions[node.neighbors[i].idx][1]+volumes[node.neighbors[i].idx].collisionBoundsScale[1]) my = positions[node.neighbors[i].idx][1]+volumes[node.neighbors[i].idx].collisionBoundsScale[1];
+                        if(uz > positions[node.neighbors[i].idx][2]-volumes[node.neighbors[i].idx].collisionBoundsScale[2]) uz = positions[node.neighbors[i].idx][2]-volumes[node.neighbors[i].idx].collisionBoundsScale[2];
+                        if(mz < positions[node.neighbors[i].idx][2]+volumes[node.neighbors[i].idx].collisionBoundsScale[2]) mz = positions[node.neighbors[i].idx][2]+volumes[node.neighbors[i].idx].collisionBoundsScale[2];
+                        newvolume.children.push(volumes[node.neighbors[i].idx]);
+                        tree.splice(node.neighbors[i].idx,1);
+                        foundidxs.push(node.neighbors[i].idx);
+                        i++; j++;
+                    }
+                    let bounds = [mx*0.5,my*0.5,mz*0.5];
+                    let pos = [bounds[0]+ux,bounds[1]+uy,bounds[2]+uz]
+                    newvolume.position = pos;
+                    newvolume.collisionBoundsScale = bounds;
+                    
+                    //then walk to the nearest unchecked node and make a box around the next 2 or 3 nodes
+                    // then continue till you run out of nodes to check. Shoud be left with a bounding tree with larger to smaller boxes
+                    newVolumes.push(newvolume);
+                    volumePositions.push(pos);
+                    
+                    //now find the next not-found neighbor
+                    while(node.neighbors.length > i) {
+                        if(foundidxs.indexOf(node.neighbors[i].idx) < 0) break;
+                            i++;
+                    }
+                    if(node.neighbors.length > i) {
+                        index = node.neighbors.length[i].idx;
+                    } else index = 0; //just jump back to zero and keep looking
+                    
+                    count++;
                 }
-                let bounds = [mx*0.5,my*0.5,mz*0.5];
-                let pos = [bounds[0]+ux,bounds[1]+uy,bounds[2]+uz]
-                let newvolume = this.newBoundingVolume({position:[mx*.5,my*.5,mz*.5],collisionBoundsScale:[]})
-                //then walk to the farthest unchecked node and make a box around the 
-                // 3 farthest unchecked neighbors (which were nearer than the parent group)
-                // then continue till you run out of nodes to check. Shoud be left with a bounding tree with larger to smaller boxes
-                count++;
+
+                return [newVolumes,volumePositions];
             }
+
+            let result = genBoundingBoxLevel(tree,volumes);
+            let nextTree = Math3D.nearestNeighborSearch(result[1],this.globalSettings.maxDistCheck);
+            while(nextTree.length > 2) {
+                result = genBoundingBoxLevel(nextTree,result[0]);
+                nextTree = Math3D.nearestNeighborSearch(result[1],this.globalSettings.maxDistCheck);
+            }
+
+            head.children = result[0]; //that should parent the final bounding boxes to the main box
 
             return head;
         }
