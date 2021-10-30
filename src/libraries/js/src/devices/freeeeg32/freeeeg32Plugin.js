@@ -105,8 +105,8 @@ export class eeg32Plugin {
                     }
                 });
             },
-            ()=>{
-                this.setupAtlas(pipeToAtlas,info);
+            async ()=>{
+                await this.setupAtlas(info, pipeToAtlas);
                 if(info.useAtlas === true){			
                     this.atlas.data.eegshared.startTime = Date.now();
                     if(this.atlas.settings.analyzing !== true && info.analysis.length > 0) {
@@ -129,7 +129,7 @@ export class eeg32Plugin {
        
     }
 
-    setupAtlas = (pipeToAtlas,info) => {
+    setupAtlas = async (info,pipeToAtlas) => {
         if(info.useFilters === true) {
             info.eegChannelTags.forEach((row,i) => {
                 if(row.tag !== 'other') {
@@ -150,7 +150,7 @@ export class eeg32Plugin {
                 config,
             );
             
-            this.atlas.init()
+            await this.atlas.init()
             info.useAtlas = true;
         } else if (typeof pipeToAtlas === 'object') {
             this.atlas = pipeToAtlas; //External atlas reference

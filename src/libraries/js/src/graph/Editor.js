@@ -62,17 +62,6 @@ export class Editor{
             this.container.style.display ='none'
             this.container.innerHTML = `
                     <div id="${this.props.id}FileSidebar" class="brainsatplay-node-sidebar" style="min-width: 150px; width: 150px; height: 100%;">
-                        <div class='header node-sidebar-section'>
-                            <h3>Project Files</h3>
-                        </div>
-
-                        <div class="brainsatplay-option-type option-type-collapsible">Graphs</div>
-                        <div class="graphs option-type-content"></div>
-
-                        <div class="brainsatplay-option-type option-type-collapsible">Code</div>
-                        <div class="code option-type-content">
-
-                        </div>
                     </div>
                     <div id="${this.props.id}MainPage" class="main">
                         <div class="brainsatplay-node-editor-preview-wrapper">
@@ -128,16 +117,6 @@ export class Editor{
                     // Set UI Attributes
                     this.filesidebar = {}
                     this.filesidebar.container = this.container.querySelector(`[id="${this.props.id}FileSidebar"]`)
-                    
-                    this.filesidebar.graph = this.filesidebar.container.querySelector(`.graphs`)
-                    this.addDropdownFunctionality(this.filesidebar.graph.previousElementSibling)
-
-                    this.filesidebar.code = this.filesidebar.container.querySelector(`.code`) 
-                    this.addDropdownFunctionality(this.filesidebar.code.previousElementSibling)
-
-                    
-                    this.filesidebar.header = this.filesidebar.container.querySelector(`.header`) 
-
                     this.mainPage = this.container.querySelector(`[id="${this.props.id}MainPage"]`)
                     this.editor = this.container.querySelector(`[id="${this.props.id}Editor"]`)
                     this.viewer = this.container.querySelector(`[id="${this.props.id}NodeViewer"]`)
@@ -195,7 +174,6 @@ export class Editor{
         if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
             if (e.key === 'e') { // Toggle Editor
                 e.preventDefault();
-                console.log('togglingopen')
                 this.toggleDisplay()
             }
             else if (e.key === 's') { // Save Application
@@ -223,8 +201,6 @@ export class Editor{
             this.settings = Object.assign({parentId: this.props.currentApp?.ui?.parent?.id, show: false, create: true}, this.props.currentApp?.info?.editor ?? {})
 
             if (!document.getElementById(this.settings.parentId)) this.settings.parentId = this.props.currentApp?.ui?.parent?.id
-
-            this.filesidebar.header.querySelector('h3').innerHTML = this.props.currentApp?.info?.name
 
             this.download.classList.add('disabled')
 
@@ -375,25 +351,67 @@ export class Editor{
     }
     
     removeGraph = (graph) => {
-        if (this.files[graph.name]){
-            for (const key in this.files[graph.name].files){
-                let elements = this.files[graph.name].files[key]
+        if (this.files[graph.app.uuid].graphs[graph.uuid]){
+            for (const key in this.files[graph.app.uuid].graphs[graph.uuid].files){
+                let elements = this.files[graph.app.uuid].graphs[graph.uuid].files[key]
                 if (elements.tab){
                     elements.tab.querySelector('.closeIcon').click()
                 }
             }
-            delete this.files[graph.name]
+            delete this.files[graph.app.uuid].graphs[graph.uuid]
+
+            // Remove App
+            if (Object.keys(this.files[graph.app.uuid].graphs).length === 0){
+                this.files[graph.app.uuid].element.remove()
+                delete this.files[graph.app.uuid]
+            }
+        }
+    }
+
+    addApp = (app) => {
+        if (!this.files[app.uuid]) {
+            let element = document.createElement('div')
+
+            let header = document.createElement('div')
+            header.classList.add('header')
+            header.classList.add('node-sidebar-section')
+            header.innerHTML = `<h3>${app?.info?.name}</h3>`
+
+            element.insertAdjacentElement('afterbegin', header)
+            element.insertAdjacentHTML('beforeend', `
+                <div class="brainsatplay-option-type option-type-collapsible">Graphs</div>
+                <div class="graphs option-type-content"></div>
+
+                <div class="brainsatplay-option-type option-type-collapsible">Code</div>
+                <div class="code option-type-content">
+            `)
+
+            this.filesidebar[app.uuid] = {}                  
+            this.filesidebar[app.uuid].graph = element.querySelector(`.graphs`)
+            this.addDropdownFunctionality(this.filesidebar[app.uuid].graph.previousElementSibling)
+
+            this.filesidebar[app.uuid].code = element.querySelector(`.code`) 
+            this.addDropdownFunctionality(this.filesidebar[app.uuid].code.previousElementSibling)
+
+            this.filesidebar[app.uuid].header = header
+
+            if (app.uuid === 'global') this.filesidebar.container.insertAdjacentElement('afterbegin', element)
+            else this.filesidebar.container.insertAdjacentElement('beforeend', element)
+
+            this.files[app.uuid] = {graphs: {}, element}
         }
     }
 
     addGraph(graph){
 
+            this.addApp(graph.app)
+
             // Create Graph File
             let type = graph.constructor?.name
-            this.files[graph.uuid] = {name: graph.name, type, nodes: [], graph}
-            this.files[graph.uuid].elements = {}
-            this.files[graph.uuid].elements.code = (graph.ui.code instanceof Function) ? graph.ui.code() : graph.ui.code 
-            this.files[graph.uuid].elements.graph = (graph.ui.graph instanceof Function) ? graph.ui.graph() : graph.ui.graph 
+            this.files[graph.app.uuid].graphs[graph.uuid] = {name: graph.name, type, nodes: [], graph}
+            this.files[graph.app.uuid].graphs[graph.uuid].elements = {}
+            this.files[graph.app.uuid].graphs[graph.uuid].elements.code = (graph.ui.code instanceof Function) ? graph.ui.code() : graph.ui.code 
+            this.files[graph.app.uuid].graphs[graph.uuid].elements.graph = (graph.ui.graph instanceof Function) ? graph.ui.graph() : graph.ui.graph 
 
             let graphs = graph.info.graphs.length // initial nodes
             let nodes = graph.info.nodes.length // initial nodes
@@ -401,7 +419,7 @@ export class Editor{
 
             
             let showGraph = type === 'Graph' && (nodes > 0 || (graphs === 0 && (parentnodes === 0 || parentnodes == undefined)))
-            this.createFileElement(this.files[graph.uuid], {graph: showGraph})
+            this.createFileElement(this.files[graph.app.uuid].graphs[graph.uuid], {graph: showGraph})
             let save = this.container.querySelector(`[id="${this.props.id}save"]`)
             
             // TODO
@@ -460,11 +478,10 @@ export class Editor{
             tab.onclick = () => {
 
                 if (tab.style.display !== 'none'){
-
                     // Close Other Tabs
-                    for (const name in this.files){
-                        let file = this.files[name]
-                        // for (let tab of allTabs){
+                    for (const app in this.files){
+                        for (const name in this.files[app].graphs){
+                            let file = this.files[app].graphs[name]
                             for (let type in file.files){
                                 if (file.files[type]?.tab && file.elements[type]){
                                     if(file.files[type]?.tab != tab) {
@@ -477,7 +494,7 @@ export class Editor{
                                     }
                                 }
                             }
-                        // }
+                        }
                     }
                 }
 
@@ -615,13 +632,12 @@ export class Editor{
     toggleDisplay = (on) => {
 
         // Set App if not in Existing Apps
-        console.log(this.session.info.apps)
         if (!this.session.info.apps.find(a => a === this.props.currentApp)) {
-
              let filteredApps = this.session.info.apps.filter(a => 'graphs' in a.info || 'graph' in a.info)
             this.setApp(filteredApps[0])
         }
 
+        if (this.props.currentApp) {
         // if (this.element){
             if (on === true || (on != false && this.container?.style?.display == 'none')){
                 this.parentNode.insertAdjacentElement('beforeend', this.container)
@@ -632,18 +648,18 @@ export class Editor{
                 this.shown = true
 
                 // Move App Into Preview
-                this.preview.appendChild(this.props.currentApp.ui.container)
-                this.defaultpreview.style.display = 'none'
-                // setTimeout(() => {
-                    this.responsive()
-                    this.props.currentApp.graphs.forEach(g => {
-                        g._resizeUI() 
-                        if (g === this.graph) {
-                            this.graph.resizeAllNodes()
-                            this.graph.resizeAllEdges()
-                            // this.graph._nodesToGrid()
-                        }
-                    })
+                    this.preview.appendChild(this.props.currentApp.ui.container)
+                    this.defaultpreview.style.display = 'none'
+                    // setTimeout(() => {
+                        this.responsive()
+                        this.props.currentApp.graphs.forEach(g => {
+                            g._resizeUI() 
+                            if (g === this.graph) {
+                                this.graph.resizeAllNodes()
+                                this.graph.resizeAllEdges()
+                                // this.graph._nodesToGrid()
+                            }
+                        })
                     this._resizeGallery('Defaults')
                 },50)
             } else if (!on) {
@@ -659,7 +675,7 @@ export class Editor{
                     g._resizeUI() 
                 })
             }
-        // }
+        }
     }
 
     removeEdge(e, ignoreManager=false){
@@ -1024,8 +1040,8 @@ export class Editor{
         if (name == null || name === '') name = `${cls.name}`
         let filename = `${name}.js`
 
-        if (this.files[filename] == null){
-            this.files[filename] = {}
+        if (this.files[graph.app.uuid].graphs[filename] == null){
+            this.files[graph.app.uuid].graphs[filename] = {}
 
 
             if (activeNode == null){
@@ -1035,22 +1051,22 @@ export class Editor{
             } 
 
 
-            this.files[filename].name = filename
-            this.files[filename].type = 'Plugin'
+            this.files[graph.app.uuid].graphs[filename].name = filename
+            this.files[graph.app.uuid].graphs[filename].type = 'Plugin'
             // this.files[filename].container = activeNode.ui.code
-            this.files[filename].elements = {
+            this.files[graph.app.uuid].graphs[filename].elements = {
                 code: activeNode.ui.code,
                 graph: activeNode.ui.graph
             }
 
-            this.createFileElement(this.files[filename])
+            this.createFileElement(this.files[graph.app.uuid].graphs[filename])
 
 
             // Add Option to Selector
             this.addNodeOption({id:cls.id, label: cls.name, class:cls})
 
         } else {
-            let files = this.files[filename].files
+            let files = this.files[graph.app.uuid].graphs[filename].files
             let toClick = files.code?.tab ?? files.code?.toggle
             toClick.click()
         }
@@ -1082,7 +1098,7 @@ export class Editor{
                 fileDict.files[type].tab.click()
             }
 
-            this.filesidebar[type].insertAdjacentElement('beforeend', fileDict.files[type].toggle)
+            this.filesidebar[fileDict.graph.app.uuid][type].insertAdjacentElement('beforeend', fileDict.files[type].toggle)
             
             if (initialize[type]) fileDict.files[type].toggle.click()
         }
@@ -1163,7 +1179,6 @@ export class Editor{
                 if (cls && n.class === cls){
                     // clsInfo.class = n.class
                     let baseClass = this.library.plugins[cls.name]
-                    // console.log(baseClass, cls.name, cls)
 
                     if (cls != baseClass){
                         info.category = null // 'custom'

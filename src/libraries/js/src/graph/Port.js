@@ -107,9 +107,11 @@ export class Port {
         this.ui.latency.classList.add('latency-display')
 
 
-        if (this.node.session.editor) {
-            this.ui.gui = this.node.session.editor.createObjectEditor({[this.name]:this}, this.name)
-        }
+        this.createGUI()
+    }
+
+    createGUI = () => {
+        if (this.node.app.session.editor) this.ui.gui = this.node.app.session.editor.createObjectEditor({[this.name]:this}, this.name)
     }
 
     deinit = () => {
@@ -142,8 +144,8 @@ export class Port {
         portCopy.meta.source = port // allows tracing where data has arrived from
 
         // Add User Data
-        if (!('id' in portCopy)) portCopy.id = this.node.session?.info?.auth?.id
-        if (!('username' in portCopy)) portCopy.username = this.node.session?.info?.auth?.username
+        if (!('id' in portCopy)) portCopy.id = this.node.app.session?.info?.auth?.id
+        if (!('username' in portCopy)) portCopy.username = this.node.app.session?.info?.auth?.username
         return await this._onchange(portCopy);
     }
 
@@ -264,7 +266,7 @@ export class Port {
         let input = this.ui.gui.input
 
         // Filter for Displayable Inputs
-        if (input && this.node.session.editor.elementTypesToUpdate.includes(input.tagName) && input.type != 'file'){
+        if (input && this.node.app.session.editor.elementTypesToUpdate.includes(input.tagName) && input.type != 'file'){
             if (input.type === 'checkbox') {
                 oldValue = input.checked
                 input.checked = this.value

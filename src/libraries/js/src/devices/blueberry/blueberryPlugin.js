@@ -21,7 +21,7 @@ export class BlueberryPlugin {
     }
 
     init = async (info,pipeToAtlas) => {
-
+        return new Promise(resolve => {
 		this.info.sps = 32;
         this.info.deviceType = 'heg';
 
@@ -45,23 +45,25 @@ export class BlueberryPlugin {
         this.device= new blueberry(ondata,
 
         // On Connection
-        ()=>{
-            this.setupAtlas(pipeToAtlas);
+        async ()=>{
+            await this.setupAtlas(pipeToAtlas);
             if(this.atlas.settings.analyzing !== true && info.analysis.length > 0) {
                 this.atlas.settings.analyzing = true;
                 setTimeout(() => {this.atlas.analyzer();},1200);		
             }
             this.atlas.settings.deviceConnected = true;
             this.onconnect();
+
+            resolve(true)
         },
 
         // On Disconnection
         ()=>{ this.atlas.settings.analyzing = false; this.atlas.settings.deviceConnected = false; this.ondisconnect();});
         
-        
+    })
     }
 
-    setupAtlas = (pipeToAtlas) => {
+    setupAtlas = async (pipeToAtlas) => {
 
         this.filters.push(new BiquadChannelFilterer('red',100,false,1),new BiquadChannelFilterer('ir',100,false,1),new BiquadChannelFilterer('ratio',100,false,1),new BiquadChannelFilterer('ambient',100,false,1));
         this.filters.forEach((filter)=> {
@@ -77,7 +79,7 @@ export class BlueberryPlugin {
                 config,
                 );
                 
-		    this.atlas.init()
+		    await this.atlas.init()
 
                 this.info.deviceNum = this.atlas.data.heg.length-1;
                 this.info.useAtlas = true;

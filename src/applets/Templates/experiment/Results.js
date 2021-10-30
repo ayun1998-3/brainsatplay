@@ -2,12 +2,7 @@ class Results{
 
     static id = String(Math.floor(Math.random()*1000000))
 
-    constructor(info, graph, params={}) {
-
-        // Generic Plugin Attributes
-        
-        
-        
+    constructor(info, graph) {
 
         // UI Identifier
         this.props = {

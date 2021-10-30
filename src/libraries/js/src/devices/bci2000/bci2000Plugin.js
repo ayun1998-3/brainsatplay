@@ -154,14 +154,14 @@ export class bci2000Plugin {
                     })
                 })
             }
-            this.device.onSignalProperties = data => {
+            this.device.onSignalProperties = async (data) => {
 
                 // Check if already created
                 if (this.atlas == null){
                     this.info.eegChannelTags = data.channels.length//eegChannelTags
 
                     // Create Data Atlas Given Signal Properties
-                    this.setupAtlas(this.info,pipeToAtlas);  
+                    await this.setupAtlas(this.info,pipeToAtlas);  
                     
                     // Validate Connection
                     this.onconnect();
@@ -173,7 +173,7 @@ export class bci2000Plugin {
         })
     }
 
-    setupAtlas = (info,pipeToAtlas) => {
+    setupAtlas = async (info,pipeToAtlas) => {
 
         if(pipeToAtlas === true) { //New Atlas
 			let config = '10_20';
@@ -182,7 +182,7 @@ export class bci2000Plugin {
 				{eegshared:{eegChannelTags:info.eegChannelTags, sps:info.sps}},
 				config
                 );
-            this.atlas.init()
+            await this.atlas.init()
 			info.useAtlas = true;
 		} else if (typeof pipeToAtlas === 'object') { //Reusing an atlas
 			this.atlas = pipeToAtlas; //External atlas reference

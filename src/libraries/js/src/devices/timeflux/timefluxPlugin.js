@@ -144,7 +144,7 @@ export class timefluxPlugin {
                  {eegshared:{eegChannelTags: info.eegChannelTags, sps:info.sps}},
                  config,
                  );
-                this.atlas.init()
+                await this.atlas.init()
 
              info.useAtlas = true;
          } else if (typeof pipeToAtlas === 'object') { //Reusing an atlas

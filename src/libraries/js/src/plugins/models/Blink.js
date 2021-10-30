@@ -37,6 +37,7 @@ export class Blink {
 
         this.ports = {
             default: {
+                edit: false,
                 input: {type: Object, name: 'DataAtlas'},
                 output: {type: Array},
                 onUpdate: async (user) => {

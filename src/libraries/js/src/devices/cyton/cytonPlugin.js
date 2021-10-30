@@ -67,8 +67,8 @@ export class cytonPlugin {
         }
 
 
-        this._onConnect = () => {
-            this.setupAtlas(pipeToAtlas,info);
+        this._onConnect = async () => {
+            await this.setupAtlas(info, pipeToAtlas);
             this.onconnect(); 
         }
 
@@ -123,7 +123,7 @@ export class cytonPlugin {
         this.info = info;
     }
 
-    setupAtlas = (pipeToAtlas=true,info) => {
+    setupAtlas = async (info,pipeToAtlas=true) => {
         if(this.info.useFilters === true) {
             this.info.eegChannelTags.forEach((row,i) => {
                 if(row.tag !== 'other') {
@@ -159,7 +159,7 @@ export class cytonPlugin {
 				{eegshared:{eegChannelTags:this.info.eegChannelTags, sps:this.info.sps}},
 				config,
                 );
-                this.atlas.init()
+                await this.atlas.init()
                 this.info.useAtlas = true;
 		} else if (typeof pipeToAtlas === 'object') { //Reusing an atlas
 			this.atlas = pipeToAtlas; //External atlas reference
@@ -194,7 +194,7 @@ export class cytonPlugin {
 
     connect = async () => {
         await this.device.setupSerialAsync();
-        this._onConnect()
+        await this._onConnect()
     }
 
 

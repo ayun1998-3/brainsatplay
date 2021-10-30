@@ -141,7 +141,9 @@ export class Session {
 
 		// Create Session-Level Editor
 		this.editor = new Editor(this)
-        // this.app = new App({}, document.body, this, [])
+		this.app = new App({name: 'Global'}, undefined, this)
+		this.app.uuid = 'global'
+		this.editor.addApp(this.app)
 	}
 
 	/**
@@ -235,9 +237,6 @@ export class Session {
 
 			onconnect(newStream);
 			this.onconnected();
-
-			// Add Device Stream Graphs to Session Apps
-			if (newStream?.device?.graph) this.editor.addGraph(newStream.device.graph)
 		}
 
 		newStream.ondisconnect = () => {
@@ -260,6 +259,10 @@ export class Session {
 		// Wait for Initialization before Connection
 		await newStream.init();
 		await newStream.connect()
+
+		// Add Device Stream Graphs to Session Apps
+		newStream.device.atlas.graph.replaceApp(this.app)
+		if (newStream.device.atlas.graph) this.editor.addGraph(newStream.device.atlas.graph)
 
 		// Initialize Route Management Interface
 		let contentChild = document.getElementById(`brainsatplay-device-${device.split('_')[0]}`)
@@ -1407,9 +1410,7 @@ export class Session {
 					this.projects.helper.loadAsync(res.blob())
 					.then(async (file) => {
 						let fileArray = await this.projects.getFilesFromZip(file)
-						console.log(fileArray)
 						let loadedInfo = await this.projects.load(fileArray, false)
-						console.log(loadedInfo)
 						if (!loadedInfo){
 							console.log(`falling back to link: ${info.link}`)
 							if (info.link) {
@@ -2486,7 +2487,6 @@ class deviceStream {
 
 	configureRoutes = (parentNode = document.body) => {
 		this.info.events.addControls(parentNode);
-		this.info.events.addDebugger(parentNode);
 	}
 
 	disconnect = () => {

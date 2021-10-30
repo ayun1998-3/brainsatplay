@@ -36,7 +36,7 @@ export class ganglionPlugin {
         ];
     }
 
-    setupAtlas = (pipeToAtlas=true,info) => {
+    setupAtlas = async (info,pipeToAtlas=true) => {
 
         let uvPerStep = 1e6;
 
@@ -61,7 +61,7 @@ export class ganglionPlugin {
 				{eegshared:{eegChannelTags:info.eegChannelTags, sps:info.sps}},
 				config,
                 );
-            this.atlas.init()
+            await this.atlas.init()
 			info.useAtlas = true;
 		} else if (typeof pipeToAtlas === 'object') { //Reusing an atlas
 			this.atlas = pipeToAtlas; //External atlas reference
@@ -94,7 +94,7 @@ export class ganglionPlugin {
         var info = this.info;
         var pipeToAtlas = this.pipeToAtlas;
 
-        this.setupAtlas(pipeToAtlas, info);
+        await this.setupAtlas(info, pipeToAtlas);
         
         this.device.stream.subscribe(sample => {
             if(info.useAtlas) {

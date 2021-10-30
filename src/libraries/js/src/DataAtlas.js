@@ -175,7 +175,6 @@ export class DataAtlas {
 			],
 		}, {app:{session:{atlas: this, projects}}}); // top-level graph
 		await this.graph.init()
-
 	}
 
 	deinit = () => {

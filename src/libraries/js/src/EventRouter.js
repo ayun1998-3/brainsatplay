@@ -254,30 +254,6 @@ export class EventRouter{
         }
     }
 
-    addDebugger = (parentNode=document.body) => {
-        
-        if (Object.keys(this.device.states).length > 0){
-            let template = () => {
-                return `
-                <br>
-                <div id='${this.id}debugger' style="padding: 10px;">
-                    <h4>Debugger</h4>
-                    <hr>
-                    <div class='brainsatplay-debugger' style="display: flex; flex-wrap: wrap;">
-                    </div>
-                </div>
-                `;
-            }
-
-            this.ui.push(new DOMFragment(
-                template,
-                parentNode,
-                undefined,
-                () => {}
-            ))
-        }
-    }
-
     updateApp = (app) => {
         let found =  this.routes.reserve.apps.find((a) => a === app)
         if (!found) this.routes.reserve.apps.push(app)
