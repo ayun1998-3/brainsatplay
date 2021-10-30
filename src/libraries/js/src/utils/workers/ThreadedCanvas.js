@@ -2,7 +2,7 @@ import { WorkerManager } from "./Workers"
 
 //The animation should probably be an arrow function
 export class ThreadedCanvas {
-    constructor(canvas, context='2d', animation=undefined, workerId=undefined) { 
+    constructor(canvas, context='2d', animation=undefined, setValues=undefined, workerId=undefined) { 
         if(!canvas) throw new Error('Input a canvas element or Id')
         this.name = `canvas_${Math.round(Math.random()*100000)}`;
         this.workerId = workerId;
@@ -13,6 +13,7 @@ export class ThreadedCanvas {
 
         if(animation) {
             this.init();
+            if(typeof setValues === 'object') window.workers.postToWorker({foo:'setValues',args:setValues,origin:this.name},this.workerId);
             this.setAnimation(animation);
         }
         

@@ -2,24 +2,43 @@
 import {CallbackManager} from './workerCallbacks'
 
 let manager = new CallbackManager()
-let canvas = manager.canvas;
+let canvas = manager.canvas; 
 let ctx = manager.canvas.context;
+let context = ctx; //another common reference
 let counter = 0;
 
 self.onmessage = (event) => {
     // define gpu instance
   // console.log("worker executing...", event)
   console.time("worker");
-  let output;
+  let input;
+  if(event.data.output) input = event.data.output; //from events
+  else input = event.data;
 
-  if(event.data.canvas !== undefined) { //if a new canvas is sent (event.data.canvas = htmlCanvasElement.transferControlToOffscreen()).
-    manager.canvas = event.data.canvas; 
-    canvas = manager.canvas;
+  let dict;
+  let output = undefined;
+  if(typeof input === 'object'){
+    if(input.canvas !== undefined) { //if a new canvas is sent (event.data.canvas = htmlCanvasElement.transferControlToOffscreen()).
+      manager.canvas = input.canvas; 
+      canvas = manager.canvas;
+    }
+    if(input.context !== undefined ) { //set the context
+      manager.ctx = manager.canvas.getContext(input.context);
+      manager.context = manager.ctx;
+      ctx = manager.ctx;
+      context = manager.ctx;
+    } 
+    let eventSetting = manager.checkEvents(input.foo,input.origin);
+    output = manager.checkCallbacks(event);  // output some results!
+    counter++; //just tracks the number of calls made to the worker
+  
+    dict = {output: output, foo: input.foo, origin: input.origin}
+  
+    if(eventSetting) manager.events.emit(eventSetting.eventName,dict); //if the origin and foo match an event setting on the thread, this emits output as an event
+    else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
+        self.postMessage(dict);
+    } 
   }
-  if(event.data.context !== undefined ) { //set the context
-    manager.ctx = manager.canvas.getContext(event.data.context);
-    ctx = manager.ctx;
-  } 
   /*
     now run "addfunc" to render something in the linked canvas from the worker thread
     e.g. workers.postToWorker('addfunc',['offscreenrender',`(args)=>{
@@ -30,22 +49,10 @@ self.onmessage = (event) => {
     }`]);
   */
 
-  output = manager.checkCallbacks(event);
+  manager.events.workerCallback(event.data); //checks for eventName tag
 
-  // output some results!
   console.timeEnd("worker");
-  counter++; //just tracks the number of calls made to the worker
-
-  let dict = {output: output, foo: event.data.foo, origin: event.data.origin}
-  
-  let eventSetting = manager.checkEvents(event.data.foo,event.data.origin);
-
-  if(eventSetting) manager.events.emit(eventSetting.eventName,dict);
-  else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
-      self.postMessage(dict);
-      return 0;
-  } 
-  return dict
+  return dict;
 }
 
 if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {

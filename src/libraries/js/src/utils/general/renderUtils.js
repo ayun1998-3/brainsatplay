@@ -922,7 +922,7 @@ class Physics {
 
         minRadius *= 2;
 
-        if(octree === true) {
+        if(octree === true) { //octrees
             function genOct(parentPos,halfbounds) { //return center positions of child octree cubes, radius = parent half radius
                 let oct1 = [parentPos[0]+halfbounds[0],parentPos[1]+halfbounds[1],parentPos[2]+halfbounds[2]]; //+x+y+z
                 let oct2 = [parentPos[0]-halfbounds[0],parentPos[1]+halfbounds[1],parentPos[2]+halfbounds[2]]; //-x+y+z
@@ -962,7 +962,7 @@ class Physics {
             
             return head;
         }
-        else {
+        else { //dynamic AABB trees
             let tree = Math3D.nearestNeighborSearch(positions,this.globalSettings.maxDistCheck);
 
             /**
@@ -986,7 +986,7 @@ class Physics {
             let genBoundingBoxLevel = (tree,volumes) => {
                 let newVolumes = [];
                 let volumePositions = [];
-                let foundidxs=[]
+                let foundidxs=[];
                 while(searching && count < tree.length) { 
                     let node = tree[index]; 
                     let i = 0; //starting with the farthest neighbor in the node

@@ -62,16 +62,12 @@ export class Events {
 
     //use this to set values by event name, will post messages on threads too
     emit(eventName, input, workerId=undefined) {
-        let output = input;
-        if(typeof output === 'object') {
-            output.eventName = eventName;
-        }
-        else {
-            output = {eventName:eventName, output:output};
-        }
+        let output = {eventName:eventName, output:output};;
+        if(!input || !eventName) return;
 
         if (this.workermanager) { //when emitting values for workers, input should be an object like {input:0, foo'abc', origin:'here'} for correct worker callback usage
-            this.workermanager.postToWorker(output,workerId);
+            if(workerId) this.workermanager.postToWorker(output,workerId);
+            else {this.workermanager.workers.forEach((w)=>{this.workermanager.postToWorker(output,w.id);});}
         } else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         // run this in global scope of window or worker. since window.self = window, we're ok
             postMessage(output); //thread event 
@@ -82,7 +78,7 @@ export class Events {
 
     workerCallback = (msg) => {
         if(typeof msg === 'object') {
-            if(msg.eventName) {
+            if(msg.eventName && msg.output) {
                 this.state.setState({[msg.eventName]:msg.output});
             }
         }

@@ -36,6 +36,10 @@ export class MultithreadedApplet {
         this.angle = 0;
         this.angleChange = 0.001;
         this.bgColor = 'black'
+
+        this.worker1Id;
+        this.worker2Id;
+        this.canvasWorkerId;
     }
 
     //---------------------------------
@@ -58,7 +62,13 @@ export class MultithreadedApplet {
         let setupHTML = (props=this.props) => {
             this.canvas = document.getElementById(props.id+"canvas");
             this.ctx = this.canvas.getContext('2d');
-            this.canvasWorker = new ThreadedCanvas(this.canvas,this.draw().toString());    // This also gets a worker
+            this.canvasWorker = new ThreadedCanvas(
+                this.canvas,
+                '2d',
+                this.draw().toString(),
+                {angle:0,angleChange:0.001,bgColor:'black'}, //'this' values, canvas and context are also available under 'this'
+                this.canvasWorkerId
+            );    // This also gets a worker
         }
 
         this.AppletHTML = new DOMFragment( // Fast HTML rendering container object
@@ -73,12 +83,27 @@ export class MultithreadedApplet {
         if(this.settings.length > 0) { this.configure(this.settings); } //You can give the app initialization settings if you want via an array.
 
 
-        
-
         if(!window.workers) { window.workers = new WorkerManager();}
 
         this.worker1Id = window.workers.addWorker(); // Thread 1
         this.worker2Id = window.workers.addWorker(); // Thread 2
+        this.canvasWorkerId = window.workers.addWorker(); // Thread 3
+
+        this.origin = this.props.id;
+
+        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
+        window.workers.events.addEvent('thread2process',this.origin,undefined,this.worker2Id);
+
+
+        //on input event send to thread 1
+
+        window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
+            console.log('thread1',res);
+            
+        })
+        window.workers.events.subEvent('thread2process',(res) => { //send thread2 result to canvas thread to update visual settings
+            console.log('thread2',res);
+        })
 
         //Add whatever else you need to initialize
         this.looping = true;

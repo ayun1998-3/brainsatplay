@@ -64,7 +64,7 @@ export class CallbackManager{
         this.eventSettings = [];
 
         this.canvas = new OffscreenCanvas(512,512); //can add fnctions and refer to this.offscreen 
-        this.context;
+        this.ctx; this.context;
         this.animation = undefined;
         this.animtionFunc = undefined;
         this.animating = false;
@@ -99,6 +99,12 @@ export class CallbackManager{
           }},
           {case:'addevent',callback:(args,origin)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
             this.eventSettings.push({eventName:args[0],case:args[1],origin:origin});
+          }},
+          {case:'subevent',callback:(args)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
+            this.events.subEvent(args[0],parseFunctionFromText(args[1]))
+          }},
+          {case:'unsubevent',callback:(args)=>{ //args[0] = eventName, args[1] = case, only fires event if from specific same origin
+            this.events.unsubEvent(args[0],args[1]);
           }},
           {case:'resizecanvas',callback:(args)=>{
             this.canvas.width = args[0];
@@ -289,12 +295,12 @@ export class CallbackManager{
     checkCallbacks(event) {
       let output = 'function not defined';
       this.callbacks.find((o,i)=>{
-        if(o.case === event.data.foo) {
-          if(event.data.input) output = o.callback(event.data.input,event.data.origin);
-          else if (event.data.args) output = o.callback(event.data.args,event.data.origin);
-          return true;
-        }
-      });
-      return output;
+          if(o.case === event.data.foo) {
+            if(event.data.input) output = o.callback(event.data.input,event.data.origin);
+            else if (event.data.args) output = o.callback(event.data.args,event.data.origin);
+            return true;
+          }
+        });
+        return output;
     }
 }
