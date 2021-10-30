@@ -257,9 +257,6 @@ export class Graph {
                 // Check if Controls
                 if (o.instance.className === 'Event') this.app.controls.push(o.instance)
 
-                o.instance.debug() // instantiate debug elements in appropriate containers
-
-
                 // Flatten Subgraphs into Nodes, Edges, and Events
                 await Promise.all(o.instance.graphs.map(async (g,i) => {
                     let activeGraph = await o.instance.addGraph(g, false)
@@ -809,14 +806,8 @@ export class Graph {
             portEditor.innerHTML = ''
 
             for (let key in node.ports){
-
-                console.log(!node.ports[key].ui.gui.container, node.ports[key].ui.gui.container)
-
-                // Skips ports created after initialization (NO LONGER THIS)
                 if (!node.ports[key].ui.gui.container) node.ports[key].createGUI()
-                console.log(node.ports[key].ui.gui)
                 if (!!node.ports[key].ui.gui.container) portEditor.insertAdjacentElement('beforeend', node.ports[key].ui.gui.container)
-            
             }
 
             // Edit and Delete Buttons
@@ -838,28 +829,6 @@ export class Graph {
                 }
             } else this.app.session.editor.edit.style.display = 'none'
         }
-    }
-
-    // ---------------- DEBUG HELPER ----------------
-    debug = (parentNode = document.body) => {
-    
-        let container = parentNode.querySelector('.brainsatplay-debugger')
-
-        // if ('debug' in this.ports) {
-            // if (parentNode === document.body) {
-            //     this.ports.element.data.style.position = 'absolute'
-            //     this.ports.element.data.style.top = 0
-            //     this.ports.element.data.style.right = 0
-            // }
-            // this.updateParams({debug: true})
-            if (container) {
-                // let button = document.createElement('button')
-                // button.style = "position: absolute; top: 0; right: 0;"
-                // button.onclick = this.app.session.editor.toggleDisplay
-                // document.body.insertAdjacentElement('beforeend', button)
-                if (this.ports.debug) container.insertAdjacentElement('beforeend', this.ports.debug.data)
-            }
-        // }
     }
 
     // ---------------- EXPORT HELPER ----------------

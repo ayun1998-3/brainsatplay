@@ -45,7 +45,7 @@ export const settings = {
         {name: 'manager', class: Manager, params: {button}},
         {
           name: 'scheduler', 
-          class: Scheduler, 
+          class: "Scheduler", 
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
@@ -86,7 +86,7 @@ export const settings = {
         }
       },
 
-      {name: 'debug', class: 'Debug'},
+      // {name: 'debug', class: 'Debug'},
       ],
 
       edges: [

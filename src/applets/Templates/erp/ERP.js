@@ -82,6 +82,7 @@ export class ERP {
     
             this.ports.atlas.data.eeg.forEach(ch => {
     
+                if (ch.count != 0){
     
                 // Extract Timestamps
                 let times = ch.times.reverse()
@@ -113,12 +114,13 @@ export class ERP {
                 // this.props.lda.instance.update(this.ports.mode.data, {data: arr.reverse()})
     
                 votes.push(P300)
+            }
             })
 
             // console.log(votes)
     
             // let P300 = votes.reduce((a,b) => a * b) === 1 // all true
-            let P300 = votes.reduce((a,b) => a + b) >= (votes.length/2) // half or more true
+            let P300 = (votes.length > 0) ? votes.reduce((a,b) => a + b) >= (votes.length/2) : false // half or more true
             // console.log(P300)
 
             return P300

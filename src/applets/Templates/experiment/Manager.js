@@ -4,8 +4,6 @@ export class Manager {
 
     constructor(info, graph) {
         
-
-
         // UI Identifier
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)), 

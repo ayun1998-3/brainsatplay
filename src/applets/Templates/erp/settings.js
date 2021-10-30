@@ -24,7 +24,7 @@ export const settings = {
       nodes: [
         {name: 'eeg', class: 'EEG'},
         {name: 'manager', class: Manager, params: {}},
-        {name: 'erp', class: 'ERP', params: {}},
+        {name: 'erp', class: ERP, params: {}},
         {name: 'ui', class: 'DOM', params: {
 
           html: `<div id="content"></div>`,

@@ -166,12 +166,12 @@ export class App {
             if (soft) {
                 if (this.intro?.deleteNode instanceof Function) this.intro.deleteNode()
                 // this._removeAllFragments()
-                // this.editor.init()
+                this.session.editor.init()
             }
 
             // Hard Deinit
             else {
-                // this.editor.deinit()
+                this.session.editor.deinit()
                 document.removeEventListener('keydown', this.shortcutManager);
                 this.AppletHTML.deleteNode();
                 this.AppletHTML = null

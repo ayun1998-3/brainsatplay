@@ -2487,7 +2487,6 @@ class deviceStream {
 
 	configureRoutes = (parentNode = document.body) => {
 		this.info.events.addControls(parentNode);
-		this.info.events.addDebugger(parentNode);
 	}
 
 	disconnect = () => {
