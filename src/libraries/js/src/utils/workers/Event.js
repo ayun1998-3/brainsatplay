@@ -19,7 +19,7 @@ export class Events {
         this.state = new StateManager({},undefined,false); //trigger only state (no overhead)
         this.workermanager = workermanager;
 
-        if(workermanager) { //only in window
+        if(workermanager !== undefined) { //only in window
             let found = workermanager.workerResponses.find((foo) => {
                 if(foo.name === 'eventmanager') return true;
             });
@@ -42,9 +42,9 @@ export class Events {
     //add an event name, can optionally add them to any threads too from the main thread
     addEvent(eventName,origin=undefined,foo=undefined,workerId=undefined) {
         this.state.setState({[eventName]:undefined});
-        if(this.workermanager) {
-            if(origin) {
-                if(workerId) {
+        if(this.workermanager !== undefined) {
+            if(origin !== undefined) {
+                if(workerId !== undefined) {
                     this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},workerId);
                 } else {
                     this.workermanager.workers.forEach((w)=>{
@@ -65,8 +65,8 @@ export class Events {
         let output = {eventName:eventName, output:output};;
         if(!input || !eventName) return;
 
-        if (this.workermanager) { //when emitting values for workers, input should be an object like {input:0, foo'abc', origin:'here'} for correct worker callback usage
-            if(workerId) this.workermanager.postToWorker(output,workerId);
+        if (this.workermanager !== undefined) { //when emitting values for workers, input should be an object like {input:0, foo'abc', origin:'here'} for correct worker callback usage
+            if(workerId !== undefined) this.workermanager.postToWorker(output,workerId);
             else {this.workermanager.workers.forEach((w)=>{this.workermanager.postToWorker(output,w.id);});}
         } else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         // run this in global scope of window or worker. since window.self = window, we're ok
@@ -78,7 +78,7 @@ export class Events {
 
     workerCallback = (msg) => {
         if(typeof msg === 'object') {
-            if(msg.eventName && msg.output) {
+            if(msg.eventName !== undefined && msg.output !== undefined) {
                 this.state.setState({[msg.eventName]:msg.output});
             }
         }
