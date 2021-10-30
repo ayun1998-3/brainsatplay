@@ -68,15 +68,14 @@ export class webgazerPlugin {
 
     init = async (info,pipeToAtlas) => {
         info.deviceType = 'eyetracker';
-
-        this._onConnected = () => {
-            this.setupAtlas(info,pipeToAtlas);
-        }
-
         this.info = info;
+
+        this._onConnected = async () => {
+            await this.setupAtlas(info,pipeToAtlas)
+        }
     }
 
-    setupAtlas = (info,pipeToAtlas) => {
+    setupAtlas = async (info,pipeToAtlas) => {
         if(pipeToAtlas === true) {
             let config = 'eyetracker';
 			
@@ -85,7 +84,7 @@ export class webgazerPlugin {
                 undefined,
                 config,
                 );
-            this.atlas.init()
+            await this.atlas.init()
 
             info.deviceNum = this.atlas.data.heg.length-1;
             info.useAtlas = true;
@@ -153,9 +152,9 @@ export class webgazerPlugin {
 
     connect = async () => {
         
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
 
-        this._onConnected(); // Create atlas
+        await this._onConnected(); // Create atlas
 
         // Create a callback to throw when Webgazer has loaded
         let onload = () => {

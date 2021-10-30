@@ -45,13 +45,12 @@ export class syntheticPlugin {
         }
         
         this.info = info;
-
-        this._onConnected = () => {
-            this.setupAtlas(pipeToAtlas,info);
+        this._onConnected = async () => {
+            await this.setupAtlas(info,pipeToAtlas)
         }
     }
 
-    setupAtlas = (pipeToAtlas=true,info=this.info) => {
+    setupAtlas = async (info=this.info,pipeToAtlas=true) => {
         
         if (this.info.deviceType === 'eeg'){
             if(pipeToAtlas === true) { //New Atlas
@@ -61,7 +60,7 @@ export class syntheticPlugin {
                     {eegshared:{eegChannelTags: info.eegChannelTags, sps:info.sps}},
                     config
                     );
-                    this.atlas.init()
+                await this.atlas.init()
                 info.useAtlas = true;
             } else if (typeof pipeToAtlas === 'object') { //Reusing an atlas
                 this.atlas = pipeToAtlas; //External atlas reference
@@ -111,7 +110,7 @@ export class syntheticPlugin {
                     config,
                     );
     
-                this.atlas.init()
+                await this.atlas.init()
                 this.info.deviceNum = this.atlas.data.heg.length-1;
                 this.info.useAtlas = true;
                 
@@ -129,9 +128,9 @@ export class syntheticPlugin {
     //For internal use only on init
     _onConnected = () => {}
 
-    connect = () => {
+    connect = async () => {
 
-      this._onConnected();
+      await this._onConnected();
       if (this.deviceType === 'eeg') this.atlas.data.eegshared.startTime = Date.now();
 
       this.atlas.settings.deviceConnected = true;

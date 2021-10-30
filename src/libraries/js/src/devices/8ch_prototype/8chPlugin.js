@@ -18,6 +18,8 @@ export class Prototype8Plugin {
     }
 
     init = async (info,pipeToAtlas) => {
+        return new Promise(resolve => {
+
         info.sps = 500;
         info.deviceType = 'eeg';
         //this._onConnected = () => { this.setupAtlas(info,pipeToAtlas); }
@@ -67,8 +69,8 @@ export class Prototype8Plugin {
                     });
                 }
             },
-            ()=>{
-                this.setupAtlas(pipeToAtlas,info);
+            async ()=>{
+                await this.setupAtlas(info, pipeToAtlas);
                 if(info.useAtlas === true){			
                     this.atlas.data.eegshared.startTime = Date.now();
                     if(this.atlas.settings.analyzing !== true && info.analysis.length > 0) {
@@ -78,16 +80,18 @@ export class Prototype8Plugin {
                     }
                     this.onconnect();
                 }
+
+                resolve(true)
             },
             ()=>{
                 this.atlas.settings.analyzing = false;
                 this.ondisconnect();
             }
         );
-       
+        })
     }
 
-    setupAtlas = (pipeToAtlas,info) => {
+    setupAtlas = async (info,pipeToAtlas) => {
         if(info.useFilters === true) {
             info.eegChannelTags.forEach((row,i) => {
                 if(row.tag !== 'other') {
@@ -107,7 +111,7 @@ export class Prototype8Plugin {
                 {eegshared:{eegChannelTags:info.eegChannelTags, sps:info.sps}},
                 config
             );
-            this.atlas.init()
+            await this.atlas.init()
             info.useAtlas = true;
         } else if (typeof pipeToAtlas === 'object') {
             this.atlas = pipeToAtlas; //External atlas reference

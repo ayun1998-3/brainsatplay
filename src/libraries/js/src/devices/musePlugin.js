@@ -37,12 +37,12 @@ export class musePlugin {
 
         this.info = info;
 
-        this._onConnected = () => {
-            this.setupAtlas(info,pipeToAtlas);
-        }
+            this._onConnected = async () => {
+                await this.setupAtlas(info,pipeToAtlas)
+            }
     }
 
-    setupAtlas = (info,pipeToAtlas) => {
+    setupAtlas = async (info,pipeToAtlas) => {
         if(info.useFilters === true) {
             info.eegChannelTags.forEach((row,i) => {
                 if(row.tag !== 'other') {
@@ -62,7 +62,7 @@ export class musePlugin {
 				{eegshared:{eegChannelTags:info.eegChannelTags, sps:info.sps}},
 				config,
                 );
-            this.atlas.init()
+            await this.atlas.init()
 			info.useAtlas = true;
 		} else if (typeof pipeToAtlas === 'object') { //Reusing an atlas
 			this.atlas = pipeToAtlas; //External atlas reference
@@ -102,7 +102,7 @@ export class musePlugin {
         await this.device.connect();
         await this.device.start();
 
-        this._onConnected();
+        await this._onConnected();
         
         this.device.eegReadings.subscribe(o => {
             if(this.info.useAtlas) {

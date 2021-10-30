@@ -83,7 +83,7 @@ export class brainstormPlugin {
         if (this.atlas) this.atlas.settings.deviceConnected = false;
     }
 
-    setupAtlas = (info,pipeToAtlas, onsuccess) => {
+    setupAtlas = async (info,pipeToAtlas, onsuccess) => {
 
         if (Object.keys(this.subscription.props).length > 0){
          info.sps = this.subscription.props.sps
@@ -98,7 +98,7 @@ export class brainstormPlugin {
                  {eegshared:{eegChannelTags: info.eegChannelTags, sps:info.sps}},
                  config,
                  );
-                 this.atlas.init()
+                 await this.atlas.init()
              info.useAtlas = true;
          } else if (typeof pipeToAtlas === 'object') { //Reusing an atlas
              this.atlas = pipeToAtlas; //External atlas reference

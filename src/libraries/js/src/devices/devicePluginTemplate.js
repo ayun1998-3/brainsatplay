@@ -20,7 +20,13 @@ export class devicePlugin {
     init = async (info,pipeToAtlas) => {
         //info.sps = 10
         //info.deviceType = ''
-        //this._onConnected = () => { this.setupAtlas(info,pipeToAtlas); }
+        // return new Promise((resolve, reject) => {
+        //     this._onConnected = () => {
+        //         this.setupAtlas(info,pipeToAtlas).then(() => {
+        //             resolve(true)
+        //         });
+        //     }
+        // });
     }
 
     setupAtlas = (info,pipeToAtlas) => {
@@ -34,7 +40,7 @@ export class devicePlugin {
         //         config,true,true,
         //         info.analysis
         //         );
-        //      this.atlas.init()
+        //      await this.atlas.init()
 
         //     this.info.deviceNum = this.atlas.data.heg.length-1;
         //     this.info.useAtlas = true;

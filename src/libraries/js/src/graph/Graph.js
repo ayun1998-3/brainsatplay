@@ -790,6 +790,11 @@ export class Graph {
         return position
     }
 
+    replaceApp = (app) => {
+        this.app = app
+        this.nodes.forEach(n => n.replaceApp(app))
+    }
+
     addNodeEvents = (node) => {
         let nodeElement = node.ui.element.children[0]
 
@@ -805,13 +810,12 @@ export class Graph {
 
             for (let key in node.ports){
 
-                console.log(this.app.session.editor.portEditor, node.ports[key].ui)
+                console.log(!node.ports[key].ui.gui.container, node.ports[key].ui.gui.container)
 
                 // Skips ports created after initialization (NO LONGER THIS)
-                if (!node.ports[key].ui.gui) node.ports[key].createGUI()
+                if (!node.ports[key].ui.gui.container) node.ports[key].createGUI()
                 console.log(node.ports[key].ui.gui)
-                // if (!!node.ports[key].ui.gui.container) 
-                portEditor.insertAdjacentElement('beforeend', node.ports[key].ui.gui.container)
+                if (!!node.ports[key].ui.gui.container) portEditor.insertAdjacentElement('beforeend', node.ports[key].ui.gui.container)
             
             }
 

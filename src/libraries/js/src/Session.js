@@ -261,8 +261,7 @@ export class Session {
 		await newStream.connect()
 
 		// Add Device Stream Graphs to Session Apps
-		newStream.device.atlas.graph.app = this.app
-		newStream.device.atlas.graph.session = this
+		newStream.device.atlas.graph.replaceApp(this.app)
 		if (newStream.device.atlas.graph) this.editor.addGraph(newStream.device.atlas.graph)
 
 		// Initialize Route Management Interface

@@ -111,10 +111,7 @@ export class Port {
     }
 
     createGUI = () => {
-        if (this.node.app.session.editor) {
-            console.log('creating GUI')
-            this.ui.gui = this.node.app.session.editor.createObjectEditor({[this.name]:this}, this.name)
-        }
+        if (this.node.app.session.editor) this.ui.gui = this.node.app.session.editor.createObjectEditor({[this.name]:this}, this.name)
     }
 
     deinit = () => {

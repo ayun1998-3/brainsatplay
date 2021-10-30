@@ -32,12 +32,12 @@ export class buzzPlugin {
                     }
                 })
 
-            this._onConnected = () => {
-                this.setupAtlas(this.info,pipeToAtlas);
+            this._onConnected = async () => {
+                await this.setupAtlas(this.info,pipeToAtlas);
             }
     }
 
-    setupAtlas(info,pipeToAtlas){
+    setupAtlas = async (info,pipeToAtlas) => {
         if(pipeToAtlas === true) {
             let config = 'neosensory_buzz';
             this.atlas = new DataAtlas(
@@ -45,7 +45,7 @@ export class buzzPlugin {
                 {},
                 config
                 );
-            this.atlas.init()
+            await this.atlas.init()
             this.info.useAtlas = true;
             
         } else if (typeof pipeToAtlas === 'object') {
@@ -61,7 +61,7 @@ export class buzzPlugin {
             if (device){
                 let res = await this.agreeToTerms()
                 if (res) {
-                    this._onConnected();
+                    await this._onConnected();
                     this.onconnect()
                     resolve(true)
                 } else {
