@@ -56,6 +56,9 @@ import { EventRouter } from './EventRouter'
 // Data Manager
 import { DataManager } from './utils/DataManager'
 
+// Editor
+import { Editor } from './graph/Editor'
+
 // Project Manager
 import { App } from './App'
 import { ProjectManager } from './utils/ProjectManager'
@@ -131,8 +134,14 @@ export class Session {
 
 		if (initFS) this.initFS();
 
+		// Create Project Manager
 		this.projects = new ProjectManager(this)
 		this.projects.init()
+
+
+		// Create Session-Level Editor
+		this.editor = new Editor(this)
+        // this.app = new App({}, document.body, this, [])
 	}
 
 	/**
@@ -226,9 +235,9 @@ export class Session {
 
 			onconnect(newStream);
 			this.onconnected();
-			//console.log(this.deviceStreams)
-			//console.log(this.state.data)
-			//console.log(this.atlas)
+
+			// Add Device Stream Graphs to Session Apps
+			if (newStream?.device?.graph) this.editor.addGraph(newStream.device.graph)
 		}
 
 		newStream.ondisconnect = () => {
@@ -1394,7 +1403,6 @@ export class Session {
 			if (info.zip){
 				if (!info.zip.includes('.zip')) info.zip = info.zip + '/app.zip'
 
-				console.log(info)
 				fetch(info.zip).then((res) => {
 					this.projects.helper.loadAsync(res.blob())
 					.then(async (file) => {
@@ -1480,7 +1488,6 @@ export class Session {
 	}
 
 	removeApp = (app) => {
-		// let info = this.graph.remove(appId)
 		this.info.apps.find((a,i) => {
 			this.updateApps()
 

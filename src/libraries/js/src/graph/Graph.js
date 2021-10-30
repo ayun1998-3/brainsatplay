@@ -62,7 +62,7 @@ export class Graph {
             relYParent: null
         }
 
-        if (this.app.editor && !(this.parent instanceof Graph) && edit) this.app.editor.addGraph(this) // place top-level graph as a tab
+        if (this.session.editor && !(this.parent instanceof Graph) && edit) this.session.editor.addGraph(this) // place top-level graph as a tab
     }
 
 
@@ -91,15 +91,15 @@ export class Graph {
         }
 
         // Remove Editor Tab
-        if (this.app.editor) {
-            let files = this.app.editor.files[this.uuid]?.files
+        if (this.session.editor) {
+            let files = this.session.editor.files[this.uuid]?.files
             for (let type in files) {
                 for (let key in files[type]){
                     let el = files[type][key]
                     if (!!el && !(el instanceof Function)) el.remove()
                 }
             }
-            if (this.app.editor) this.app.editor.removeGraph(this)
+            if (this.session.editor) this.session.editor.removeGraph(this)
         }
 
     }
@@ -212,7 +212,7 @@ export class Graph {
                 if (typeof str === 'string') {
                     // let module = await dynamicImport(pluginManifest[o.class].folderUrl) // classname
                     // o.class = module[o.class]
-                    if (this.app.editor?.classRegistry) o.class = this.app.editor.classRegistry[str]
+                    if (this.session.editor?.classRegistry) o.class = this.session.editor.classRegistry[str]
                     if (o.class == null || typeof o.class === 'string') o.class = this.app.session.projects.libraries.experimental.plugins[str]
                 }
                 
@@ -250,7 +250,7 @@ export class Graph {
 
                 this.nodes.set(o.instance.uuid, o.instance) // set immediately
 
-                if (this.app.editor) this.app.editor.addGraph(o.instance) // place in editor as a tab
+                if (this.session.editor) this.session.editor.addGraph(o.instance) // place in editor as a tab
 
                 // this.analysis.add(...Array.from(nodeInfo.analysis))
 
@@ -730,12 +730,12 @@ export class Graph {
         if (top || left){
             if (top) node.ui.element.style.top = top[1]
             if (left) node.ui.element.style.left = left[1]
-        } else if (this.app?.editor?.nextNode) {
+        } else if (this.session?.editor?.nextNode) {
             let rect = this.ui.graph.getBoundingClientRect()
-            let position = this._mapPositionFromScale(this.app.editor.nextNode.position, rect)
+            let position = this._mapPositionFromScale(this.session.editor.nextNode.position, rect)
             node.ui.element.style.top = `${position.x}px`
             node.ui.element.style.left = `${position.y}px`
-            this.app.editor.nextNode = null
+            this.session.editor.nextNode = null
         }
 
         node.style = node.ui.element.style.cssText // Set initial translation
@@ -800,7 +800,7 @@ export class Graph {
             nodeElement.classList.add('clicked')
 
             // Port GUI
-            let portEditor = this.app.editor.portEditor
+            let portEditor = this.session.editor.portEditor
             portEditor.innerHTML = ''
 
             for (let key in node.ports){
@@ -811,23 +811,23 @@ export class Graph {
             }
 
             // Edit and Delete Buttons
-            this.app.editor.delete.style.display = ''
-            this.app.editor.delete.onclick = () => {
+            this.session.editor.delete.style.display = ''
+            this.session.editor.delete.onclick = () => {
                 this.removeNode(node)
             }
 
             node.editable = this.session.projects.checkIfSaveable(node)
 
             if (node.editable){
-                this.app.editor.edit.style.display = ''
-                this.app.editor.edit.onclick = (e) => {
-                    let files = this.app.editor.files[node.uuid].files
+                this.session.editor.edit.style.display = ''
+                this.session.editor.edit.onclick = (e) => {
+                    let files = this.session.editor.files[node.uuid].files
                     let graphtoggle = files.graph?.tab ?? files.graph?.toggle
                     let codetoggle = files.code?.tab ?? files.code?.toggle
 
                     if (codetoggle) codetoggle.click()
                 }
-            } else this.app.editor.edit.style.display = 'none'
+            } else this.session.editor.edit.style.display = 'none'
         }
     }
 
@@ -846,7 +846,7 @@ export class Graph {
             if (container) {
                 // let button = document.createElement('button')
                 // button.style = "position: absolute; top: 0; right: 0;"
-                // button.onclick = this.app.editor.toggleDisplay
+                // button.onclick = this.session.editor.toggleDisplay
                 // document.body.insertAdjacentElement('beforeend', button)
                 if (this.ports.debug) container.insertAdjacentElement('beforeend', this.ports.debug.data)
             }
