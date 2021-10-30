@@ -190,7 +190,7 @@ export class StateManager {
     }
 
     //Trigger-only functions on otherwise looping listeners
-    subscribeTrigger(key=undefined,onchange=(key)=>{}) {
+    subscribeTrigger(key=undefined,onchange=(value)=>{}) {
 
         // console.error('SUBSCRIBING')
         if(key) {
@@ -206,10 +206,13 @@ export class StateManager {
     //Delete specific trigger functions for a key
     unsubscribeTrigger(key=undefined,sub=0) {
         let idx = undefined;
-        let obj = this.triggers[key].find((o)=>{
-            if(o.idx===sub) {return true;}
-        });
-        if(obj) this.triggers[key].splice(idx,1);
+        let triggers = this.triggers[key]
+        if (triggers){
+            let obj = triggers.find((o)=>{
+                if(o.idx===sub) {return true;}
+            });
+            if(obj) triggers.splice(idx,1);
+        }
     }
 
     //Remove all triggers for a key

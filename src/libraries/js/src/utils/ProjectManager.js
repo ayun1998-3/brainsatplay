@@ -1,8 +1,8 @@
 import JSZip from 'jszip'
 import fileSaver from 'file-saver';
-import * as brainsatplayLocal from '../../brainsatplay'
+import * as experimental from '../../brainsatplay'
 
-let latest = '0.0.35'
+let latest = '0.0.37'
 let cdnLink = `https://cdn.jsdelivr.net/npm/brainsatplay@${latest}`;
 
 import * as blobUtils from './general/blobUtils'
@@ -17,25 +17,19 @@ export class ProjectManager {
             app: null
         }
 
+        this.platform = window.brainsatplayPlatform
         this.latest = latest
         this.script = document.createElement("script");
 
-        this.local = window.location.origin.includes('localhost')
-        if (!this.local) this.version = this.latest
-        else this.version = 'experimental'
-
         // Load Latest B@P Library
-        this.libraries = {
-            experimental: brainsatplayLocal
-        }
+        this.libraries = {}
 
-        if (this.version != 'experimental'){
-            this.getLibraryVersion(latest)
-        }
+        // Organize as a Class Registry
+        this.classRegistries = {}
 
         // Set Server Connection Variables
         this.serverResolved = true
-        this.publishURL = (this.local) ? 'http://localhost/apps' : 'https://server.brainsatplay.com/apps'
+        this.publishURL = (this.local && this.platform) ? 'http://localhost/apps' : 'https://server.brainsatplay.com/apps'
 
         this.createDefaultHTML = (script) => {
             return `
@@ -52,26 +46,50 @@ export class ProjectManager {
         `}
     }
 
+    init = async () => {
+        this.version = this.latest
+        await this.getLibraryVersion('experimental')
+        if (!this.local && this.platform) await this.getLibraryVersion(this.version)
+    }
+
     getLibraryVersion = async (version='experimental') => {
 
-        if (version != 'experimental' && Number.parseInt(version.split('.')[2]) < 33) version = 'experimental' // FIX: Any lower versions are not supported
-
-        return new Promise(resolve => {
+        this.libraries[version] = await Promise.resolve(new Promise(resolve => {
             if (this.libraries[version] == null){
-                this.script.src = `https://cdn.jsdelivr.net/npm/brainsatplay@${version}`
-                this.script.async = true;
-                this.script.onload = () => {
-                    console.log('loading version')
-                    if (brainsatplay) {
-                        this.libraries[version] = brainsatplay
-                        resolve(this.libraries[version])
+                if (version === 'experimental') resolve(experimental)
+                else {
+                    this.script.src = `https://cdn.jsdelivr.net/npm/brainsatplay@${version}`
+                    this.script.async = true;
+                    this.script.onload = () => {
+                        if (window.brainsatplay) resolve(window.brainsatplay)
+                    }
+                    document.body.appendChild(this.script);
+                }
+            } else resolve(this.libraries[version])
+        }))
+
+        // Organize in a single object
+        if (this.classRegistries[version] == null){
+            this.classRegistries[version] = {}
+            for (let category in this.libraries[version].plugins){
+                for (let name in this.libraries[version].plugins[category]){
+                    // TODO: Should shift to ID at some point
+
+                    let cls = this.libraries[version].plugins[category][name]
+                    let clsStr = cls.toString().trim().slice(0,5) === 'class'
+                    let funcStr = cls.toString().trim().slice(0,8) === 'function' // compiled
+
+                    if (clsStr || funcStr){
+                        this.classRegistries[version][name] = {
+                            name,
+                            category, 
+                            class: cls
+                        }
                     }
                 }
-                document.body.appendChild(this.script);
-            } else {
-                resolve(this.libraries[version])
             }
-        })
+        }
+        return this.libraries[version]
     }
 
     getPlugins = (version) =>{
@@ -106,7 +124,7 @@ export class ProjectManager {
 }`)
 
         this.helper.file("index.js", `import {settings} from './app/settings.js'
-let app =  new brainsatplay.Application(settings)
+let app =  new brainsatplay.App(settings)
 app.init()`)
 
 
@@ -119,24 +137,33 @@ app.init()`)
         this.addDefaultFiles()
     }
 
-    generateZip(app, callback) {
+    async generateZip(app, onsuccess=()=>{}, onerror=()=>{}) {
         
         this.initializeZip()
+
+        // Convert App to File
         let o = this.appToFile(app)
-        o.classes.forEach(c => {
-            this.addClass(c)
-        })
+        let classInfo = o.classes.map(this.classToFile)
+
+        // Check Ability to Load
+        let settings = await this.load([o, ...classInfo])
+        let library = await this.getLibraryVersion(settings.version)
+        let instance = (library.Application instanceof Function) ? new library.Application(settings) : new library.App(settings)
+
+        await instance.init().then(() => {
+        
+        // Add Classes to Project
+        classInfo.forEach(this.addClass)
 
         // Combine Custom Plugins into the Compact File
         let combined = ``;
         o.classes.forEach(c => combined += c.prototype.constructor.toString()) // Combine Custom Plugins into the Compact File
         o.classes.forEach(c => {
-            console.log('saving', c, c.name)
             this.session.storage.set('plugins',c.name, c)
         }) // save separately
         combined += o.combined;
 
-        this.folders.app.file(o.filename, o.data)
+        this.folders.app.file(o.filename, o.content)
         this.helper.file("compact.html", `
             <!DOCTYPE html> 
             <html lang="en"> 
@@ -162,7 +189,7 @@ app.init()`)
                     <script src="${cdnLink}"></script>
                     <script type="module">
                         ${combined}
-                        let app =  new brainsatplay.Application(settings);
+                        let app =  new brainsatplay.App(settings);
                         app.init();
                     </script>
                 </head>
@@ -170,17 +197,19 @@ app.init()`)
             </html>`)
         this.helper.generateAsync({ type: "blob" })
             .then(function (content) {
-                callback(content)
+                onsuccess(content)
             });
+        }).catch((e) => {
+            onerror(); 
+            let msg = `Project cannot be saved: ${e}`
+            alert(msg)
+        }).finally(() => {
+            instance.deinit()
+        })
     }
 
-    classToFile(cls) {
-        return { filename: `${cls.name}.js`, data: cls.toString() + `\nexport {${cls.name}}` }
-    }
-
-    addClass(cls) {
-        let info = this.classToFile(cls)
-        return this.folders.app.file(info.filename, info.data)
+    addClass = (info) => {
+        return this.folders.app.file(info.filename, info.content)
     }
 
     loadFromFile() {
@@ -236,9 +265,13 @@ app.init()`)
 
     appToFile(app) {
 
-        let info = Object.assign({}, app.info) //JSON.parse(JSON.stringifyWithCircularRefs(app.info))
-        info.graph = Object.assign({}, info.graph)
-        info.graph.nodes = info.graph.nodes.map(n => Object.assign({}, n))
+        let info = JSON.parse(JSON.stringify(app.info))
+        // let info = Object.assign({}, app.info)
+        info.graphs = Array.from(app.graphs).map(arr => Object.assign({}, arr[1]))
+        info.graphs.forEach(g => {
+            if (g.edges) g.edges = Array.from(g.edges).map(arr => Object.assign({}, arr[1].export()))
+           if (g.nodes) g.nodes = Array.from(g.nodes).map(arr => Object.assign({}, arr[1].export()))
+        })
 
         // Default Settings
         info.connect = true
@@ -252,67 +285,43 @@ app.init()`)
         // Add imports
         let classNames = []
         let classes = []
-        app.info.graph.nodes.forEach(n => {
-            let found = plugins.find(o => { 
-                if (o.id === n.class.id) return o 
-            })
+
+        info.graphs.forEach(g => {
+        g.nodes.forEach(n => {
+            let found = plugins.find(o => { if (o?.id === n?.class?.id) return o})
             // let saveable = this.checkIfSaveable(n.class)
-            if (!found && !classNames.includes(n.class.name)) {
-                imports += `import {${n.class.name}} from "./${n.class.name}.js"\n`
-                classNames.push(n.class.name)
+
+            // Custom Plugin (not included by name)
+            let name = n.class.name
+            if (!found && !classNames.includes(name)) {
+                imports += `import {${name}} from "./${name}.js"\n`
+                classNames.push(name)
                 classes.push(n.class)
-            } else if (found) {
-                classNames.push(found.label)
-            } else if (classNames.includes(n.class.name)) {
-                classNames.push(n.class.name)
-            }
+            } 
+            else if (found) classNames.push(found.label) // In Plugins
+            else if (classNames.includes(name)) classNames.push(name) // If Already included by Name
         })
+    })
 
 
-        console.log(info)
-
-        info.graph.nodes.forEach((n, i) => {
-
-            // FIX
-            for (let k in n.params){ 
-            //     // Delete non-editable elements
-            //     if (n.instance.ports[k]?.edit === false) {
-            //         delete n.params[k] 
-            //     }
-
-                // convert functions
+        info.graphs.forEach(g => {
+        g.nodes.forEach((n, i) => {
+            for (let k in n?.params){ 
                 if (n.params[k] instanceof Function) n.params[k] = n.params[k].toString()
-                
-                // Delete if non-stringifiable object
-                // if (typeof n.params[k] === 'object' ){
-                //     console.log(n.params[k])
-                //     let result = JSON.parse(JSON.stringify(n.params[k]))
-                //     console.log(result)
-                //     if (typeof result !== 'object' || Object.keys(result).length == 0){ // Removes Elements
-                //         delete n.params[k]
-                //     } else {
-                //         n.params[k] = result
-                //     }
-                // }
             } 
 
-            delete n['configure']
-            delete n['ports']
-            delete n['instance']
-            delete n['ui']
-            delete n['fragment']
-            delete n['controls']
-            delete n['analysis']
             n.class = `${classNames[i]}`
+        })})
+
+        info.graphs.forEach(g => {
+            for (let key in g) {
+                if (key != 'nodes' && key != 'edges') {
+                    delete g[key]
+                }
+            }
         })
 
-        for (let key in info.graph) {
-            if (key != 'nodes' && key != 'edges') {
-                delete info.graph[key]
-            }
-        }
-
-        info = JSON.stringify(info, '\t')
+        info = JSON.stringify(info, null, 2);
 
         // Replace Stringified Class Names with Actual References (provided by imports)
         var re = /"class":\s*"([^\/"]+)"/g;
@@ -324,46 +333,22 @@ app.init()`)
                 info = info.replaceAll(m[0], '"class":' + m[1])
             }
         } while (m);
-        // console.log(info)
-
-        // // Replace Stringified Functions with Actual
-        // re = /"(([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) => \{([^}]+)\})"/ //[^\}].*}
-        // do {
-        //     m = re.exec(info);
-        //     if (m) {
-        //         console.log(m)
-        //         // console.log(`'${m[0]}'`, eval('('+m[1]+')'))
-        //         info = info.replaceAll(`${m[0]}`, m[1])
-        //     }
-        // } while (m);
-
-        // console.log(info)
-
-
-        // for (let k in n.params){
-        //     let value = n.params[k]
-        //     let regex = new RegExp('([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) =>')
-        //     let func = value.substring(0,8) == 'function'
-        //     let arrow = regex.test(value)
-        //     n.params[k] = ( func || arrow) ? eval('('+value+')') : value;
-        // }
-
 
         return {
-            name: app.info.name, filename: 'settings.js', data: `${imports}
+            name: app.info.name, filename: 'settings.js', content: `${imports}
         
         export const settings = ${info};`, combined: `const settings = ${this._prettyPrint(info)};\n`, classes
         }
     }
 
     classToFile(cls) {
-        return { filename: `${cls.name}.js`, data: cls.toString() + `\nexport {${cls.name}}`, combined: cls.toString() + `\n` }
+        return { filename: `${cls.name}.js`, content: cls.toString() + `\nexport {${cls.name}}`, combined: cls.toString() + `\n` }
     }
 
-    download(app, filename = app.info.name ?? 'brainsatplay') {
-        this.generateZip(app, (zip) => {
+    async download(app, filename = app.info.name ?? 'brainsatplay', onsuccess, onerror) {
+        await this.generateZip(app, (zip) => {
             fileSaver.saveAs(zip, `${filename}.zip`);
-        })
+        }, onsuccess, onerror)
     }
 
     async publish(app) {
@@ -386,19 +371,20 @@ app.init()`)
         });
     }
 
-    async appToDataURL(app){
-        return new Promise(resolve => {
-            this.generateZip(app, (blob) => {
+    async appToDataURL(app, onsuccess, onerror){
+        return new Promise(async resolve => {
+            await this.generateZip(app, (blob) => {
+                onsuccess()
                 blobUtils.blobToDataURL(blob, async (dataurl) => {
                     resolve(dataurl)
                 })
-            })
+            }, onerror)
         })
     }
 
 
-    async save(app) {
-        let dataurl = await this.appToDataURL(app)
+    async save(app, onsuccess, onerror) {
+        let dataurl = await this.appToDataURL(app, onsuccess, onerror)
         await this.session.dataManager.saveFile(dataurl, `/projects/${app.info.name}`)  
         console.log('App Saved!')
       
@@ -456,14 +442,15 @@ app.init()`)
 
     // Only save if a class instance can be created from the constructor string
     checkIfSaveable(node){
+
         let editable = false
         try {
-            let constructor = node.prototype.constructor.toString()
+            let constructor = node.info.class.prototype.constructor.toString() // save original class
             let cls = eval(`(${constructor})`)
-            let instance = new cls() // This triggers the catch
+            let instance = new cls(node.info, node.parent) // This triggers the catch
             editable = true
         }
-        catch (e) {console.log('Cannot Save Node', e)}
+        catch (e) {}
 
         return editable
     }
@@ -502,7 +489,8 @@ app.init()`)
 
                     let classes = {}
                     info.classes.forEach(c => {
-                        c = eval(`(${c.split('export')[0]})`)
+                        let toEval = c.split('export')[0]
+                        c = eval(`(${toEval})`) 
                         classes[c.name] = c
                     })
 
@@ -556,16 +544,18 @@ app.init()`)
 
                     let settings
                     try {
+
                         let moduleText = "data:text/javascript;base64," + btoa(info.settings);
                         let module = await import(moduleText);
                         settings = module.settings
 
                         // Replace Random IDs with Classes
-                        settings.graph.nodes.forEach(n => {
-                            n.class = classMap[n.class].class
+                        settings.graphs.forEach(g => {
+                            g.nodes.forEach(n => {
+                                if (n?.class && classMap[n.class]?.class) n.class = classMap[n.class]?.class
+                            })
                         })
-
-                        settings = this.session.graph.parseParamsForSettings(settings)
+                        // settings = this.session.graph.parseParamsForSettings(settings)
 
                         resolve(settings)
                     } catch (e) {

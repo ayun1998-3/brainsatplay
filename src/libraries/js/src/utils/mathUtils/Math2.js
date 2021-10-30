@@ -208,14 +208,15 @@ export class Math2 {
 	}
 
 	//find the relative error of predicted results
-	static relError(actual=[],forecast=[]) {
+	static relError(actual=[],forecast=[],abs=true) {
 		if(actual.length !== forecast.length) throw new Error('Input arrays of same length!');
 		let i = actual.length;
 		let d = []; //relative errors
 		for(let j = 0; j<i; j++) {
-			d.push(Math.abs((actual[j] - forecast[j])/actual[j]));
+			let dd = (actual[j] - forecast[j])/actual[j];
+			if(abs) dd = Math.abs(dd);
+			d.push(dd);
 		}
-
 		return d;
 	}
 
@@ -447,23 +448,52 @@ export class Math2 {
 		return m;
 	}
 
-	//Get probability densities for the samples
-	static normalDistribution(samples=[], normalize=true) {
-		let mean = this.mean(samples);
-		let variance = this.variance(samples);
+	//return a histogram of the array, use nBins to override binSize
+	static histogram(arr=[], binSize=1, nBins=undefined) {  
+		let copy = [...arr]; 
+		copy.sort(function(a, b){return a - b}); //ascending sort
+		let binStart = Math.min(...copy);
+		if(typeof nBins === 'number') {
+			let binEnd = Math.max(...copy);
+			binSize = Math.abs((binEnd - binStart) / (nBins-1));
+		} 
+		let j = binStart;
+		let binx = [];
+		let biny = [];
+		for(let i = 0; i < copy.length; i++) {
+			let binidx = binSize*j;
+			if(copy[i] > binStart+binidx) { 
+				j++; 
+				binidx+=binSize; 
+				let binmin = binStart+binidx;
+				let binmid = binmin + binidx*0.5;
+				binx.push(binmid);
+				biny.push(0);
+			}
+			biny[biny.length-1]++;
+		}
+
+		return [binx,biny];
+	}
+
+
+	//Get probability densities for the samples, set a cutoff to avoid obscenely small numbers
+	static normalDistribution(samples=[], normalize=true, cutoff = 0.0001) {
+		let m = this.mean(samples);
+		let vari = this.variance(samples);
 		let nSamples = samples.length;
 
 		let probabilities = [];
 
-		let denom = 1/(this.TWO_PI*variance);
-		let _variance = 1/variance;
+		let denom = 1/(this.TWO_PI*vari);
+		let _variance = 1/vari;
 		let sum = 0; //for normalization
 		for (let i = 0; i < nSamples; i++) {
-			let px = Math.exp(-0.5*Math.pow((samples[i]-mean)*_variance,2))*denom
+			let px = Math.exp(-0.5*Math.pow((samples[i]-m)*_variance,2))*denom
+			if(px < cutoff) px = 0;
 			probabilities.push(px);
 			sum += px;
 		}
-
 		if(normalize) {
 			let _sum = 1/sum;
 			probabilities = probabilities.map(x => x*_sum);
@@ -1093,9 +1123,57 @@ export class Math2 {
 
 	//-------------------------------------------------------------
 
-	static p300(raw_signal=[],signal_timestamps=[],event_timestamps=[]) {
-		
+	//pass in 1 second of raw data ish recommended, desired event timestamps and signals are ordered from least current to most current 
+	static p300(event_timestamps=[],raw_signal=[],signal_timestamps=[], sps=256) {
+		let smoothingstep = Math.floor(sps/10); //300ms width peak, 1/10th sec smoothing for filtering
+		let smoothed = this.sma(raw_signal,smoothingstep);
+		let peaks = this.peakDetect(smoothed,'peak',smoothingstep); //returns indices of peaks
+		let mean = this.mean(smoothed);
+		let std = this.std(smoothed,mean);
 
+		let p_idx = 0;
+		let candidates = [];
+		if(peaks.length > 0) {
+			event_timestamps.forEach((t,j) => {
+				while(signal_timestamps[peaks[p_idx]] < t + 200) { //roll over peaks that are behind of the latest event + 200ms
+					p_idx++;
+					if(!peaks[p_idx]) break;
+				}
+				
+				let tempi = 0;
+				let tempcandidates = [];
+				while(signal_timestamps[peaks[p_idx+tempi]] < t + 600 ) { //get peaks that are behind the latest event + (200ms-600ms)
+					tempcandidates.push(p_idx+tempi);
+					tempi++;
+					if(!peaks[p_idx+tempi]) break;
+				}
+				if(tempcandidates.length > 1) { //if multiple peaks found choose the biggest one for the main p300 peak (not worrying about p1,p2,n1,n2 yet)
+					let peakvals = [];
+					tempcandidates.forEach((tc) => {
+						peakvals.push(smoothed[peaks[tc]]);
+					});
+					let max = Math.max(...peakvals);
+					let maxi = tempcandidates[peakvals.indexOf(max)];
+
+					candidates.push({
+						event_timestamp:t, 
+						event_index:j, 
+						peak_timestamp:signal_timestamps[[peaks[maxi]]],
+						signal_index:[peaks[maxi]], 
+						signal_amplitude:raw_signal[[peaks[maxi]]], 
+						zscore:(smoothed[peaks[maxi]]-mean)/std //significance measure
+					});
+				} else if (tempcandidates.length === 1) candidates.push({
+					event_timestamp:t, 
+					event_index:j, 
+					peak_timestamp:signal_timestamps[peaks[tempcandidates[0]]],
+					signal_index:peaks[tempcandidates[0]],
+					signal_amplitude:raw_signal[[peaks[tempcandidates[0]]]],
+					zscore:(smoothed[peaks[tempcandidates[0]]]-mean)/std //significance measure
+
+				});
+			});
+		} return candidates;
 	}
 
 }

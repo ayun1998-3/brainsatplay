@@ -5,8 +5,8 @@ export class Manager extends Plugin {
 
     static id = String(Math.floor(Math.random() * 1000000))
 
-    constructor(label, session) {
-        super(label, session)
+    constructor(info, graph) {
+        
 
 
         // UI Identifier

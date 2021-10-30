@@ -37,12 +37,13 @@ export class cyton { //Contains structs and necessary functions/API calls to ana
 		this.gain = 24;
 
 		this.vscale = (this.vref/this.gain)*this.stepSize; //volts per step.
-		this.uVperStep = 1000000 * ((this.vref/this.gain)*this.stepSize); //uV per step.
-		this.scalar = 1/(1000000 / ((this.vref/this.gain)*this.stepSize)); //steps per uV.
+		this.uVperStep = 100000 * ((this.vref/this.gain)*this.stepSize); //uV per step.
+		this.scalar = 1/(100000 / ((this.vref/this.gain)*this.stepSize)); //steps per uV.
 
 		this.maxBufferedSamples = this.sps*60*1; //max samples in buffer this.sps*60*nMinutes = max minutes of data
 		
 		this.mode = mode;
+		this.odd = false; //
 
 		this.data = { //Data object to keep our head from exploding. Get current data with e.g. this.data.A0[this.data.count-1]
 			count: 0,
@@ -81,8 +82,8 @@ export class cyton { //Contains structs and necessary functions/API calls to ana
 		this.gain = gain;
 
 		this.vscale = (this.vref/this.gain)*this.stepSize; //volts per step.
-		this.uVperStep = 1000000 * ((this.vref/this.gain)*this.stepSize); //uV per step.
-		this.scalar = 1/(1000000 / ((this.vref/this.gain)*this.stepSize)); //steps per uV.
+		this.uVperStep = 100000 * ((this.vref/this.gain)*this.stepSize); //uV per step.
+		this.scalar = 1/(100000 / ((this.vref/this.gain)*this.stepSize)); //steps per uV.
     }
 
 	getLatestData(channel="A0",count=1) { //Return slice of specified size of the latest data from the specified channel
@@ -147,14 +148,16 @@ export class cyton { //Contains structs and necessary functions/API calls to ana
 					var line = buffer.slice(indices[k-1],indices[k]+1); //Slice out this line to be decoded
 					
 					// line[0] = stop byte, line[1] = start byte, line[2] = counter, line[3:99] = ADC data 32x3 bytes, line[100-104] = Accelerometer data 3x2 bytes
-
+					let odd = line[2] % 2 !== 0;
 					//line found, decode.
-					if(this.data.count < this.maxBufferedSamples){
+					if(this.data.count < this.maxBufferedSamples && ((this.mode === 'daisy' && odd) || this.mode !== 'daisy')){
 						this.data.count++;
 					}
 
-					if(this.data.count-1 === 0) {this.data.ms[this.data.count-1] = Date.now(); this.data.startms = this.data.ms[0];}
-					else {
+					if(this.data.count-1 === 0) {
+						this.data.ms[this.data.count-1] = Date.now(); this.data.startms = this.data.ms[0];
+					}
+					else if(odd) {
 						this.data.ms[this.data.count-1]=this.data.ms[this.data.count-2]+this.updateMs;
 						
 						if(this.data.count >= this.maxBufferedSamples) {
@@ -166,9 +169,10 @@ export class cyton { //Contains structs and necessary functions/API calls to ana
 					for(var i = 3; i < 27; i+=3) {
 						let channel;
 						if(this.mode === 'daisy') {
-							if(line[2] % 2 !== 0) {
+							if(odd) {
 								channel = "A"+(i-3)/3;
-							} else { channel = "A"+(8+(i-3)/3); }
+								this.odd = false;
+							} else { channel = "A"+(8+(i-3)/3); this.odd = true; }
 						}
 						else {
 							channel = "A"+(i-3)/3;
@@ -181,10 +185,11 @@ export class cyton { //Contains structs and necessary functions/API calls to ana
 							//console.log(this.data[channel][this.data.count-1],indices[k], channel)
 					}
 
-					this.data["Ax"][this.data.count-1]=this.bytesToInt16(line[27],line[28]);
-					this.data["Ay"][this.data.count-1]=this.bytesToInt16(line[29],line[30]);
-					this.data["Az"][this.data.count-1]=this.bytesToInt16(line[31],line[32]);
-
+					if(!odd) {
+						this.data["Ax"][this.data.count-1]=this.bytesToInt16(line[27],line[28]);
+						this.data["Ay"][this.data.count-1]=this.bytesToInt16(line[29],line[30]);
+						this.data["Az"][this.data.count-1]=this.bytesToInt16(line[31],line[32]);
+					}
 					
 					if(this.data.count >= this.maxBufferedSamples) { 
 						this.data["Ax"].splice(0,5120);
@@ -229,7 +234,7 @@ export class cyton { //Contains structs and necessary functions/API calls to ana
 		let newLines = this.decode(this.buffer);
 		//console.log(newLines, this.data);
 		//console.log(this.data)
-		if(newLines !== false && newLines !== 0 && !isNaN(newLines) ) this.onDecodedCallback(newLines);
+		if(newLines !== false && newLines !== 0 && !isNaN(newLines) && ((this.mode === 'daisy' && this.odd === false) || this.mode !== 'daisy') ) this.onDecodedCallback(newLines);
 	}
 
 	async sendMsg(msg) {

@@ -12,11 +12,7 @@ class Blob{
 
     static id = String(Math.floor(Math.random()*1000000))
 
-    constructor(label, session) {
-
-        // Generic Plugin Attributes
-        this.label = label
-        this.session = session
+    constructor(info, graph) {
 
         // UI Identifier
         this.props = {
@@ -259,8 +255,8 @@ class Blob{
     }
 
     deinit = () => {
-
         this.renderer.setAnimationLoop( null );
+        this.props.container.remove()
     }
 
     responsive = () => {
