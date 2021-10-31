@@ -229,7 +229,7 @@ export class MultithreadedApplet {
         window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
-        // window.workers.runWorkerFunction('transferClassObject',{particleObj:this.particleObj},this.origin,this.worker1Id);
+        window.workers.runWorkerFunction('transferClassObject',{particleObj:this.particleObj},this.origin,this.worker1Id);
         // //window.workers.postToWorker({foo:'setValues',input:{particles:this.particleObj}},this.worker1Id,[this.particleObj]);
         // //add some custom functions to the threads
         // window.workers.runWorkerFunction(

@@ -206,7 +206,7 @@ export class CallbackManager {
                 let obj = JSON.parse(args[key]);
                 for(const prop in obj) {
                   let stringIsFunc = isFunction(obj[prop])
-                  console.log(prop,obj[prop])
+                  console.log('prop:',prop,'function text:',obj[prop]);
                   obj[prop] = stringIsFunc ? eval(obj[prop]) : obj[prop];
                   //console.log(prop, func,arrow);
                 }
