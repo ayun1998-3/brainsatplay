@@ -478,7 +478,8 @@ export class App {
             if (g.nodes) g.nodes.forEach(n => {
                 for (let k in n.params){
                     let value = n.params[k]
-                    let regex = new RegExp('([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) =>')
+                    value = value.toString()
+                    let regex = new RegExp('(|[a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\))\s*=>')
                     let func = (typeof value === 'string') ? value.substring(0,8) == 'function' : false
                     let arrow = (typeof value === 'string') ? regex.test(value) : false
                     n.params[k] = ( func || arrow) ? eval('('+value+')') : value;
