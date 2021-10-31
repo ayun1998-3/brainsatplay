@@ -195,10 +195,10 @@ export class CallbackManager {
               if(typeof args[key] === 'string') {
                 let obj = JSON.parse(args[key]);
                 for(const prop in obj) {
-                  let regex = new RegExp('([^\=].+) =>') //new RegExp('([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) =>')
+                  let regex = new RegExp('([^\=].+)\s*=>') //new RegExp('([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) =>')
                   let func = (typeof obj[prop] === 'string') ? obj[prop].substring(0,10).includes('function') : false;
                   let arrow = (typeof obj[prop] === 'string') ? regex.test(obj[prop]) : false;
-                  obj[prop] = ( func || arrow ) ? parseFunctionFromText(obj[prop]) : obj[prop];
+                  obj[prop] = ( func || arrow ) ? eval('('+obj[prop]+')') : obj[prop];
                 }
                 this[key] = obj; //variables will be accessible in functions as this.x or this['x']
                 if (this.threeUtil) this.threeUtil[key] = obj;
