@@ -102,8 +102,8 @@ export class WorkerManager {
 
         if (Array.isArray(input.input)){
         input.input = input.input.map(v => {
-          if (typeof v === 'function') return v.toString()
-          else return v
+          if (typeof v === 'function') return v.toString();
+          else return v;
         })} 
 
         if(id === null) {
