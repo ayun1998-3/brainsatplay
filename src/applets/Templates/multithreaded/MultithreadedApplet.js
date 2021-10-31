@@ -191,6 +191,7 @@ export class MultithreadedApplet {
 
         //add the worker manager if it's not on window
         if(!window.workers) { window.workers = new WorkerManager();}
+        this.origin = this.props.id;
 
         //add workers
         this.worker1Id      = window.workers.addWorker(); // Thread 1
@@ -199,6 +200,7 @@ export class MultithreadedApplet {
 
         //quick setup canvas worker with initial settings
         this.canvasWorker = new ThreadedCanvas(
+            this.origin,
             this.canvas,                                              //canvas element to transfer to offscreencanvas
             '2d',                                                     //canvas context setting
             this.draw,                                                //pass the custom draw function
@@ -208,7 +210,6 @@ export class MultithreadedApplet {
 
 
         //add some events to listen to thread results
-        this.origin = this.props.id;
         window.workers.events.addEvent('thread1process',this.origin,'add',this.worker1Id);
         window.workers.events.addEvent('thread2process',this.origin,'mul',this.worker2Id);
         window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
@@ -267,7 +268,7 @@ export class MultithreadedApplet {
 
         //once the render completes release the input
         window.workers.events.subEvent('render',(res)=>{
-            console.log('render thread event',res,Date.now());
+            //console.log('render thread event',res,Date.now());
         });
 
         //on input event send to thread 1

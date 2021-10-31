@@ -29,9 +29,9 @@ export class threeUtil {
 
     draw = () => { //frame draw function
         //do something
-        this.ANIMFRAMETIME = Date.now();
+        this.ANIMFRAMETIME = performance.now();
         this.defaultDraw();
-        this.ANIMFRAMETIME = Date.now() - this.ANIMFRAMETIME;
+        this.ANIMFRAMETIME = performance.now() - this.ANIMFRAMETIME;
         this.finished();
     }
 

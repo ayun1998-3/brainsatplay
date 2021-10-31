@@ -68,7 +68,7 @@ export class CallbackManager {
     this.animation = undefined;
     this.animtionFunc = undefined;
     this.animating = false;
-    this.ANIMFRAMETIME = Date.now(); //ms based on UTC stamps
+    this.ANIMFRAMETIME = performance.now(); //ms based on UTC stamps
     this.threeWorker = undefined;
 
 
@@ -197,15 +197,15 @@ export class CallbackManager {
           console.log(this.animationFunc.toString(), this.canvas, this.angle, this.angleChange, this.bgColor)
           let anim = () => {
             if (this.animating) {
-              this.ANIMFRAMETIME = Date.now();
+              this.ANIMFRAMETIME = performance.now();
               this.animationFunc(this);
+              this.ANIMFRAMETIME = performance.now() - this.ANIMFRAMETIME;
               let emitevent = this.checkEvents('render', origin);
               let dict = { foo: 'render', output: this.ANIMFRAMETIME, id: self.id, origin: origin };
               if (emitevent) {
                 this.events.emit('render', dict);
               }
               else {
-                this.ANIMFRAMETIME = Date.now() - this.ANIMFRAMETIME;
                 postMessage(dict);
               }
               requestAnimationFrame(anim);
@@ -238,9 +238,9 @@ export class CallbackManager {
       },
       {
         case: 'render', callback: (args) => { //runs the animation function
-          this.ANIMFRAMETIME = Date.now();
+          this.ANIMFRAMETIME = performance.now();
           this.animationFunc();
-          this.ANIMFRAMETIME = Date.now() - this.ANIMFRAMETIME;
+          this.ANIMFRAMETIME = performance.now() - this.ANIMFRAMETIME;
           return this.ANIMFRAMETIME;
         }
       },

@@ -2,9 +2,9 @@ import { WorkerManager } from "./Workers"
 
 //The animation should probably be an arrow function
 export class ThreadedCanvas {
-    constructor(canvas, context='2d', animation=undefined, setValues=undefined, workerId=undefined, transfer=undefined) { 
+    constructor(name= `canvas_${Math.round(Math.random()*100000)}`,canvas, context='2d', animation=undefined, setValues=undefined, workerId=undefined, transfer=undefined) { 
         if(!canvas) throw new Error('Input a canvas element or Id')
-        this.name = `canvas_${Math.round(Math.random()*100000)}`;
+        this.name = name;
         this.workerId = workerId;
         
         if(typeof canvas === 'string') canvas = document.getElementById(canvas);
