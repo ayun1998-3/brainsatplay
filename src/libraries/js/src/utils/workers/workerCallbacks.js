@@ -193,10 +193,17 @@ export class CallbackManager {
           if (typeof args === 'object') {
             Object.keys(args).forEach((key) => {
               if(typeof args[key] === 'string') {
-                let value = JSON.parse(args[key]);
-                console.log(value);
-                this[key] = value; //variables will be accessible in functions as this.x or this['x']
-                if (this.threeUtil) this.threeUtil[key] = value;
+                let obj = JSON.parse(args[key]);
+                for(const prop in obj) {
+                  let regex = new RegExp('([a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\)) =>')
+                  let func = (typeof obj[prop] === 'string') ? obj[prop].substring(0,10).includes('function') : false;
+                  let arrow = (typeof obj[prop] === 'string') ? regex.test(obj[prop]) : false;
+                  obj[prop] = ( func || arrow ) ? parseFunctionFromText(obj[prop]) : obj[prop];
+                  console.log(prop,func,arrow);
+                }
+                this[key] = obj; //variables will be accessible in functions as this.x or this['x']
+                if (this.threeUtil) this.threeUtil[key] = obj;
+                console.log(obj);
               }
             });
             return true;
