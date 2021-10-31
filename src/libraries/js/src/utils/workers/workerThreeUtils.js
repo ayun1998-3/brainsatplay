@@ -29,10 +29,10 @@ export class threeUtil {
 
     draw = () => { //frame draw function
         //do something
-        this.ANIMFRAMETIME = performance.now();
         this.defaultDraw();
         this.ANIMFRAMETIME = performance.now() - this.ANIMFRAMETIME;
         this.finished();
+        this.ANIMFRAMETIME = performance.now();
     }
 
     finished = () => {

@@ -197,11 +197,11 @@ export class CallbackManager {
           console.log(this.animationFunc.toString(), this.canvas, this.angle, this.angleChange, this.bgColor)
           let anim = () => {
             if (this.animating) {
-              this.ANIMFRAMETIME = performance.now();
               this.animationFunc(this);
               this.ANIMFRAMETIME = performance.now() - this.ANIMFRAMETIME;
               let emitevent = this.checkEvents('render', origin);
               let dict = { foo: 'render', output: this.ANIMFRAMETIME, id: self.id, origin: origin };
+              this.ANIMFRAMETIME = performance.now();
               if (emitevent) {
                 this.events.emit('render', dict);
               }
@@ -238,10 +238,10 @@ export class CallbackManager {
       },
       {
         case: 'render', callback: (args) => { //runs the animation function
-          this.ANIMFRAMETIME = performance.now();
           this.animationFunc();
-          this.ANIMFRAMETIME = performance.now() - this.ANIMFRAMETIME;
-          return this.ANIMFRAMETIME;
+          let time = performance.now() - this.ANIMFRAMETIME
+          this.ANIMFRAMETIME = performance.now();
+          return time;
         }
       },
       { case: 'xcor', callback: (args) => { return Math2.crosscorrelation(...args); } },
