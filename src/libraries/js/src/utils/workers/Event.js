@@ -43,7 +43,7 @@ export class Events {
     addEvent(eventName,origin=undefined,foo=undefined,workerId=undefined) {
         this.state.setState({[eventName]:undefined});
         if(this.workermanager !== undefined) {
-            if(origin !== undefined) {
+            if(origin !== undefined || foo !== undefined) {
                 if(workerId !== undefined) {
                     this.workermanager.postToWorker({origin:origin,foo:'addevent',input:[eventName,foo]},workerId);
                 } else {
@@ -72,7 +72,6 @@ export class Events {
         // run this in global scope of window or worker. since window.self = window, we're ok
             postMessage(output); //thread event 
         }
-
         this.state.setState({[eventName]:input}); //local event 
     }
 

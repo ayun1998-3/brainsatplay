@@ -214,20 +214,38 @@ export class MultithreadedApplet {
         window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
 
         //add some custom functions to the threads
-        window.workers.postToWorker({foo:'addfunc',input:['add',function add(args,origin){return args[0]+args[1];}.toString()],origin:this.origin},this.worker1Id);
+        window.workers.runWorkerFunction(
+            'addfunc',
+            [   
+                'add',
+                function add(args,origin){return args[0]+args[1];}.toString()
+            ],
+            this.origin,
+            this.worker1Id
+        );
+        
+        window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
         //window.workers.postToWorker({foo:'setValues',input:{particles:this.particles}},this.worker1Id,[this.particles]);
 
-        window.workers.postToWorker({foo:'addfunc',input:['mul',function mul(args,origin){return args[0]*args[1];}.toString()],origin:this.origin},this.worker2Id);
-
-        window.workers.postToWorker({foo:'list',input:[],origin:this.origin},this.worker1Id);
+        window.workers.runWorkerFunction(
+            'addfunc',
+            [
+                'mul',
+                function mul(args,origin){return args[0]*args[1];}.toString()
+            ],
+            this.origin,
+            this.worker2Id
+        );
+        
+                
         //thread 1 process initiated by button press
         window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
             console.log('thread1 event',res);
             if(typeof res.output === 'number')
             {
-                window.workers.postToWorker({foo:'mul',input:[this.increment,2],origin:this.origin},this.worker2Id);
+                window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
                 this.increment = res.output;
                 console.log('multiply by 2 on thread 2')
             }
@@ -239,10 +257,9 @@ export class MultithreadedApplet {
             console.log('thread2 event',res);
             if(typeof res.output === 'number')
             {
-                window.workers.postToWorker({foo:'setValues',input:{angleChange:res.output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
+                window.workers.runWorkerFunction('setValues',{angleChange:res.output},this.origin,this.canvasWorkerId);
                 element.innerHTML = res.output.toFixed(3);
-                //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
-                this.pushedUpdateToThreads = false;
+                 this.pushedUpdateToThreads = false;
                 console.log('set new angle change speed on render thread (3)')
             }
         });
@@ -257,7 +274,7 @@ export class MultithreadedApplet {
         document.getElementById(this.props.id+'input').onclick = () => {
             console.log('clicked', this.pushedUpdateToThreads); 
             if(this.pushedUpdateToThreads === false) {
-                window.workers.postToWorker({foo:'add',input:[this.increment,0.001],origin:this.origin},this.worker1Id);
+                window.workers.runWorkerFunction('add',[this.increment,0.001],this.origin,this.worker1Id);
                 console.log('add 0.001 on thread 1')
             }
         };

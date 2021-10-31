@@ -11,7 +11,7 @@ let counter = 0;
 self.onmessage = (event) => {
     // define gpu instance
   // console.log("worker executing...", event)
-  console.time("worker");
+  //console.time("worker");
   let input;
   if(event.data.output) input = event.data.output; //from events
   else input = event.data;
@@ -19,6 +19,7 @@ self.onmessage = (event) => {
 
   let dict;
   let output = undefined;
+  let emitted = false;
   if(typeof input === 'object'){
     if(input.canvas !== undefined) { //if a new canvas is sent (event.data.canvas = htmlCanvasElement.transferControlToOffscreen()).
       manager.canvas = input.canvas; 
@@ -38,7 +39,7 @@ self.onmessage = (event) => {
   
     dict = {output: output, foo: input.foo, origin: input.origin, id:id, counter:counter};
 
-    if(eventSetting) manager.events.emit(eventSetting.eventName,dict); //if the origin and foo match an event setting on the thread, this emits output as an event
+    if(eventSetting) {manager.events.emit(eventSetting.eventName,dict); emitted = true;} //if the origin and foo match an event setting on the thread, this emits output as an event
     else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         self.postMessage(dict);
     } 
@@ -52,10 +53,10 @@ self.onmessage = (event) => {
       ctx.strokeRect(50, 50, 50, 50);
     }`]);
   */
+  console.log(event.data)
+  if(!emitted) manager.events.workerCallback(event.data); //checks for eventName tag
 
-  manager.events.workerCallback(event.data); //checks for eventName tag
-
-  console.timeEnd("worker");
+  //console.timeEnd("worker");
   return dict;
 }
 

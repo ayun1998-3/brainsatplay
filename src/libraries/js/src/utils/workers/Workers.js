@@ -79,6 +79,13 @@ export class WorkerManager {
       }
     }
 
+    runWorkerFunction(functionName,args=[],origin,id,transfer=undefined) {
+        if(functionName) {
+          let dict = {foo:functionName, args:args, origin:origin};
+          this.postToWorker(dict,id,transfer);
+        }
+    }
+
     postToWorker = (input, id = null, transfer=undefined) => {
 
         if (Array.isArray(input.input)){
