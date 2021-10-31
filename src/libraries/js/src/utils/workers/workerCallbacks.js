@@ -199,7 +199,6 @@ export class CallbackManager {
                   let func = (typeof obj[prop] === 'string') ? obj[prop].substring(0,10).includes('function') : false;
                   let arrow = (typeof obj[prop] === 'string') ? regex.test(obj[prop]) : false;
                   obj[prop] = ( func || arrow ) ? eval(obj[prop]) : obj[prop];
-                  console.log(prop, func,arrow);
                 }
                 this[key] = obj; //variables will be accessible in functions as this.x or this['x']
                 if (this.threeUtil) this.threeUtil[key] = obj;
