@@ -23,6 +23,14 @@ function buildNewFunction(head, body) {
   return newFunc;
 }
 
+function isFunction(string) {
+  let regex = new RegExp('(|[a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\))\s*=>')
+  let func = (typeof string === 'string') ? string.substring(0,10).includes('function') : false;
+  let arrow = (typeof string === 'string') ? regex.test(string) : false;
+  if(func || arrow) return true;
+  else return false;
+}
+
 function parseFunctionFromText(method) {
   //Get the text inside of a function (regular or arrow);
   let getFunctionBody = (methodString) => {
@@ -188,18 +196,16 @@ export class CallbackManager {
           } else return false;
         }
       },
-      {
+      { //parses an object containing function methods
         case: 'transferClassObject', callback: (args) => {
           if (typeof args === 'object') {
             Object.keys(args).forEach((key) => {
               if(typeof args[key] === 'string') {
                 let obj = JSON.parse(args[key]);
                 for(const prop in obj) {
-                  let regex = new RegExp('(|[a-zA-Z]\w*|\([a-zA-Z]\w*(,\s*[a-zA-Z]\w*)*\))\s*=>')
-                  let func = (typeof obj[prop] === 'string') ? obj[prop].substring(0,10).includes('function') : false;
-                  let arrow = (typeof obj[prop] === 'string') ? regex.test(obj[prop]) : false;
-                  obj[prop] = ( func || arrow ) ? eval(obj[prop]) : obj[prop];
-                  console.log(prop, func,arrow);
+                  let stringIsFunc = isFunction(obj[prop])
+                  obj[prop] = stringIsFunc ? eval(obj[prop]) : obj[prop];
+                  //console.log(prop, func,arrow);
                 }
                 this[key] = obj; //variables will be accessible in functions as this.x or this['x']
                 if (this.threeUtil) this.threeUtil[key] = obj;
