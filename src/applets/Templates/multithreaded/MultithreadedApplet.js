@@ -229,37 +229,37 @@ export class MultithreadedApplet {
         window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
-        window.workers.runWorkerFunction('transferClassObject',{particleObj:this.particleObj},this.origin,this.worker1Id);
-        //window.workers.postToWorker({foo:'setValues',input:{particles:this.particleObj}},this.worker1Id,[this.particleObj]);
-        //add some custom functions to the threads
-        window.workers.runWorkerFunction(
-            'addfunc',
-            [   
-                'particleSetup',
-                function particleStep(args,origin,self){
-                    console.log(self.particleObj)
-                    self.particleObj.setupRules();
-                    console.log(self.particleObj.particles)
-                    return self.particleObj.particles;
-                }.toString()
-            ],
-            this.origin,
-            this.worker1Id
-        );
-        //add some custom functions to the threads
-        window.workers.runWorkerFunction(
-            'addfunc',
-            [   
-                'particleStep',
-                function particleStep(args,origin,self){
-                    self.particleObj.lastFrame = args[0];
-                    self.particleObj.frame();
-                    return self.particleObj.particles;
-                }.toString()
-            ],
-            this.origin,
-            this.worker1Id
-        );
+        // window.workers.runWorkerFunction('transferClassObject',{particleObj:this.particleObj},this.origin,this.worker1Id);
+        // //window.workers.postToWorker({foo:'setValues',input:{particles:this.particleObj}},this.worker1Id,[this.particleObj]);
+        // //add some custom functions to the threads
+        // window.workers.runWorkerFunction(
+        //     'addfunc',
+        //     [   
+        //         'particleSetup',
+        //         function particleStep(args,origin,self){
+        //             console.log(self.particleObj)
+        //             self.particleObj.setupRules();
+        //             console.log(self.particleObj.particles)
+        //             return self.particleObj.particles;
+        //         }.toString()
+        //     ],
+        //     this.origin,
+        //     this.worker1Id
+        // );
+        // //add some custom functions to the threads
+        // window.workers.runWorkerFunction(
+        //     'addfunc',
+        //     [   
+        //         'particleStep',
+        //         function particleStep(args,origin,self){
+        //             self.particleObj.lastFrame = args[0];
+        //             self.particleObj.frame();
+        //             return self.particleObj.particles;
+        //         }.toString()
+        //     ],
+        //     this.origin,
+        //     this.worker1Id
+        // );
 
         //window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
         //window.workers.runWorkerFunction('particleStep',[7],this.origin,this.worker1Id);
