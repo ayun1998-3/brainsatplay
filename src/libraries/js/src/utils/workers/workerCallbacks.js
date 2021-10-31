@@ -204,12 +204,12 @@ export class CallbackManager {
                 let obj = JSON.parse(args[key]);
                 for(const prop in obj) {
                   let stringIsFunc = isFunction(obj[prop])
-                  obj[prop] = stringIsFunc ? eval(obj[prop]) : obj[prop];
+                  console.log(prop,obj[prop])
+                  obj[prop] = stringIsFunc ? parseFunctionFromText(obj[prop]) : obj[prop];
                   //console.log(prop, func,arrow);
                 }
                 this[key] = obj; //variables will be accessible in functions as this.x or this['x']
                 if (this.threeUtil) this.threeUtil[key] = obj;
-                console.log(obj);
               }
             });
             return true;
@@ -401,8 +401,8 @@ export class CallbackManager {
     if(!event.data) return output;
     this.callbacks.find((o, i) => {
       if (o.case === event.data.foo || o.case === event.data.case) {
-        if (event.data.input) output = o.callback(event.data.input, event.data.origin);
-        else if (event.data.args) output = o.callback(event.data.args, event.data.origin);
+        if (event.data.input) output = o.callback(event.data.input, event.data.origin, this);
+        else if (event.data.args) output = o.callback(event.data.args, event.data.origin, this);
         return true;
       }
     });

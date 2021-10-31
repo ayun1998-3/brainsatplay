@@ -50,7 +50,7 @@ export class MultithreadedApplet {
         this.increment = 0;
         this.res = 0;
 
-        this.particles = new DynamicParticles(undefined,undefined,false,false);
+        this.particleObj = new DynamicParticles(undefined,undefined,false,false);
     }
 
     //---------------------------------
@@ -211,7 +211,7 @@ export class MultithreadedApplet {
 
 
         //add some events to listen to thread results
-        window.workers.events.addEvent('thread1process',this.origin,'add',this.worker1Id);
+        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
         window.workers.events.addEvent('thread2process',this.origin,'mul',this.worker2Id);
         window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
 
@@ -229,8 +229,40 @@ export class MultithreadedApplet {
         window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
-        window.workers.runWorkerFunction('transferClassObject',{particles:this.particles},this.origin,this.worker1Id);
-        //window.workers.postToWorker({foo:'setValues',input:{particles:this.particles}},this.worker1Id,[this.particles]);
+        window.workers.runWorkerFunction('transferClassObject',{particleObj:this.particleObj},this.origin,this.worker1Id);
+        //window.workers.postToWorker({foo:'setValues',input:{particles:this.particleObj}},this.worker1Id,[this.particleObj]);
+        //add some custom functions to the threads
+        window.workers.runWorkerFunction(
+            'addfunc',
+            [   
+                'particleSetup',
+                function particleStep(args,origin,self){
+                    console.log(self.particleObj)
+                    self.particleObj.setupRules();
+                    console.log(self.particleObj.particles)
+                    return self.particleObj.particles;
+                }.toString()
+            ],
+            this.origin,
+            this.worker1Id
+        );
+        //add some custom functions to the threads
+        window.workers.runWorkerFunction(
+            'addfunc',
+            [   
+                'particleStep',
+                function particleStep(args,origin,self){
+                    self.particleObj.lastFrame = args[0];
+                    self.particleObj.frame();
+                    return self.particleObj.particles;
+                }.toString()
+            ],
+            this.origin,
+            this.worker1Id
+        );
+
+        //window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
+        //window.workers.runWorkerFunction('particleStep',[7],this.origin,this.worker1Id);
 
         window.workers.runWorkerFunction(
             'addfunc',

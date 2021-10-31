@@ -84,10 +84,11 @@ export class WorkerManager {
           if(functionName === 'transferClassObject') {
             if(typeof args === 'object' && !Array.isArray(args)) {
               for(const prop in args) {
-                if(typeof args[prop] === 'object' && !Array.isArray(args)) {
-                  for(const argprop in args[prop]) {
+                if(typeof args[prop] === 'object' && !Array.isArray(args[prop])) {
+                  Object.getOwnPropertyNames(args[prop]).concat(Object.getOwnPropertyNames(args[prop].__proto__)).forEach((argprop) => {
+                    console.log(argprop)
                     if(typeof args[prop][argprop] === 'function') args[prop][argprop] = args[prop][argprop].toString();
-                  }
+                  });
                 }
                 args[prop] = JSON.stringify(args[prop]);
               }

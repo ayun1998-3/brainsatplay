@@ -14,6 +14,8 @@ export class DynamicParticles {
         this.defaultCanvas=defaultCanvas;
         this.ctx = undefined;
         this.looping = false;
+        this.currFrame = 0; this.lastFrame = 0;
+        this.ticks = 0;
 
         this.startingRules = rules;
 
@@ -116,15 +118,20 @@ export class DynamicParticles {
             window.addEventListener('resize',this.onresize());
         }
 
-        rules.forEach((rule,i) => {
-            //console.log(rule)
-            let group = this.addGroup(rule);
-        });
+        this.setupRules(rules);
 
         if(!this.looping) {
             this.looping = true;
             this.loop();
         }
+    }
+
+    setupRules(rules=this.startingRules) {
+        rules.forEach((rule,i) => {
+            //console.log(rule)
+            let group = this.addGroup(rule);
+        });
+        return this.particles;
     }
 
     deinit = () => {
@@ -733,11 +740,9 @@ export class DynamicParticles {
         }
     }
 
-    loop = (lastFrame=performance.now()*0.001,ticks=0) => {
-        if(this.looping === false) return; 
-        
-        let currFrame = performance.now()*0.001;
-        let timeStep = currFrame - lastFrame;
+    frame = () => {
+        this.currFrame = performance.now()*0.001;
+        let timeStep = this.currFrame - this.lastFrame;
         //console.log(timeStep,);
         if(this.defaultCanvas) {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -747,7 +752,7 @@ export class DynamicParticles {
             group.timestepFunc(group,timeStep);
             
             if(isNaN(group.particles[0].position.x)) {
-                console.log(timeStep,ticks,group.particles[0]);
+                console.log(timeStep,this.ticks,group.particles[0]);
                 this.looping = false;
                 return;
             }
@@ -759,8 +764,14 @@ export class DynamicParticles {
         //     this.particles[0].particles[0].velocity
         //     );
 
-        let tick = ticks+1;
-        setTimeout(()=>{requestAnimationFrame(()=>{this.loop(currFrame,tick)})},15);
+        this.ticks = this.ticks+1;
+
+    }
+
+    loop = () => {
+        if(this.looping === false) return; 
+        this.frame();
+        setTimeout(()=>{requestAnimationFrame(()=>{this.loop()})},15);
     }
 
 }
