@@ -37,12 +37,12 @@ export class threeUtil {
 
     finished = () => {
         let dict = {foo:'render',output:this.ANIMFRAMETIME,id:self.id};
-        if(emitevent && self.manager) {
-            self.manager.events.emit('render',dict);
+        if(self.manager) {
+            let emitevent = self.manager.checkEvents('render');
+            if(emitevent) self.manager.events.emit('render',dict);
+            else postMessage(dict);
         }
-        else {
-            postMessage(dict);
-        }
+        else postMessage(dict);
     }
 
     clear = () => {

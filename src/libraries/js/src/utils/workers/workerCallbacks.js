@@ -169,7 +169,7 @@ export class CallbackManager{
               if(this.animating) {
                 this.ANIMFRAMETIME = Date.now();
                 this.animationFunc();
-                let emitevent = this.checkEvents(undefined,'origin');
+                let emitevent = this.checkEvents('render',origin);
                 let dict = {foo:'render',output:this.ANIMFRAMETIME,id:self.id,origin:origin};
                 if(emitevent) {
                   this.events.emit('render',dict);
@@ -304,13 +304,8 @@ export class CallbackManager{
 
     checkEvents(foo,origin) {
       return this.eventSettings.find((o)=>{
-        if(o.origin && origin) {
-          if(o.origin === origin) {
-            if(o.foo && foo) {
-              if(o.foo === foo) return true;
-              else return false;
-            } else return true;
-          } else return false;
+        if((o.origin && origin) || (o.foo && foo)) {
+          return true;
         } else return false;
       });
     }

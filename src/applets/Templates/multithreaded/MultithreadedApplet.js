@@ -42,7 +42,7 @@ export class MultithreadedApplet {
         this.worker2Id;
         this.worker2Waiting = false;
         this.canvasWorkerId;
-        this.canvasWorkerWaiting = false;
+        this.pushedUpdateToThreads = false;
 
         this.thread1lastoutput = 1;
         this.increment = 0.001;
@@ -73,22 +73,7 @@ export class MultithreadedApplet {
             this.canvas = document.getElementById(props.id+"canvas");
             this.ctx = this.canvas.getContext('2d');
 
-            document.getElementById(props.id+'input').onclick = () => {
-                
-                if(this.canvasWorkerWaiting === false) { 
-                    window.workers.postToWorker({foo:'add',input:[this.increment,0.001]});
-                }
-            };
-
-            this.canvasWorker = new ThreadedCanvas(
-                this.canvas,
-                '2d',
-                this.draw().toString(),
-                {angle:0,angleChange:0.000,bgColor:'black'}, //'this' values, canvas and context are also available under 'this'
-                this.canvasWorkerId
-            );    // This also gets a worker
-
-            this.canvasWorker.startAnimation();
+            this.setupWorkerStuff();
 
         }
 
@@ -103,38 +88,6 @@ export class MultithreadedApplet {
 
         if(this.settings.length > 0) { this.configure(this.settings); } //You can give the app initialization settings if you want via an array.
 
-
-        if(!window.workers) { window.workers = new WorkerManager();}
-
-        this.worker1Id = window.workers.addWorker(); // Thread 1
-        this.worker2Id = window.workers.addWorker(); // Thread 2
-        this.canvasWorkerId = window.workers.addWorker(); // Thread 3
-
-        this.origin = this.props.id;
-
-        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
-        window.workers.events.addEvent('thread2process',this.origin,undefined,this.worker2Id);
-
-        window.workers.postToWorker({foo:'addfunc',input:['add',function add(a,b){return a+b;}.toString()],origin:this.origin},this.worker1Id);
-        window.workers.postToWorker({foo:'addfunc',input:['mul',function mul(a,b){return a*b;}.toString()],origin:this.origin},this.worker1Id);
-        //on input event send to thread 1
-
-        window.workers.events.subEvent('thread1process',(output) => { //send thread1 result to thread 2
-            console.log('thread1',output);
-            this.canvasWorkerWaiting = true;
-            window.workers.postToWorker({foo:'mul',input:[increment,2]},this.worker2Id);
-            this.increment = output;
-        });
-
-        window.workers.events.subEvent('thread2process',(output) => { //send thread2 result to canvas thread to update visual settings
-            console.log('thread2',output);
-            window.workers.postToWorker({foo:'setValues',input:{angleChange:output}},this.canvasWorkerId);
-        });
-
-        window.workers.events.subEvent('render',(output)=>{
-            console.log('output',output);
-            this.canvasWorkerWaiting = false;
-        });
 
         //Add whatever else you need to initialize
         this.looping = true;
@@ -151,6 +104,8 @@ export class MultithreadedApplet {
                 window.audio.osc[0].stop(0);
             }
         }
+
+        this.cleanupWorkers();
 
         this.AppletHTML.deleteNode();
         //Be sure to unsubscribe from state if using it and remove any extra event listeners
@@ -224,6 +179,82 @@ export class MultithreadedApplet {
         this.ctx.fill();
         //console.log(this.ctx, this.cColor, this.bgColor)
         
+    }
+
+
+    setupWorkerStuff() {
+
+        //add the worker manager if it's not on window
+        if(!window.workers) { window.workers = new WorkerManager();}
+
+        //add workers
+        this.worker1Id = window.workers.addWorker(); // Thread 1
+        this.worker2Id = window.workers.addWorker(); // Thread 2
+        this.canvasWorkerId = window.workers.addWorker(); // Thread 3
+
+        //quick setup canvas worker with initial settings
+        this.canvasWorker = new ThreadedCanvas(
+            this.canvas,                                 //canvas element to transfer to offscreencanvas
+            '2d',                                        //canvas context setting
+            this.draw().toString(),                      //pass the custom draw function as a string
+            {angle:0,angleChange:0.000,bgColor:'black'}, //'this' values, canvas and context/ctx are also available under 'this', these can be mutated like uniforms
+            this.canvasWorkerId                          //optional worker id to use, otherwise it sets up its own worker
+        );    // This also gets a worker
+
+
+        //add some events to listen to thread results
+        this.origin = this.props.id;
+        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
+        window.workers.events.addEvent('thread2process',this.origin,undefined,this.worker2Id);
+        window.workers.events.addEvent('render',this.origin,'render',this.canvasWorkerId);
+
+        //add some custom functions to the threads
+        window.workers.postToWorker({foo:'addfunc',input:['add',function add(a,b){return a+b;}.toString()],origin:this.origin},this.worker1Id);
+        window.workers.postToWorker({foo:'addfunc',input:['mul',function mul(a,b){return a*b;}.toString()],origin:this.origin},this.worker1Id);
+
+        //thread 1 process initiated by button press
+        window.workers.events.subEvent('thread1process',(output) => { //send thread1 result to thread 2
+            console.log('thread1',output);
+            window.workers.postToWorker({foo:'mul',input:[increment,2]},this.worker2Id);
+            this.increment = output;
+        });
+
+        //send thread2 result to canvas thread to update visual settings
+        window.workers.events.subEvent('thread2process',(output) => { 
+            console.log('thread2',output);
+            window.workers.postToWorker({foo:'setValues',input:{angleChange:output}},this.canvasWorkerId); //set one of the values the draw function references
+            //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
+        });
+
+        //once the render completes release the input
+        window.workers.events.subEvent('render',(output)=>{
+            console.log('rendered',output);
+            this.pushingUpdateToThreads = false;
+        });
+
+        //on input event send to thread 1
+        document.getElementById(this.props.id+'input').onclick = () => {
+            if(this.pushingUpdateToThreads === false) { 
+                window.workers.postToWorker({foo:'add',input:[this.increment,0.001]});
+                this.pushingUpdateToThreads = true;
+            }
+        };
+
+        this.canvasWorker.startAnimation(); //run animationFrame loop on the worker
+    }
+
+    animate() {
+        this.canvasWorker.startAnimation(); //start the worker animation loop
+    }
+
+    stop() {
+        this.canvasWorker.stopAnimation(); //stop the worker animation loop
+    }
+
+    cleanupWorkers() {
+        window.workers.terminate(this.worker1Id);
+        window.workers.terminate(this.worker2Id);
+        window.workers.terminate(this.canvasWorkerId);
     }
 
 } 

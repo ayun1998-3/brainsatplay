@@ -62,7 +62,7 @@ export class WorkerManager {
         }
     }
 
-    addCallback(name='',callback=(msg)=>{}) {
+    addCallback(name='',callback=(args)=>{}) {
       if(name.length > 0 && !this.workerResponses.find((o)=>{if(typeof o === 'object') {if(o.name === name) return true;}})) {
         this.workerResponses.push({name:'',callback:callback});
       }
