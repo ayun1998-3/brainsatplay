@@ -198,7 +198,7 @@ export class CallbackManager {
           let anim = () => {
             if (this.animating) {
               this.ANIMFRAMETIME = Date.now();
-              this.animationFunc();
+              this.animationFunc(this);
               let emitevent = this.checkEvents('render', origin);
               let dict = { foo: 'render', output: this.ANIMFRAMETIME, id: self.id, origin: origin };
               if (emitevent) {
@@ -221,6 +221,7 @@ export class CallbackManager {
             }, 300);
           } else {
             this.animating = true;
+            console.log('begin animation')
             this.animation = requestAnimationFrame(anim);
           }
           return true;

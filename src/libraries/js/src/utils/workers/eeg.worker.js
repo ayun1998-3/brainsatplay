@@ -15,7 +15,7 @@ self.onmessage = (event) => {
   let input;
   if(event.data.output) input = event.data.output; //from events
   else input = event.data;
-  console.log(input)
+  //console.log(input)
 
   let dict;
   let output = undefined;

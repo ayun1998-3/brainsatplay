@@ -36,7 +36,8 @@ export class MultithreadedApplet {
         this.ctx = null;
         this.angle = 0;
         this.angleChange = 0.001;
-        this.bgColor = 'black'
+        this.bgColor = 'black';
+        this.cColor = 'red';
 
         this.worker1Id;
         this.worker1Waiting = false;
@@ -157,30 +158,30 @@ export class MultithreadedApplet {
         }
     }
 
-    draw = () => {
-        let cWidth = this.canvas.width;
-        let cHeight = this.canvas.height;
+    draw = (self) => {
+        let cWidth = self.canvas.width;
+        let cHeight = self.canvas.height;
            // style the background
-        let gradient = this.ctx.createRadialGradient(cWidth*0.5,cHeight*0.5,2,cWidth*0.5,cHeight*0.5,100*this.angle*this.angle);
+        let gradient = self.ctx.createRadialGradient(cWidth*0.5,cHeight*0.5,2,cWidth*0.5,cHeight*0.5,100*self.angle*self.angle);
         gradient.addColorStop(0,"purple");
         gradient.addColorStop(0.25,"dodgerblue");
         gradient.addColorStop(0.32,"skyblue");
-        gradient.addColorStop(1,this.bgColor ?? 'black');
-        this.ctx.fillStyle = gradient;
-        this.ctx.fillRect(0,0,cWidth,cHeight);
+        gradient.addColorStop(1,self.bgColor ?? 'black');
+        self.ctx.fillStyle = gradient;
+        self.ctx.fillRect(0,0,cWidth,cHeight);
         
         // draw the circle
-        this.ctx.beginPath();
+        self.ctx.beginPath();
 
-        this.angle += this.angleChange;
+        self.angle += self.angleChange;
 
-        let radius = cHeight*0.04 + (cHeight*0.46) * Math.abs(Math.cos(this.angle));
-        this.ctx.arc(cWidth*0.5, cHeight*0.5, radius, 0, Math.PI * 2, false);
-        this.ctx.closePath();
+        let radius = cHeight*0.04 + (cHeight*0.46) * Math.abs(Math.cos(self.angle));
+        self.ctx.arc(cWidth*0.5, cHeight*0.5, radius, 0, Math.PI * 2, false);
+        self.ctx.closePath();
         
         // color in the circle
-        this.ctx.fillStyle = this.cColor;
-        this.ctx.fill();
+        self.ctx.fillStyle = self.cColor;
+        self.ctx.fill();
         //console.log(this.ctx, this.cColor, this.bgColor)
         
     }
@@ -200,7 +201,7 @@ export class MultithreadedApplet {
             this.canvas,                                 //canvas element to transfer to offscreencanvas
             '2d',                                        //canvas context setting
             this.draw,                      //pass the custom draw function as a string
-            {angle:0,angleChange:0.000,bgColor:'black'}, //'this' values, canvas and context/ctx are also available under 'this', these can be mutated like uniforms
+            {angle:0,angleChange:0.000,bgColor:'black',cColor:'red'}, //'this' values, canvas and context/ctx are also available under 'this', these can be mutated like uniforms
             this.canvasWorkerId                          //optional worker id to use, otherwise it sets up its own worker
         );    // This also gets a worker
 
@@ -237,7 +238,7 @@ export class MultithreadedApplet {
             console.log('thread2 event',output);
             if(typeof output.output === 'number')
             {
-                window.workers.postToWorker({foo:'setValues',input:{angleChange:output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
+                window.workers.postToWorker({foo:'setValues',input:{angleChange:output.output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
                 element.innerHTML = output.output;
                 //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
                 this.pushedUpdateToThreads = false;
