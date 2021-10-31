@@ -118,6 +118,7 @@ export class MultithreadedApplet {
 
     //Responsive UI update, for resizing and responding to new connections detected by the UI manager
     responsive() {
+        window.workers?.postToWorker({foo:'resizecanvas',input:[this.AppletHTML.node.clientWidth,this.AppletHTML.node.clientHeight],origin:this.props.id},this.canvasWorkerId);
         // this.canvas.width = this.AppletHTML.node.clientWidth;
         // this.canvas.height = this.AppletHTML.node.clientHeight;
         // this.canvas.style.width = this.AppletHTML.node.clientWidth;
@@ -239,7 +240,7 @@ export class MultithreadedApplet {
             if(typeof output.output === 'number')
             {
                 window.workers.postToWorker({foo:'setValues',input:{angleChange:output.output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
-                element.innerHTML = output.output;
+                element.innerHTML = output.output.toFixed(3);
                 //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
                 this.pushedUpdateToThreads = false;
                 console.log('set new angle change speed on render thread (3)')
