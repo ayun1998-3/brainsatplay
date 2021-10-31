@@ -194,7 +194,7 @@ export class CallbackManager {
         }
       },
       {case: 'startAnimation', callback: (args, origin) => {
-          console.log(this.animationFunc.toString(), this.canvas)
+          console.log(this.animationFunc.toString(), this.canvas, this.angle, this.angleChange, this.bgColor)
           let anim = () => {
             if (this.animating) {
               this.ANIMFRAMETIME = Date.now();
@@ -216,12 +216,10 @@ export class CallbackManager {
             this.animating = false;
             cancelAnimationFrame(this.animation);
             setTimeout(() => {
-              this.checkCallbacks('setupAnim');
               this.animating = true;
               this.animation = requestAnimationFrame(anim);
             }, 300);
           } else {
-            this.checkCallbacks('setupAnim');
             this.animating = true;
             this.animation = requestAnimationFrame(anim);
           }
