@@ -199,11 +199,11 @@ export class MultithreadedApplet {
 
         //quick setup canvas worker with initial settings
         this.canvasWorker = new ThreadedCanvas(
-            this.canvas,                                 //canvas element to transfer to offscreencanvas
-            '2d',                                        //canvas context setting
-            this.draw,                      //pass the custom draw function as a string
-            {angle:0,angleChange:0.000,bgColor:'black',cColor:'red'}, //'this' values, canvas and context/ctx are also available under 'this', these can be mutated like uniforms
-            this.canvasWorkerId                          //optional worker id to use, otherwise it sets up its own worker
+            this.canvas,                                              //canvas element to transfer to offscreencanvas
+            '2d',                                                     //canvas context setting
+            this.draw,                                                //pass the custom draw function
+            {angle:0,angleChange:0.000,bgColor:'black',cColor:'red'}, //'this' values, canvas and context/ctx are also available under 'self' for now, these can be mutated like uniforms with the 'setValues' command
+            this.canvasWorkerId                                       //optional worker id to use, otherwise it sets up its own worker
         );    // This also gets a worker
 
 
