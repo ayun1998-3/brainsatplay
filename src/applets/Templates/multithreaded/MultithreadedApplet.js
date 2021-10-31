@@ -223,24 +223,24 @@ export class MultithreadedApplet {
 
         window.workers.postToWorker({foo:'list',input:[],origin:this.origin},this.worker1Id);
         //thread 1 process initiated by button press
-        window.workers.events.subEvent('thread1process',(output) => { //send thread1 result to thread 2
-            console.log('thread1 event',output);
-            if(typeof output.output === 'number')
+        window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
+            console.log('thread1 event',res);
+            if(typeof res.output === 'number')
             {
                 window.workers.postToWorker({foo:'mul',input:[this.increment,2],origin:this.origin},this.worker2Id);
-                this.increment = output.output;
+                this.increment = res.output;
                 console.log('multiply by 2 on thread 2')
             }
         });
 
         let element = document.getElementById(this.props.id+'res');
         //send thread2 result to canvas thread to update visual settings
-        window.workers.events.subEvent('thread2process',(output) => { 
-            console.log('thread2 event',output);
-            if(typeof output.output === 'number')
+        window.workers.events.subEvent('thread2process',(res) => { 
+            console.log('thread2 event',res);
+            if(typeof res.output === 'number')
             {
-                window.workers.postToWorker({foo:'setValues',input:{angleChange:output.output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
-                element.innerHTML = output.output.toFixed(3);
+                window.workers.postToWorker({foo:'setValues',input:{angleChange:res.output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
+                element.innerHTML = res.output.toFixed(3);
                 //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
                 this.pushedUpdateToThreads = false;
                 console.log('set new angle change speed on render thread (3)')
@@ -249,8 +249,8 @@ export class MultithreadedApplet {
 
 
         //once the render completes release the input
-        window.workers.events.subEvent('render',(output)=>{
-            console.log('render thread event',output);
+        window.workers.events.subEvent('render',(res)=>{
+            console.log('render thread event',res);
         });
 
         //on input event send to thread 1
