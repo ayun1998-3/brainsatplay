@@ -2,6 +2,7 @@ import {Session} from '../../../libraries/js/src/Session'
 import {DOMFragment} from '../../../libraries/js/src/ui/DOMFragment'
 import { WorkerManager } from '../../../libraries/js/src/utils/workers/Workers';
 import { ThreadedCanvas } from '../../../libraries/js/src/utils/workers/ThreadedCanvas'
+import {DynamicParticles} from '../../../libraries/js/src/utils/graphics/DynamicParticles'
 
 import * as settingsFile from './settings'
 
@@ -23,7 +24,7 @@ export class MultithreadedApplet {
         //------------------------
 
         this.props = { //Changes to this can be used to auto-update the HTML and track important UI values 
-            id: String(Math.floor(Math.random()*1000000)), //Keep random ID
+            id: `${'applet'}${Math.floor(Math.random()*1000000)}`, //Keep random ID
             //Add whatever else
         };
 
@@ -45,8 +46,10 @@ export class MultithreadedApplet {
         this.pushedUpdateToThreads = false;
 
         this.thread1lastoutput = 1;
-        this.increment = 0.001;
+        this.increment = 0;
+        this.res = 0;
 
+        //this.particles = new DynamicParticles();
     }
 
     //---------------------------------
@@ -62,6 +65,7 @@ export class MultithreadedApplet {
             <div id=${props.id}>
                 <div style='position:absolute;'>
                     <button id='${props.id}input'>Increment</button>
+                    <div id='${props.id}res'>${this.res}</div>
                 </div>
                 <canvas id='${props.id}canvas' style='z-index:1;'></canvas>
             </div>
@@ -71,7 +75,7 @@ export class MultithreadedApplet {
         //HTML UI logic setup. e.g. buttons, animations, xhr, etc.
         let setupHTML = (props=this.props) => {
             this.canvas = document.getElementById(props.id+"canvas");
-            this.ctx = this.canvas.getContext('2d');
+            //this.ctx = this.canvas.getContext('2d');
 
             this.setupWorkerStuff();
 
@@ -113,10 +117,10 @@ export class MultithreadedApplet {
 
     //Responsive UI update, for resizing and responding to new connections detected by the UI manager
     responsive() {
-        this.canvas.width = this.AppletHTML.node.clientWidth;
-        this.canvas.height = this.AppletHTML.node.clientHeight;
-        this.canvas.style.width = this.AppletHTML.node.clientWidth;
-        this.canvas.style.height = this.AppletHTML.node.clientHeight;
+        // this.canvas.width = this.AppletHTML.node.clientWidth;
+        // this.canvas.height = this.AppletHTML.node.clientHeight;
+        // this.canvas.style.width = this.AppletHTML.node.clientWidth;
+        // this.canvas.style.height = this.AppletHTML.node.clientHeight;
 
         //this.draw();
     }
@@ -181,22 +185,21 @@ export class MultithreadedApplet {
         
     }
 
-
     setupWorkerStuff() {
 
         //add the worker manager if it's not on window
         if(!window.workers) { window.workers = new WorkerManager();}
 
         //add workers
-        this.worker1Id = window.workers.addWorker(); // Thread 1
-        this.worker2Id = window.workers.addWorker(); // Thread 2
-        this.canvasWorkerId = window.workers.addWorker(); // Thread 3
+        this.worker1Id      = window.workers.addWorker(); // Thread 1
+        this.worker2Id      = window.workers.addWorker(); // Thread 2
+        this.canvasWorkerId = window.workers.addWorker(); // Thread 3 - render thread
 
         //quick setup canvas worker with initial settings
         this.canvasWorker = new ThreadedCanvas(
             this.canvas,                                 //canvas element to transfer to offscreencanvas
             '2d',                                        //canvas context setting
-            this.draw().toString(),                      //pass the custom draw function as a string
+            this.draw,                      //pass the custom draw function as a string
             {angle:0,angleChange:0.000,bgColor:'black'}, //'this' values, canvas and context/ctx are also available under 'this', these can be mutated like uniforms
             this.canvasWorkerId                          //optional worker id to use, otherwise it sets up its own worker
         );    // This also gets a worker
@@ -204,39 +207,56 @@ export class MultithreadedApplet {
 
         //add some events to listen to thread results
         this.origin = this.props.id;
-        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
-        window.workers.events.addEvent('thread2process',this.origin,undefined,this.worker2Id);
-        window.workers.events.addEvent('render',this.origin,'render',this.canvasWorkerId);
+        window.workers.events.addEvent('thread1process',this.origin,'add',this.worker1Id);
+        window.workers.events.addEvent('thread2process',this.origin,'mul',this.worker2Id);
+        window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
 
         //add some custom functions to the threads
-        window.workers.postToWorker({foo:'addfunc',input:['add',function add(a,b){return a+b;}.toString()],origin:this.origin},this.worker1Id);
-        window.workers.postToWorker({foo:'addfunc',input:['mul',function mul(a,b){return a*b;}.toString()],origin:this.origin},this.worker1Id);
+        window.workers.postToWorker({foo:'addfunc',input:['add',function add(args,origin){return args[0]+args[1];}.toString()],origin:this.origin},this.worker1Id);
+        
+        //add a particle system
+        //window.workers.postToWorker({foo:'setValues',input:{particles:this.particles}},this.worker1Id,[this.particles]);
 
+        window.workers.postToWorker({foo:'addfunc',input:['mul',function mul(args,origin){return args[0]*args[1];}.toString()],origin:this.origin},this.worker2Id);
+
+        window.workers.postToWorker({foo:'list',input:[],origin:this.origin},this.worker1Id);
         //thread 1 process initiated by button press
         window.workers.events.subEvent('thread1process',(output) => { //send thread1 result to thread 2
-            console.log('thread1',output);
-            window.workers.postToWorker({foo:'mul',input:[increment,2]},this.worker2Id);
-            this.increment = output;
+            console.log('thread1 event',output);
+            if(typeof output.output === 'number')
+            {
+                window.workers.postToWorker({foo:'mul',input:[this.increment,2],origin:this.origin},this.worker2Id);
+                this.increment = output.output;
+                console.log('multiply by 2 on thread 2')
+            }
         });
 
+        let element = document.getElementById(this.props.id+'res');
         //send thread2 result to canvas thread to update visual settings
         window.workers.events.subEvent('thread2process',(output) => { 
-            console.log('thread2',output);
-            window.workers.postToWorker({foo:'setValues',input:{angleChange:output}},this.canvasWorkerId); //set one of the values the draw function references
-            //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
+            console.log('thread2 event',output);
+            if(typeof output.output === 'number')
+            {
+                window.workers.postToWorker({foo:'setValues',input:{angleChange:output},origin:this.origin},this.canvasWorkerId); //set one of the values the draw function references
+                element.innerHTML = output.output;
+                //window.workers.postToWorker({foo:'render',input:[]},this.canvasWorkerId); //render single frame on input
+                this.pushedUpdateToThreads = false;
+                console.log('set new angle change speed on render thread (3)')
+            }
         });
+
 
         //once the render completes release the input
         window.workers.events.subEvent('render',(output)=>{
-            console.log('rendered',output);
-            this.pushingUpdateToThreads = false;
+            console.log('render thread event',output);
         });
 
         //on input event send to thread 1
         document.getElementById(this.props.id+'input').onclick = () => {
-            if(this.pushingUpdateToThreads === false) { 
-                window.workers.postToWorker({foo:'add',input:[this.increment,0.001]});
-                this.pushingUpdateToThreads = true;
+            console.log('clicked', this.pushedUpdateToThreads); 
+            if(this.pushedUpdateToThreads === false) {
+                window.workers.postToWorker({foo:'add',input:[this.increment,0.001],origin:this.origin},this.worker1Id);
+                console.log('add 0.001 on thread 1')
             }
         };
 

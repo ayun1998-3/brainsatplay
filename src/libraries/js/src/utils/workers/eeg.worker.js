@@ -15,6 +15,7 @@ self.onmessage = (event) => {
   let input;
   if(event.data.output) input = event.data.output; //from events
   else input = event.data;
+  console.log(input)
 
   let dict;
   let output = undefined;
@@ -30,11 +31,13 @@ self.onmessage = (event) => {
       context = manager.ctx;
     } 
     let eventSetting = manager.checkEvents(input.foo,input.origin);
+    //console.log(event)
+
     output = manager.checkCallbacks(event);  // output some results!
     counter++; //just tracks the number of calls made to the worker
   
-    dict = {output: output, foo: input.foo, origin: input.origin, id:self.id, counter:counter};
-  
+    dict = {output: output, foo: input.foo, origin: input.origin, id:id, counter:counter};
+
     if(eventSetting) manager.events.emit(eventSetting.eventName,dict); //if the origin and foo match an event setting on the thread, this emits output as an event
     else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
         self.postMessage(dict);
