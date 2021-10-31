@@ -81,6 +81,18 @@ export class WorkerManager {
 
     runWorkerFunction(functionName,args=[],origin,id,transfer=undefined) {
         if(functionName) {
+          if(functionName === 'transferClassObject') {
+            if(typeof args === 'object' && !Array.isArray(args)) {
+              for(const prop in args) {
+                if(typeof args[prop] === 'object' && !Array.isArray(args)) {
+                  for(const argprop in args[prop]) {
+                    if(typeof args[prop][argprop] === 'function') args[prop][argprop] = args[prop][argprop].toString();
+                  }
+                }
+                args[prop] = JSON.stringify(args[prop]);
+              }
+            }
+          }
           let dict = {foo:functionName, args:args, origin:origin};
           this.postToWorker(dict,id,transfer);
         }

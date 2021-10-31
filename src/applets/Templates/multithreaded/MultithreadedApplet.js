@@ -50,7 +50,7 @@ export class MultithreadedApplet {
         this.increment = 0;
         this.res = 0;
 
-        //this.particles = new DynamicParticles();
+        this.particles = new DynamicParticles(undefined,undefined,false,false);
     }
 
     //---------------------------------
@@ -229,6 +229,7 @@ export class MultithreadedApplet {
         window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
+        window.workers.runWorkerFunction('transferClassObject',{particles:this.particles},this.origin,this.worker1Id);
         //window.workers.postToWorker({foo:'setValues',input:{particles:this.particles}},this.worker1Id,[this.particles]);
 
         window.workers.runWorkerFunction(

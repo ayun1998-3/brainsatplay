@@ -188,12 +188,28 @@ export class CallbackManager {
           } else return false;
         }
       },
+      {
+        case: 'transferClassObject', callback: (args) => {
+          if (typeof args === 'object') {
+            Object.keys(args).forEach((key) => {
+              if(typeof args[key] === 'string') {
+                let value = JSON.parse(args[key]);
+                console.log(value);
+                this[key] = value; //variables will be accessible in functions as this.x or this['x']
+                if (this.threeUtil) this.threeUtil[key] = value;
+              }
+            });
+            return true;
+          } else return false;
+        }
+      },
       {case: 'setAnimation', callback: (args) => { //pass a draw function to be run on an animation loop. Reference this.canvas and this.context or canvas and context. Reference values with this.x etc. and use setValues to set the values from another thread
           this.animationFunc = parseFunctionFromText(args[0]);
           return true;
         }
       },
-      {case: 'startAnimation', callback: (args, origin) => {
+      {
+        case: 'startAnimation', callback: (args, origin) => {
           console.log(this.animationFunc.toString(), this.canvas, this.angle, this.angleChange, this.bgColor)
           let anim = () => {
             if (this.animating) {

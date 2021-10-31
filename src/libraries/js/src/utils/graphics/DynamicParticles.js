@@ -6,7 +6,8 @@ export class DynamicParticles {
         ['boids',50]
         ], 
         canvas=undefined,
-        defaultCanvas=true
+        defaultCanvas=true,
+        init=true
     ) {
         
         this.canvas = canvas;
@@ -105,7 +106,7 @@ export class DynamicParticles {
             
         };
 
-        this.init();
+        if(init) this.init();
         
     }
 
