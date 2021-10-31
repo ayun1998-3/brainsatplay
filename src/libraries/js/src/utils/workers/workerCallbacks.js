@@ -38,7 +38,8 @@ function parseFunctionFromText(method) {
   }
 
   let getFunctionHead = (methodString) => {
-    return methodString.slice(0, methodString.indexOf('{') + 1);
+    let startindex = methodString.indexOf(')');
+    return methodString.slice(0, methodString.indexOf('{',startindex) + 1);
   }
 
   let newFuncHead = getFunctionHead(method);
@@ -49,6 +50,7 @@ function parseFunctionFromText(method) {
     let varName = newFuncHead.split('(')[1].split(')')[0]
     newFunc = new Function(varName, newFuncBody);
   } else {
+    console.log(newFuncHead,newFuncBody);
     newFunc = eval(newFuncHead + newFuncBody + "}");
   }
 
@@ -205,7 +207,7 @@ export class CallbackManager {
                 for(const prop in obj) {
                   let stringIsFunc = isFunction(obj[prop])
                   console.log(prop,obj[prop])
-                  obj[prop] = stringIsFunc ? parseFunctionFromText(obj[prop]) : obj[prop];
+                  obj[prop] = stringIsFunc ? eval(obj[prop]) : obj[prop];
                   //console.log(prop, func,arrow);
                 }
                 this[key] = obj; //variables will be accessible in functions as this.x or this['x']
