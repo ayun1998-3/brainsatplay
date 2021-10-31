@@ -223,7 +223,7 @@ export class MultithreadedApplet {
             this.origin,
             this.worker1Id
         );
-        
+
         window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
@@ -242,7 +242,7 @@ export class MultithreadedApplet {
                 
         //thread 1 process initiated by button press
         window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
-            console.log('thread1 event',res);
+            console.log('thread1 event',res,Date.now());
             if(typeof res.output === 'number')
             {
                 window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
@@ -254,12 +254,12 @@ export class MultithreadedApplet {
         let element = document.getElementById(this.props.id+'res');
         //send thread2 result to canvas thread to update visual settings
         window.workers.events.subEvent('thread2process',(res) => { 
-            console.log('thread2 event',res);
+            console.log('thread2 event',res,Date.now());
             if(typeof res.output === 'number')
             {
                 window.workers.runWorkerFunction('setValues',{angleChange:res.output},this.origin,this.canvasWorkerId);
                 element.innerHTML = res.output.toFixed(3);
-                 this.pushedUpdateToThreads = false;
+                this.pushedUpdateToThreads = false;
                 console.log('set new angle change speed on render thread (3)')
             }
         });
@@ -267,7 +267,7 @@ export class MultithreadedApplet {
 
         //once the render completes release the input
         window.workers.events.subEvent('render',(res)=>{
-            console.log('render thread event',res);
+            console.log('render thread event',res,Date.now());
         });
 
         //on input event send to thread 1

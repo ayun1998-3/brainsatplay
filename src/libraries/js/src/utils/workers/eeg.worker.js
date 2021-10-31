@@ -53,7 +53,7 @@ self.onmessage = (event) => {
       ctx.strokeRect(50, 50, 50, 50);
     }`]);
   */
-  console.log(event.data)
+  if(event.data.eventName) console.log("event send to thread",event.data)
   if(!emitted) manager.events.workerCallback(event.data); //checks for eventName tag
 
   //console.timeEnd("worker");
