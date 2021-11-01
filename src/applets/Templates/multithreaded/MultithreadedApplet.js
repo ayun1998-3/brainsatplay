@@ -210,7 +210,7 @@ export class MultithreadedApplet {
 
 
         //add some events to listen to thread results
-        window.workers.events.addEvent('thread1process',this.origin,'particleStep',this.worker1Id);
+        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
         window.workers.events.addEvent('thread2process',this.origin,'mul',this.worker2Id);
         window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
 
@@ -330,6 +330,7 @@ export class MultithreadedApplet {
             if(this.pushedUpdateToThreads === false) {
                 window.workers.runWorkerFunction('add',[this.increment,0.001],this.origin,this.worker1Id);
                 console.log('add 0.001 on thread 1')
+                this.pushedUpdateToThreads = true;
             }
         };
 
