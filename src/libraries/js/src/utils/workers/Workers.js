@@ -94,7 +94,7 @@ export class WorkerManager {
     }
 
     postToWorker = (input, id = null, transfer=undefined) => {
-
+        //console.log('posting',input,id);
         if (Array.isArray(input.input)){
         input.input = input.input.map(v => {
           if (typeof v === 'function') return v.toString();
