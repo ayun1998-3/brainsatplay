@@ -276,44 +276,44 @@ export class industryKiller { //Contains structs and necessary functions/API cal
 		}
 	}
 
-	//Unfinished
-	async subscribeSafe(port) { //Using promises instead of async/await to cure hangs when the serial update does not meet tick requirements
-		var readable = new Promise((resolve,reject) => {
-			while(this.port.readable && this.subscribed === true){
-				this.reader = port.readable.getReader();
-				var looper = true;
-				var prom1 = new Promise((resolve,reject) => {
-					return this.reader.read();
-				});
+	// //Unfinished
+	// async subscribeSafe(port) { //Using promises instead of async/await to cure hangs when the serial update does not meet tick requirements
+	// 	var readable = new Promise((resolve,reject) => {
+	// 		while(this.port.readable && this.subscribed === true){
+	// 			this.reader = port.readable.getReader();
+	// 			var looper = true;
+	// 			var prom1 = new Promise((resolve,reject) => {
+	// 				return this.reader.read();
+	// 			});
 
-				var prom2 = new Promise((resolve,reject) => {
-					setTimeout(resolve,100,"readfail");
-				});
-				while(looper === true ) {
-					//console.log("reading...");
-					Promise.race([prom1,prom2]).then((result) => {
-						console.log("newpromise")
-						if(result === "readfail"){
-							console.log(result);
-						}
-						else{
-							const {value, done} = result;
-							if(done === true || this.subscribed === true) { var donezo = new Promise((resolve,reject) => {
-								resolve(this.reader.releaseLock())}).then(() => {
-									looper = false;
-									return;
-								});
-							}
-							else{
-								this.onReceive(value);
-							}
-						}
-					});
-				}
-			}
-			resolve("not readable");
-		});
-	}
+	// 			var prom2 = new Promise((resolve,reject) => {
+	// 				setTimeout(resolve,100,"readfail");
+	// 			});
+	// 			while(looper === true ) {
+	// 				//console.log("reading...");
+	// 				Promise.race([prom1,prom2]).then((result) => {
+	// 					console.log("newpromise")
+	// 					if(result === "readfail"){
+	// 						console.log(result);
+	// 					}
+	// 					else{
+	// 						const {value, done} = result;
+	// 						if(done === true || this.subscribed === true) { var donezo = new Promise((resolve,reject) => {
+	// 							resolve(this.reader.releaseLock())}).then(() => {
+	// 								looper = false;
+	// 								return;
+	// 							});
+	// 						}
+	// 						else{
+	// 							this.onReceive(value);
+	// 						}
+	// 					}
+	// 				});
+	// 			}
+	// 		}
+	// 		resolve("not readable");
+	// 	});
+	// }
 
 	async closePort(port=this.port) {
 		//if(this.reader) {this.reader.releaseLock();}

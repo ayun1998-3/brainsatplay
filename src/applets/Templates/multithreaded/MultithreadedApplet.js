@@ -200,7 +200,7 @@ export class MultithreadedApplet {
 
         //quick setup canvas worker with initial settings
         this.canvasWorker = new ThreadedCanvas(
-            this.origin,
+            this.origin,                                              //name given for the worker origin tag 
             this.canvas,                                              //canvas element to transfer to offscreencanvas
             '2d',                                                     //canvas context setting
             this.draw,                                                //pass the custom draw function
