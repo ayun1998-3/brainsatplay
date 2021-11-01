@@ -9,7 +9,7 @@ let context = ctx; //another common reference
 let counter = 0;
 
 self.onmessage = (event) => {
-    // define gpu instance
+  // define gpu instance
   // console.log("worker executing...", event)
   //console.time("worker");
   let input;

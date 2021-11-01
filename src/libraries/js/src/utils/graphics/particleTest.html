@@ -6,7 +6,8 @@
 <body> 
     <canvas id='canvas' style='width:80vw;height:80vh;'></canvas>
     <script>
-         class DynamicParticles {
+//By Joshua Brewster (MIT License)
+class DynamicParticles {
     constructor(
         rules=[
         ['boids',100],
@@ -34,7 +35,7 @@
                     initialCount //initial count of particles (spawns all if undefined) 
                     useBoids, //use boids? mainly applies to the default function unless you integrate this into your own rules
                     timestepFunc, (per particle timestep, groups have additional rules for efficient scoping)
-                    
+                    avoidanceGroups, index of groups to calculate avoidance (based on the this.particles index of the group)
                 ], etc...
             ]
         */
@@ -91,7 +92,7 @@
                 useAttraction:false, //particles can attract each other on a curve
                 groupRadius:200,
                 groupSize:10,
-                searchLimit:25
+                searchLimit:10
             },
             plant:{
                 diet:"photosynthetic", //if plant or animal cell: herbivore, carnivore, omnivore, photosynthetic, dead, dead_animal, dead_plant. Determines what other particles they will consume/trend toward
@@ -195,7 +196,7 @@
 
         particle.type = rule[0];
 
-        if(rule[1] > 3000 && rule[1] < 5000) {particle.boid.searchLimit = 5;}
+        if(rule[1] > 3000 && rule[1] < 5000) {particle.boid.searchLimit = 3;}
         else if (rule[1]>=5000) {particle.boid.searchLimit = 1;}
 
         let avoidanceGroups = rule[7];
@@ -504,7 +505,11 @@
                     }
                 } 
 
-                boidVelocities[15] 
+                let _len = inRange2.length;
+                boidVelocities[15] = boidVelocities[15]*_len;
+                boidVelocities[16] = boidVelocities[16]*_len;
+                boidVelocities[17] = boidVelocities[17]*_len;
+
             }
 
 
@@ -617,6 +622,7 @@
         let spawnCount = rule[3];
         let respawnRate = rule[4];
         let useBoids = rule[5]; //for the default function
+        if(type === 'boids') useBoids = true; //default true for this rule
         let pTimestepFunc = rule[6];
 
         if(!rule[0] || !rule[1]) return false;
@@ -765,13 +771,11 @@
 
 }
 
-        let particleTest = new DynamicParticles(
-            [['boids',4000],['boids',1000],['boids',1000]],
-            document.getElementById('canvas'),
-            true
-        );
-
-        console.log(particleTest.particles)
+    let particleTest = new DynamicParticles(
+        [['boids',4000],['boids',1000],['boids',1000]],
+        document.getElementById('canvas'),
+        true
+    );
 
     </script>
 </body>

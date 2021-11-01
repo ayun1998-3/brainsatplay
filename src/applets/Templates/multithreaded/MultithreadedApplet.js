@@ -271,7 +271,7 @@ export class MultithreadedApplet {
 
 
         window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
-        window.workers.runWorkerFunction('particleStep',[7],this.origin,this.worker1Id);
+        window.workers.runWorkerFunction('particleStep',[performance.now()*0.001],this.origin,this.worker1Id);
 
         window.workers.runWorkerFunction(
             'addfunc',
