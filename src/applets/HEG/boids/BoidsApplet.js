@@ -218,6 +218,7 @@ export class BoidsApplet {
     deinit() {
         this.looping = false;
         cancelAnimationFrame(this.loop);
+        this.boids.looping = false;
         //this.class.stop();
         this.class = null;
         this.AppletHTML.deleteNode();

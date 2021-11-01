@@ -210,7 +210,7 @@ export class MultithreadedApplet {
 
 
         //add some events to listen to thread results
-        window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
+        window.workers.events.addEvent('thread1process',this.origin,'particleStep',this.worker1Id);
         window.workers.events.addEvent('thread2process',this.origin,'mul',this.worker2Id);
         window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
 
@@ -235,15 +235,21 @@ export class MultithreadedApplet {
             [   
                 'particleSetup',
                 function particleStep(args,origin,self){
-                    console.log(self);
+                    //console.log(self);
                     self.particleObj = new self.particleClass(undefined,undefined,false,false);
-                    self.particleObj.setupRules(self.particleObj.startingRules);
-                    let output = [];
-                    self.particleObj.particles.forEach((group) => {
-                        output.push(group.particles);
+                    self.particleObj.setupRules([
+                        ['boids',4000,[450,450,450]],
+                        ['boids',5000,[450,450,450]],
+                        ['boids',700,[450,450,450]]]);
+                    let groups = [];
+                    self.particleObj.particles.forEach((group,j) => {
+                        groups.push([]);
+                        group.particles.forEach((particle) => {
+                            groups[j].push(particle.position);
+                        });
                     });
                     //console.log(output)
-                    return output;
+                    return groups;
                 }.toString()
             ],
             this.origin,
@@ -255,21 +261,22 @@ export class MultithreadedApplet {
             [   
                 'particleStep',
                 function particleStep(args,origin,self){
-                    self.particleObj.lastFrame = args[0];
-                    self.particleObj.frame();
-                    let output = [];
-                    self.particleObj.particles.forEach((group) => {
-                        output.push(group.particles);
+                    self.particleObj.frame(args[0]);
+                    let groups = [];
+                    self.particleObj.particles.forEach((group,j) => {
+                        groups.push([]);
+                        group.particles.forEach((particle) => {
+                            groups[j].push(particle.position);
+                        });
                     });
-                    console.log(output)
-                    return true;
+                    return [groups,self.particleObj.currFrame];
                 }.toString()
             ],
             this.origin,
             this.worker1Id
         );
 
-
+        
         window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
         window.workers.runWorkerFunction('particleStep',[performance.now()*0.001],this.origin,this.worker1Id);
 
@@ -292,6 +299,9 @@ export class MultithreadedApplet {
                 window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
                 this.increment = res.output;
                 console.log('multiply by 2 on thread 2')
+            } else if (Array.isArray(res.output)) {
+                console.log('thread1 event',res.output[0][0][0],Date.now());
+                // setTimeout(()=>{window.workers.runWorkerFunction('particleStep',[res.output[1]],this.origin,this.worker1Id)},100);
             }
         });
 

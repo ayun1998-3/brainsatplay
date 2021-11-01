@@ -206,7 +206,7 @@ export class CallbackManager {
                 let obj = args[key];
                 if(args[key].indexOf('class') === 0) obj = eval('('+args[key]+')');
                 self[key] = obj; //variables will be accessible in functions as this.x or this['x']
-                console.log(self,key,obj);
+                //console.log(self,key,obj);
                 if (self.threeUtil) self.threeUtil[key] = obj;
               }
             });
@@ -221,7 +221,7 @@ export class CallbackManager {
       },
       {
         case: 'startAnimation', callback: (args, origin) => {
-          console.log(this.animationFunc.toString(), this.canvas, this.angle, this.angleChange, this.bgColor)
+          //console.log(this.animationFunc.toString(), this.canvas, this.angle, this.angleChange, this.bgColor)
           let anim = () => {
             if (this.animating) {
               this.animationFunc(this);
