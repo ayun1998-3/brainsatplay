@@ -2406,6 +2406,26 @@ export class Session {
 		this.session.dataManager.initFS(oninit, onerror);
 	}
 
+
+
+	// Device Prototyping
+	createDevice = (deviceInfo) => {
+
+		// name
+		// company
+		// variants: [],
+		// analysis: ['eegcoherence'],
+		// cls: DeviceClass
+		// chromeOnly: boolean
+
+		deviceList.push(deviceInfo)
+	}
+
+	loadDevice = (deviceInfo) => {
+		let device = createDevice(deviceInfo)
+		deviceList.push(device)
+	}
+
 }
 
 //-------------------------------------------------------------------------------------------------------

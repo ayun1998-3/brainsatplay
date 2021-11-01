@@ -1,9 +1,9 @@
 
 import { eeg32Plugin } from './freeeeg32/freeeeg32Plugin';
-import { musePlugin } from './musePlugin';
+import { musePlugin } from './muse/musePlugin';
 import { hegduinoPlugin } from './hegduino/hegduinoPlugin';
 import { cytonPlugin } from './cyton/cytonPlugin';
-import { webgazerPlugin } from './webgazerPlugin'
+import { webgazerPlugin } from './webgazer/webgazerPlugin'
 import { ganglionPlugin } from './ganglion/ganglionPlugin';
 import { buzzPlugin } from './neosensory/buzzPlugin';
 import { syntheticPlugin } from './synthetic/syntheticPlugin';

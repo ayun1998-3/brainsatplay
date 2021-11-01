@@ -40,7 +40,10 @@ class Plot {
         
         
 
-        this.dependencies = ['https://cdn.plot.ly/plotly-2.0.0.min.js']
+
+        this.dependencies = {
+            Plotly: 'https://cdn.plot.ly/plotly-2.0.0.min.js'
+        }
 
         // UI Identifier
         this.props = {

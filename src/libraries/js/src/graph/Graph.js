@@ -45,6 +45,7 @@ export class Graph {
         this.name = info.name ?? `graph_${this.uuid}`
         this.className = info.className ?? info.class?.name
         this.analysis = new Set()
+        this.dependencies = {}
 
         // UI
         this.ui = {
@@ -254,6 +255,27 @@ export class Graph {
 
                 // this.analysis.add(...Array.from(nodeInfo.analysis))
 
+                 // Download Dependencies
+                 for (let name in o.instance.dependencies){
+                     await new Promise(resolve => {
+                         if (window[name]){
+                            o.instance.dependencies[name] = window[name]
+                            resolve()
+                         } else {
+                            let script = document.createElement('script')
+                            script.src = o.instance.dependencies[name]
+                            script.async = true;
+                            script.onload = () => {
+                                o.instance.dependencies[name] = window[name]
+                                script.remove()
+                                resolve()
+                            }
+                            document.body.appendChild(script);
+                        }
+                    })
+                 }
+
+
                 // Check if Controls
                 if (o.instance.className === 'Event') this.app.controls.push(o.instance)
 
@@ -285,10 +307,15 @@ export class Graph {
     
 
     updateParams = (params) => {
+        let ports = {}
         for (let param in params) {
-            let port = this.getPort(param)
-            if (port) port.set({value: params[param]})
+            ports[param] = this.getPort(param)
+            if (ports[param]) ports[param].value = ports[param].data = params[param] // set all beforehand (in case they depend on each other)
             else console.error(`A port for '${param}' does not exist on the ${this.name} node.`)
+        }
+
+        for (let param in params) {
+            if (ports[param]) ports[param].set({value: params[param], forceUpdate: true}) // actually run update functions
         }
     }
 

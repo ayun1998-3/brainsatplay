@@ -12,8 +12,7 @@ class Blob{
 
     static id = String(Math.floor(Math.random()*1000000))
 
-    constructor(info, graph) {
-
+    constructor(info, graph) 
         // UI Identifier
         this.props = {
             id: String(Math.floor(Math.random()*1000000)),

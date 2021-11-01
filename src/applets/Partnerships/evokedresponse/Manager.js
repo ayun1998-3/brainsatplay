@@ -89,15 +89,13 @@ export class Manager {
                 input: {type: 'string'},
                 output: {type: null},
                 onUpdate: (user) => {
-                    if (typeof user.data  === 'string') this.props.img.src = user.data //document.getElementById('background').src
+                    if (typeof user.data  === 'string') this.props.img.src = user.data
                 },
             },
             ready: {
                 input: {type: 'boolean'},
                 output: {type: null},
                 onUpdate: (user) => {
-
-                    console.log('thiS IS READY', user)
                     if (user.data === true) {
                         this.props.img.style.opacity = '80%'
                         this.props.msg.style.display = 'none'
@@ -120,7 +118,7 @@ export class Manager {
     }
 
     init = () =>  { 
-        this.props.img.src = this.ports.image.data 
+        if (this.ports.image.data) this.props.img.src = this.ports.image.data 
     }
 
     deinit = () => {}

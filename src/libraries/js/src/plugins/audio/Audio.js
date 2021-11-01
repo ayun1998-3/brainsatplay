@@ -7,14 +7,15 @@ export class Audio {
     static id = String(Math.floor(Math.random()*1000000))
     static category = 'audio'
 
-    constructor(info, graph, params={}) {
+    constructor(info, graph) {
 
         this.props = {
             sourceGain: null,
             sourceNode: null,
             status: 0,
             maxVol: 0.5,
-            file: null
+            file: null,
+            audioEl: null,
         }
 
         if(!window.audio) window.audio = new SoundJS();
@@ -34,8 +35,11 @@ export class Audio {
                             this.props.file = file
 
                             if (this.props.file){
+
+                                console.log(this.ports.analyze.data)
                                 if (typeof this.props.file === 'string'){
-                                    await this._convertToBlob(this.props.file)
+                                    if (this.ports.analyze.data) await this._convertToBlob(this.props.file)
+                                    else this._convertToAudioElement(this.props.file,()=>{resolve({data: true})})
                                     // reject()
                                 } else {
                                     this.decodeAudio(this.props.file, () => {
@@ -65,16 +69,20 @@ export class Audio {
                 step: 0.01,
                 onUpdate: (user) => {
                     let volume = user.data*this.props.maxVol
-                    this.props.sourceGain.gain.setValueAtTime(volume, window.audio.ctx.currentTime);
+                    if (this.ports.analyze.value) this.props.sourceGain.gain.setValueAtTime(volume, window.audio.ctx.currentTime);
+                    else this.props.audioEl.volume = volume
                 }
+            },
+            analyze: {
+                data: true,
+                input: {type: 'boolean'},
+                output: {type: null}
             },
             toggle: {
                 // input: {type: 'boolean'},
                 output: {type: null},
                 onUpdate: (user) => {
-                    if (user.data){
-                        this.triggerAudio()
-                    }
+                    if (user.data) this.triggerAudio()
                 }
             }
         }
@@ -82,6 +90,14 @@ export class Audio {
 
     init = () => {
 
+    }
+
+    _convertToAudioElement = async (str, onsuccess) => {
+        this.props.audioEl = new window.Audio(str)
+        this.props.audioEl.addEventListener("canplaythrough", event => {
+            this.props.audioEl.play();
+            onsuccess()
+        });
     }
 
     _convertToBlob = async (str) => {
@@ -101,6 +117,7 @@ export class Audio {
 
     deinit = () => {
         this._deinit()
+        if (this.props.audioEl) this.props.audioEl.remove()
     }
 
     // preload = () => {
@@ -161,20 +178,25 @@ export class Audio {
         if (this.props.sourceNode){
             if (this.props.status === 1){
                 this._deinit()
-                await this.decodeAudio(this.props.file)
+                if (this.ports.analyze.value) await this.decodeAudio(this.props.file)
             }
 
-            this.props.sourceNode.start(0);
+            if (this.ports.analyze.value) this.props.sourceNode.start(0);
+            else this.props.audioEl.play();
             this.props.status = 1
         }
     }
         
     endAudio = () => {
+        this.props.status = 0;
+        if (this.ports.analyze.value){
             this.stopAudio();
-            this.props.status = 0;
             if(window.audio.sourceList.length > 0) {try {
                 this.sourceNode.stop(0);
             } catch(er){}}
+        } else {
+            if (this.props.audioEl) this.props.audioEl.pause();
+        }
     }
 
     stopAudio = () => {
