@@ -50,7 +50,7 @@ function parseFunctionFromText(method) {
     let varName = newFuncHead.split('(')[1].split(')')[0]
     newFunc = new Function(varName, newFuncBody);
   } else {
-    console.log(newFuncHead,newFuncBody);
+    //console.log(newFuncHead,newFuncBody);
     newFunc = eval(newFuncHead + newFuncBody + "}");
   }
 
@@ -188,30 +188,26 @@ export class CallbackManager {
         }
       },
       {
-        case: 'setValues', callback: (args) => {
+        case: 'setValues', callback: (args, origin, self) => {
           if (typeof args === 'object') {
             Object.keys(args).forEach((key) => {
-              this[key] = args[key]; //variables will be accessible in functions as this.x or this['x']
-              if (this.threeUtil) this.threeUtil[key] = args[key];
+              self[key] = args[key]; //variables will be accessible in functions as this.x or this['x']
+              if (self.threeUtil) self.threeUtil[key] = args[key];
             });
             return true;
           } else return false;
         }
       },
       { //parses an object containing function methods
-        case: 'transferClassObject', callback: (args) => {
+        case: 'transferClassObject', callback: (args,origin,self) => {
           if (typeof args === 'object') {
             Object.keys(args).forEach((key) => {
               if(typeof args[key] === 'string') {
-                let obj = JSON.parse(args[key]);
-                for(const prop in obj) {
-                  let stringIsFunc = isFunction(obj[prop])
-                  console.log('prop:',prop,'function text:',obj[prop]);
-                  obj[prop] = stringIsFunc ? eval(obj[prop]) : obj[prop];
-                  //console.log(prop, func,arrow);
-                }
-                this[key] = obj; //variables will be accessible in functions as this.x or this['x']
-                if (this.threeUtil) this.threeUtil[key] = obj;
+                let obj = args[key];
+                if(args[key].indexOf('class') === 0) obj = eval('('+args[key]+')');
+                self[key] = obj; //variables will be accessible in functions as this.x or this['x']
+                console.log(self,key,obj);
+                if (self.threeUtil) self.threeUtil[key] = obj;
               }
             });
             return true;

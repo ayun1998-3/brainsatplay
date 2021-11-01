@@ -39,7 +39,7 @@ export class ThreadedCanvas {
     setAnimation(animationFunction) {
         if(typeof animationFunction !== 'function') return false;
         let fstring = animationFunction.toString();
-        console.log(fstring)
+        //console.log(fstring)
         window.workers.postToWorker({origin:this.name,foo:'setAnimation',input:[fstring]},this.workerId)
     }
 

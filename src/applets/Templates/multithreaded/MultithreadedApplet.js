@@ -50,7 +50,6 @@ export class MultithreadedApplet {
         this.increment = 0;
         this.res = 0;
 
-        this.particleObj = new DynamicParticles(undefined,undefined,false,false);
     }
 
     //---------------------------------
@@ -229,40 +228,50 @@ export class MultithreadedApplet {
         window.workers.runWorkerFunction('list',undefined,this.origin,this.worker1Id);
         
         //add a particle system
-        window.workers.runWorkerFunction('transferClassObject',{particleObj:this.particleObj},this.origin,this.worker1Id);
-        // //window.workers.postToWorker({foo:'setValues',input:{particles:this.particleObj}},this.worker1Id,[this.particleObj]);
+        window.workers.runWorkerFunction('transferClassObject',{particleClass:DynamicParticles.toString()},this.origin,this.worker1Id);
         // //add some custom functions to the threads
-        // window.workers.runWorkerFunction(
-        //     'addfunc',
-        //     [   
-        //         'particleSetup',
-        //         function particleStep(args,origin,self){
-        //             console.log(self.particleObj)
-        //             self.particleObj.setupRules();
-        //             console.log(self.particleObj.particles)
-        //             return self.particleObj.particles;
-        //         }.toString()
-        //     ],
-        //     this.origin,
-        //     this.worker1Id
-        // );
-        // //add some custom functions to the threads
-        // window.workers.runWorkerFunction(
-        //     'addfunc',
-        //     [   
-        //         'particleStep',
-        //         function particleStep(args,origin,self){
-        //             self.particleObj.lastFrame = args[0];
-        //             self.particleObj.frame();
-        //             return self.particleObj.particles;
-        //         }.toString()
-        //     ],
-        //     this.origin,
-        //     this.worker1Id
-        // );
+        window.workers.runWorkerFunction(
+            'addfunc',
+            [   
+                'particleSetup',
+                function particleStep(args,origin,self){
+                    console.log(self);
+                    self.particleObj = new self.particleClass(undefined,undefined,false,false);
+                    self.particleObj.setupRules(self.particleObj.startingRules);
+                    let output = [];
+                    self.particleObj.particles.forEach((group) => {
+                        output.push(group.particles);
+                    });
+                    //console.log(output)
+                    return output;
+                }.toString()
+            ],
+            this.origin,
+            this.worker1Id
+        );
+        //add some custom functions to the threads
+        window.workers.runWorkerFunction(
+            'addfunc',
+            [   
+                'particleStep',
+                function particleStep(args,origin,self){
+                    self.particleObj.lastFrame = args[0];
+                    self.particleObj.frame();
+                    let output = [];
+                    self.particleObj.particles.forEach((group) => {
+                        output.push(group.particles);
+                    });
+                    console.log(output)
+                    return true;
+                }.toString()
+            ],
+            this.origin,
+            this.worker1Id
+        );
 
-        //window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
-        //window.workers.runWorkerFunction('particleStep',[7],this.origin,this.worker1Id);
+
+        window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
+        window.workers.runWorkerFunction('particleStep',[7],this.origin,this.worker1Id);
 
         window.workers.runWorkerFunction(
             'addfunc',
@@ -277,7 +286,7 @@ export class MultithreadedApplet {
                 
         //thread 1 process initiated by button press
         window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
-            console.log('thread1 event',res,Date.now());
+            //console.log('thread1 event',res,Date.now());
             if(typeof res.output === 'number')
             {
                 window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
@@ -289,7 +298,7 @@ export class MultithreadedApplet {
         let element = document.getElementById(this.props.id+'res');
         //send thread2 result to canvas thread to update visual settings
         window.workers.events.subEvent('thread2process',(res) => { 
-            console.log('thread2 event',res,Date.now());
+            //console.log('thread2 event',res,Date.now());
             if(typeof res.output === 'number')
             {
                 window.workers.runWorkerFunction('setValues',{angleChange:res.output},this.origin,this.canvasWorkerId);
@@ -307,7 +316,7 @@ export class MultithreadedApplet {
 
         //on input event send to thread 1
         document.getElementById(this.props.id+'input').onclick = () => {
-            console.log('clicked', this.pushedUpdateToThreads); 
+            //console.log('clicked', this.pushedUpdateToThreads); 
             if(this.pushedUpdateToThreads === false) {
                 window.workers.runWorkerFunction('add',[this.increment,0.001],this.origin,this.worker1Id);
                 console.log('add 0.001 on thread 1')
