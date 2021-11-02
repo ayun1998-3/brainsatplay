@@ -11,7 +11,7 @@
         author: "Garrett Flynn",
         description: "Get started building a multiplayer neurofeedback app!",
         categories: ["learn", "templates"],
-        zip: 'https://brainsatplay.com/multiplayer/App.zip',
+        zip: 'https://brainsatplay.com/multiplayer/Archive.zip',
         link: 'https://brainsatplay.com/multiplayer' // Fallback
     },
 

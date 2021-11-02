@@ -21,6 +21,7 @@ export class Brainstorm {
                 input: { type: undefined },
                 output: { type: null },
                 onUpdate: async (user) => {
+
                     // Register as New Port
                     let port = user.meta.source
                     this.props.sessionId = this.app.props.sessionId
@@ -52,6 +53,7 @@ export class Brainstorm {
 
                             // Create Subscription to New State
                             if (this.props.subscriptions[label] == null) {
+
                                 if (this.props.subscriptions[label] == null) this.props.subscriptions[label] = []
 
                                 let found = this.session.streamObj.streamTable.find((d => {
@@ -122,23 +124,26 @@ export class Brainstorm {
         // Leave Session
         this.session.unsubscribeFromSession(this.props.sessionId);
 
-        // Unsubscribe All Keys
-        for (const user in this.props.users){
-            this._unsubscribeUser(this.props.users[user])
-        }
+        for (let label in this.props.subscriptions) {
+            // TODO: May unintentionally remove streams with the same label
+            this.session.removeStreaming(label)
+    }
 
+        // Unsubscribe All Keys
+        for (const user in this.props.users) this._unsubscribeUser(this.props.users[user])
     }
 
     _unsubscribeUser = (user, label) => {
 
             // Unsubscribe from all keys
             Object.keys(user).forEach(label => {
-                let key = (user.username === this.session.info.auth.id) ? `${label}` : `${this.props.sessionId}_${user.username}_${label}`
+                let key = (user.id === this.session.info.auth.id) ? `${label}` : `${this.props.sessionId}_${user.username}_${label}`
                 if (label != 'username') this.session.state.unsubscribe(key, user[label]) // sometimes removed earlier
             })
     }
 
     _updateState = (port) => {
+
         // Update State (with limited information)
         let abstractedPort = {
             id: port.id,

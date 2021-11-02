@@ -126,7 +126,7 @@ export class App {
             this.props.ready = true
 
             // Multiplayer Configuration
-            this.sessionID = sessionInfo?.id
+            this.props.sessionId = sessionInfo?.id ?? this.props.id
             this.session.startApp(this)
 
             // Run Specified Edge Onstart Callbacks
