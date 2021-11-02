@@ -174,15 +174,11 @@ export class Manager {
             }, 
 
             button: {
-                data: null,
-                onUpdate: (user) => {
-                    console.log(user)
-                }
+                data: null
             },
 
             buttonToggle: {
                 onUpdate: (user) =>{
-                    console.log('START')
                     if (user.data){
                         // this.props.startButton.classList.toggle('disabled')
                     }

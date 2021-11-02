@@ -467,7 +467,7 @@ export class Session {
 					let updatedOnConnect = (device) => {
 						if (onconnect instanceof Function) onconnect(device)
 						this.info.apps.forEach(app => {
-							let connectFunc = app?.connect?.onconnect
+							let connectFunc = app?.info.connect?.onconnect
 							if (connectFunc instanceof Function) connectFunc(device)
 						})
 						div.querySelector('p').innerHTML = "Disconnect"
