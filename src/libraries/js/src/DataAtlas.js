@@ -169,6 +169,7 @@ export class DataAtlas {
 		await projects.init()
 		// Add Default Analysis Options
 		this.graph = new Graph({
+			name: `Default Analysis (${'Atlas'})`,
 			nodes: [
 				{name: 'blink', class: Blink}, // Blink Detection
 				{name: 'focus', class: Focus}, // Focus Detection

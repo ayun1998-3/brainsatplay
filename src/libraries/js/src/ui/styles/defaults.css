@@ -500,7 +500,7 @@ select {
 
 /* Node Editor */
 .brainsatplay-default-container.brainsatplay-node-editor{
-    z-index: 999;
+    z-index: 10;
     /* opacity: 0;  */
     transition: opacity 1s;
     pointer-events: none;

@@ -259,9 +259,10 @@ export class Session {
 		await newStream.connect()
 
 		// Add Device Stream Graphs to Session Apps
-		newStream.device.atlas.graph.replaceApp(this.app)
-		if (this.editor && newStream.device.atlas.graph) this.editor.addGraph(newStream.device.atlas.graph)
-
+		if (newStream.device.atlas.graph){
+			newStream.device.atlas.graph.replaceApp(this.app)
+			if (this.editor) this.editor.addGraph(newStream.device.atlas.graph)
+		}
 		// Initialize Route Management Interface
 		let contentChild = document.getElementById(`brainsatplay-device-${device.split('_')[0]}`)
 
