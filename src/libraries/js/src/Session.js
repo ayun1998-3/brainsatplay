@@ -140,7 +140,7 @@ export class Session {
 
 
 		// Create Session-Level Editor
-		this.app = new App({name: 'Global'}, undefined, this)
+		this.app = new App({name: 'Global', shortcuts: false}, undefined, this)
 		this.app.uuid = 'global'
 	}
 
@@ -2026,8 +2026,8 @@ export class Session {
 						result.sessions.forEach((g) => {
 							let playButton = document.getElementById(`${g.id}play`)
 							let spectateButton = document.getElementById(`${g.id}spectate`)
-							playButton.addEventListener('click', () => { connectToGame(g, false) })
-							spectateButton.addEventListener('click', () => { connectToGame(g, true) })
+							if (playButton) playButton.addEventListener('click', () => { connectToGame(g, false) })
+							if (spectateButton) spectateButton.addEventListener('click', () => { connectToGame(g, true) })
 						});
 					} else {
 						console.log('auto joining again')

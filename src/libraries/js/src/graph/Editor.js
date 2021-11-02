@@ -44,7 +44,7 @@ export class Editor{
             open: false,
             lastClickedProjectCategory: '',
             galleries: {},
-            currentApp: null
+            currentApp: null,
         }
 
         // Set Shortcuts
@@ -171,17 +171,19 @@ export class Editor{
     // Shortcuts
     shortcutManager = (e) => {
         if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-            if (e.key === 'e') { // Toggle Editor
-                e.preventDefault();
-                this.toggleDisplay()
-            }
-            else if (e.key === 's') { // Save Application
-                if (this.shown){
+
+                if (e.key === 'e') { // Toggle Editor
                     e.preventDefault();
-                    this.props.currentApp.graphs.forEach(g => g.save())
-                    this.props.currentApp.save()
+                    this.toggleDisplay()
+                    
                 }
-            }
+                else if (e.key === 's') { // Save Application
+                    if (this.shown){
+                        e.preventDefault();
+                        this.props.currentApp.graphs.forEach(g => g.save())
+                        this.props.currentApp.save()
+                    }
+                }
         }
     }
 
@@ -630,15 +632,13 @@ export class Editor{
     toggleDisplay = (on, app) => {
 
         // Set App if not in Existing Apps
-        if (app) this.props.currentApp = app
+        if (app) this.setApp(app)
 
 
         if (!this.session.info.apps.find(a => a === this.props.currentApp)) {
              let filteredApps = this.session.info.apps.filter(a => 'graphs' in a.info || 'graph' in a.info)
             this.setApp(filteredApps[0])
         }
-
-        console.log(this.props.currentApp, this.parentNode)
 
         if (this.props.currentApp) {
         // if (this.element){

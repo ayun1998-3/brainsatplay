@@ -60,19 +60,21 @@ export class App {
         this._createMenu()
 
         // Set Shortcuts
-        document.addEventListener('keydown', this.shortcutManager);
-    }
+        if (this.info.shortcuts != false) document.addEventListener('keydown', this.shortcutManager);
 
+    }
+    
     shortcutManager = (e) => {
         if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-            if (e.key === 'r') { // Reload Application
-                e.preventDefault();
-                this.reload()
-            }
-            else if (e.key === 'd') { // Open Device Manager (FIX: Distinguish between multiple apps)
-                e.preventDefault();
-                this.session.toggleDeviceSelectionMenu(this.info?.connect?.filter)
-            }
+
+                if (e.key === 'r') { // Reload Application
+                    e.preventDefault();
+                    this.reload()
+                }
+                else if (e.key === 'd') { // Open Device Manager (FIX: Distinguish between multiple apps)
+                    e.preventDefault();
+                    this.session.toggleDeviceSelectionMenu(this.info?.connect?.filter)
+                }
         }
     }
 
@@ -173,8 +175,10 @@ export class App {
 
     // ------------------- STOP THE APPLICATION -------------------
 
-    deinit = async (soft=false) => {            
+    deinit = async (soft=false) => {  
+        
         if (this.AppletHTML) {
+
             // Soft Deinit
             if (soft) {
                 if (this.intro?.deleteNode instanceof Function) this.intro.deleteNode()

@@ -24,6 +24,7 @@ export class Train {
             }
         ]
         
+        this.props.overlay = document.createElement('div')
         this.props.container = document.createElement('div')
         this.props.container.classList.add('training-prompt-container')
 
@@ -95,12 +96,12 @@ export class Train {
         // Create Overlay
         this.props.trainingOverlay = document.createElement('div')
         this.props.trainingOverlay.classList.add('training-overlay')
-        document.body.insertAdjacentElement('beforeend', this.props.trainingOverlay)
+        this.props.overlay.insertAdjacentElement('beforeend', this.props.trainingOverlay)
 
         this.props.gameOverlay = document.createElement('div')
         this.props.gameOverlay.classList.add('training-overlay')
         this.props.gameOverlay.style.padding = 0
-        document.body.insertAdjacentElement('beforeend', this.props.gameOverlay)
+        this.props.overlay.insertAdjacentElement('beforeend', this.props.gameOverlay)
 
         // Get Compatible Models and Games
         let modelTypes = []
@@ -196,6 +197,8 @@ export class Train {
         this.props.trainingOverlay.insertAdjacentElement('beforeend', buttonDiv)
 
         // Show Directions
+
+        document.body.insertAdjacentElement('beforeend', this.props.container)
         
         return this.props.trainingOverlay
     }
