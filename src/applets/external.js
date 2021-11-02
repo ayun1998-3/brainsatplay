@@ -1,3 +1,8 @@
+// NEXT STEP
+// 1. Store on MongoDB
+// 2. Create an interface to allow developers to link Github repositories
+
+
 [
     // -------------------- Templates -------------------- 
     {

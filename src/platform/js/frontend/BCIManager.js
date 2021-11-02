@@ -39,6 +39,7 @@ import ExtensionIcon from '../../assets/puzzle-piece-solid.svg';
 import SettingsIcon from '../../assets/cog-solid.svg';
 
 import * as BrowserFS from 'browserfs'
+import { Editor } from '../../../libraries/js/src/graph/Editor';
 
 const fs = BrowserFS.BFSRequire('fs')
 const BFSBuffer = BrowserFS.BFSRequire('buffer').Buffer;
@@ -531,6 +532,8 @@ export class BCIAppManager {
         let extensionPage = new ExtensionPage(document.getElementById('page'), extensionMenu, this.session)
         this.settingsPage = new SettingsPage(document.getElementById('page'), settingsMenu, this.session)
 
+        // Create Editor
+        this.session.edit(document.getElementById('page'))
 
         // let tutorialManager = new TutorialManager('sidebar-tutorial', tooltips, document.body, helpMenu)
         // tutorialManager.init()

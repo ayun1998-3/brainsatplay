@@ -140,10 +140,8 @@ export class Session {
 
 
 		// Create Session-Level Editor
-		this.editor = new Editor(this)
 		this.app = new App({name: 'Global'}, undefined, this)
 		this.app.uuid = 'global'
-		this.editor.addApp(this.app)
 	}
 
 	/**
@@ -262,7 +260,7 @@ export class Session {
 
 		// Add Device Stream Graphs to Session Apps
 		newStream.device.atlas.graph.replaceApp(this.app)
-		if (newStream.device.atlas.graph) this.editor.addGraph(newStream.device.atlas.graph)
+		if (this.editor && newStream.device.atlas.graph) this.editor.addGraph(newStream.device.atlas.graph)
 
 		// Initialize Route Management Interface
 		let contentChild = document.getElementById(`brainsatplay-device-${device.split('_')[0]}`)
@@ -2424,6 +2422,11 @@ export class Session {
 	loadDevice = (deviceInfo) => {
 		let device = createDevice(deviceInfo)
 		deviceList.push(device)
+	}
+
+	edit = (parent) => {
+		this.editor = new Editor(this, parent)
+        this.editor.addApp(this.app)
 	}
 
 }

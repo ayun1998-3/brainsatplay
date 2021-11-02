@@ -89,8 +89,14 @@ export class App {
         // Get New ID
         this.props.id = this.ui.container.id = String(Math.floor(Math.random()*1000000))
 
+
+        // Auto-Assign Single Graph Name
+        if (this.info.graphs.length === 1 && this.info.graphs[0].name == null) this.info.graphs[0].name = this.info.name
+
         // Add Functionality to Applet
         this.info.graphs.forEach(g => this.addGraph(g)) // initialize all graphs
+
+
         
         // Create Base UI
         this.AppletHTML = this.ui.manager = new DOMFragment( // Fast HTML rendering container object
@@ -148,7 +154,14 @@ export class App {
 
     // Executes after UI is created
     _setupUI = () => {
+        
+        // Create Device Manager
         this._createDeviceManager(this.info.connect ?? {})
+
+        // Toggle Editor
+        if (this.info.editor.show && this.session.editor) this.session.editor.toggleDisplay(true, this)
+
+        // Resize App UI
         this.graphs.forEach(g => g._resizeUI())
     }
 
@@ -166,12 +179,12 @@ export class App {
             if (soft) {
                 if (this.intro?.deleteNode instanceof Function) this.intro.deleteNode()
                 // this._removeAllFragments()
-                this.session.editor.init()
+                if (this.session.editor) this.session.editor.init()
             }
 
             // Hard Deinit
             else {
-                this.session.editor.deinit()
+                if (this.session.editor) this.session.editor.deinit()
                 document.removeEventListener('keydown', this.shortcutManager);
                 this.AppletHTML.deleteNode();
                 this.AppletHTML = null
@@ -200,7 +213,7 @@ export class App {
     }
 
     reload = async () => {
-        this.session.editor.toggleDisplay(false)
+        if (this.session.editor) this.session.editor.toggleDisplay(false)
         this.info.graphs = this.export() // Replace settings
         await this.deinit(true) // soft
         await this.init()
@@ -247,57 +260,57 @@ export class App {
                         }
                     }},
                     {header: 'options-menu', content: `<div class="toggle"><img src="${nodeSVG}"></div><p>Edit</p>`, id:"brainsatplay-visual-editor", onload: (el)=> {    
-                        this.session.editor.setToggle(el)
+                        if (this.session.editor) this.session.editor.setToggle(this, el)
                     }, onclick: (el) => {
                         // console.error('toggling')
                     }},
-                    {header: 'options-menu', content: `<div class="toggle"><img src="${appletSVG}"></div><p>Browse Apps</p>`, id:"brainsatplay-browser", onclick: async (el) => {
-                            if (appletMask.style.opacity != 0) {
-                                appletMask.style.opacity = 0
-                                appletMask.style.pointerEvents = 'none'
-                            } else {
-                                appletMask.style.opacity = 1
-                                appletMask.style.pointerEvents = 'auto'
-                                infoMask.style.opacity = 0;
-                                infoMask.style.pointerEvents = 'none';
-                                // if (instance == null) {
-                                //     getAppletSettings(appletManifest['Applet Browser'].folderUrl).then((browser) => {
+                    // {header: 'options-menu', content: `<div class="toggle"><img src="${appletSVG}"></div><p>Browse Apps</p>`, id:"brainsatplay-browser", onclick: async (el) => {
+                    //         if (appletMask.style.opacity != 0) {
+                    //             appletMask.style.opacity = 0
+                    //             appletMask.style.pointerEvents = 'none'
+                    //         } else {
+                    //             appletMask.style.opacity = 1
+                    //             appletMask.style.pointerEvents = 'auto'
+                    //             infoMask.style.opacity = 0;
+                    //             infoMask.style.pointerEvents = 'none';
+                    //             // if (instance == null) {
+                    //             //     getAppletSettings(appletManifest['Applet Browser'].folderUrl).then((browser) => {
                                        
-                                //         let config = {
-                                //             hide: [],
-                                //             applets: Object.keys(appletManifest).map(async (key) => {
-                                //                 return await getAppletSettings(appletManifest[key].folderUrl)
-                                //             }),
-                                //             presets: presetManifest,
+                    //             //         let config = {
+                    //             //             hide: [],
+                    //             //             applets: Object.keys(appletManifest).map(async (key) => {
+                    //             //                 return await getAppletSettings(appletManifest[key].folderUrl)
+                    //             //             }),
+                    //             //             presets: presetManifest,
     
-                                //             // OLD
-                                //             appletIdx: appletIdx,
-                                //             showPresets: false,
-                                //             displayMode: 'tight'
-                                //         }
+                    //             //             // OLD
+                    //             //             appletIdx: appletIdx,
+                    //             //             showPresets: false,
+                    //             //             displayMode: 'tight'
+                    //             //         }
     
-                                //         Promise.all(config.applets).then((resolved) => {
-                                //             config.applets=resolved
-                                //             let instance  = new App(browser, appletMask, this.session, [config])
+                    //             //         Promise.all(config.applets).then((resolved) => {
+                    //             //             config.applets=resolved
+                    //             //             let instance  = new App(browser, appletMask, this.session, [config])
 
-                                //           // FIX
-                                //             instance.init()
+                    //             //           // FIX
+                    //             //             instance.init()
                                             
-                                //             thisApplet.deinit = (() => {
-                                //                 var defaultDeinit = thisApplet.deinit;
+                    //             //             thisApplet.deinit = (() => {
+                    //             //                 var defaultDeinit = thisApplet.deinit;
                                             
-                                //                 return function() {    
-                                //                     instance.deinit()
-                                //                     appletDiv.querySelector(`.option-brainsatplay-browser`).click()                              
-                                //                     let result = defaultDeinit.apply(this, arguments);                              
-                                //                     return result;
-                                //                 };
-                                //             })()
-                                //         })
-                                //     })
-                                // }
-                            }
-                    }},
+                    //             //                 return function() {    
+                    //             //                     instance.deinit()
+                    //             //                     appletDiv.querySelector(`.option-brainsatplay-browser`).click()                              
+                    //             //                     let result = defaultDeinit.apply(this, arguments);                              
+                    //             //                     return result;
+                    //             //                 };
+                    //             //             })()
+                    //             //         })
+                    //             //     })
+                    //             // }
+                    //         }
+                    // }},
                     
                     // {header: 'options-menu', content: `Drag`, onload: (el) => {
                     //     let swapped = null
@@ -491,8 +504,12 @@ export class App {
     // Save
     save = async (e) => {
         this.info.graphs = this.export() // Replace settings
-        await this.session.projects.save(this, () => {this.session.editor.download.classList.remove('disabled')}, () => {this.session.editor.download.classList.add('disabled')})
-        this.session.editor.lastSavedProject = this.name
+        await this.session.projects.save(this, () => {
+            if (this.session.editor) this.session.editor.download.classList.remove('disabled')
+        }, () => {
+           if (this.session.editor) this.session.editor.download.classList.add('disabled')
+        })
+        if (this.session.editor) this.session.editor.lastSavedProject = this.name
     }
 
     // UI Helper
