@@ -293,11 +293,10 @@ export class MultithreadedApplet {
                 
         //thread 1 process initiated by button press
         window.workers.events.subEvent('thread1process',(res) => { //send thread1 result to thread 2
-            //console.log('thread1 event',res,Date.now());
             if(typeof res.output === 'number')
             {
-                window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
                 this.increment = res.output;
+                window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
                 console.log('multiply by 2 on thread 2')
             } else if (Array.isArray(res.output)) {
                 console.log('thread1 event',res.output[0][0][0],Date.now());
@@ -309,6 +308,7 @@ export class MultithreadedApplet {
         //send thread2 result to canvas thread to update visual settings
         window.workers.events.subEvent('thread2process',(res) => { 
             //console.log('thread2 event',res,Date.now());
+            console.log('thread2 event',res);
             if(typeof res.output === 'number')
             {
                 window.workers.runWorkerFunction('setValues',{angleChange:res.output},this.origin,this.canvasWorkerId);
