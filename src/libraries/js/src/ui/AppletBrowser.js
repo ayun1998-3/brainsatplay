@@ -150,6 +150,7 @@ export class AppletBrowser {
         ]
 
         let settings = {
+            name: 'Training Prompt',
             graphs: [{
                 nodes: [],
                 edges: []

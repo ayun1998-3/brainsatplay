@@ -30,7 +30,7 @@ export const settings = {
 
         button.innerHTML = 'Start Experiment'
         button.onclick = () => {
-            let n = settings.graphs[0].nodes.find(n => n.id === 'manager')
+            let n = settings.graphs[0].nodes.find(n => n.name === 'manager')
             n.instance.update('start', {data: true})
         }
 
@@ -55,7 +55,7 @@ export const settings = {
             start: false
           }},
 
-        {name: 'audioCue', class: 'Audio', params: {file: audioCue}},
+        {name: 'audioCue', class: 'Audio', params: {file: audioCue, analyze: false}},
         {name: 'data', class: 'DataManager'},
         // {name: 'spacebar', class: Event, params: {keycode: 'Space'}},
         // {name: 'results', class: Results},

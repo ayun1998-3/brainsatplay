@@ -140,10 +140,8 @@ export class Session {
 
 
 		// Create Session-Level Editor
-		this.editor = new Editor(this)
-		this.app = new App({name: 'Global'}, undefined, this)
+		this.app = new App({name: 'Global', shortcuts: false}, undefined, this)
 		this.app.uuid = 'global'
-		this.editor.addApp(this.app)
 	}
 
 	/**
@@ -261,9 +259,10 @@ export class Session {
 		await newStream.connect()
 
 		// Add Device Stream Graphs to Session Apps
-		newStream.device.atlas.graph.replaceApp(this.app)
-		if (newStream.device.atlas.graph) this.editor.addGraph(newStream.device.atlas.graph)
-
+		if (newStream.device.atlas.graph){
+			newStream.device.atlas.graph.replaceApp(this.app)
+			if (this.editor) this.editor.addGraph(newStream.device.atlas.graph)
+		}
 		// Initialize Route Management Interface
 		let contentChild = document.getElementById(`brainsatplay-device-${device.split('_')[0]}`)
 
@@ -468,7 +467,7 @@ export class Session {
 					let updatedOnConnect = (device) => {
 						if (onconnect instanceof Function) onconnect(device)
 						this.info.apps.forEach(app => {
-							let connectFunc = app?.connect?.onconnect
+							let connectFunc = app?.info.connect?.onconnect
 							if (connectFunc instanceof Function) connectFunc(device)
 						})
 						div.querySelector('p').innerHTML = "Disconnect"
@@ -2027,8 +2026,8 @@ export class Session {
 						result.sessions.forEach((g) => {
 							let playButton = document.getElementById(`${g.id}play`)
 							let spectateButton = document.getElementById(`${g.id}spectate`)
-							playButton.addEventListener('click', () => { connectToGame(g, false) })
-							spectateButton.addEventListener('click', () => { connectToGame(g, true) })
+							if (playButton) playButton.addEventListener('click', () => { connectToGame(g, false) })
+							if (spectateButton) spectateButton.addEventListener('click', () => { connectToGame(g, true) })
 						});
 					} else {
 						console.log('auto joining again')
@@ -2424,6 +2423,11 @@ export class Session {
 	loadDevice = (deviceInfo) => {
 		let device = createDevice(deviceInfo)
 		deviceList.push(device)
+	}
+
+	edit = (parent) => {
+		this.editor = new Editor(this, parent)
+        this.editor.addApp(this.app)
 	}
 
 }

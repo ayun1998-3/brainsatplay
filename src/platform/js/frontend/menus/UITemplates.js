@@ -141,7 +141,7 @@ export function appletbox_template( props={
         styleInlineText:'flex-grow: 1;'
 }) {
     return `
-    <div style='`+props.styleInlineText+`z-index:2; display:flex;' id='`+props.containerId+`'></div>
+    <div style='`+props.styleInlineText+`display:flex;' id='`+props.containerId+`'></div>
     `;
 }
 

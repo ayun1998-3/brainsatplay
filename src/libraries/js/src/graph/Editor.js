@@ -9,7 +9,6 @@ import {pluginManifest} from '../plugins/pluginManifest'
 
 
 // Node Interaction
-import * as dragUtils from '../ui/dragUtils'
 import { Port } from './Port'
 
 export class Editor{
@@ -45,7 +44,7 @@ export class Editor{
             open: false,
             lastClickedProjectCategory: '',
             galleries: {},
-            currentApp: null
+            currentApp: null,
         }
 
         // Set Shortcuts
@@ -172,17 +171,19 @@ export class Editor{
     // Shortcuts
     shortcutManager = (e) => {
         if ((window.navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey)) {
-            if (e.key === 'e') { // Toggle Editor
-                e.preventDefault();
-                this.toggleDisplay()
-            }
-            else if (e.key === 's') { // Save Application
-                if (this.shown){
+
+                if (e.key === 'e') { // Toggle Editor
                     e.preventDefault();
-                    this.props.currentApp.graphs.forEach(g => g.save())
-                    this.props.currentApp.save()
+                    this.toggleDisplay()
+                    
                 }
-            }
+                else if (e.key === 's') { // Save Application
+                    if (this.shown){
+                        e.preventDefault();
+                        this.props.currentApp.graphs.forEach(g => g.save())
+                        this.props.currentApp.save()
+                    }
+                }
         }
     }
 
@@ -212,9 +213,9 @@ export class Editor{
             if (this.settings.show) this.toggleDisplay(true)
         }
 
-    setToggle = (toggle = this.settings.toggle) => {
+    setToggle = (app, toggle = this.settings.toggle) => {
         this.toggle = (typeof toggle === 'string') ? this.props.currentApp.ui.container.querySelector(`[id="${toggle}"]`) : toggle
-        if (this.toggle) this.toggle.addEventListener('click', () => {this.toggleDisplay()})
+        if (this.toggle) this.toggle.addEventListener('click', () => {this.toggleDisplay(undefined, app)})
     }
 
     insertProject = ({settings, destination}) => {
@@ -333,7 +334,6 @@ export class Editor{
             show: true,
             style: `
             position: block;
-            z-index: 9;
             `,
         }
 
@@ -398,7 +398,7 @@ export class Editor{
             if (app.uuid === 'global') this.filesidebar.container.insertAdjacentElement('afterbegin', element)
             else this.filesidebar.container.insertAdjacentElement('beforeend', element)
 
-            this.files[app.uuid] = {graphs: {}, element}
+            this.files[app.uuid] = {app, graphs: {}, element}
         }
     }
 
@@ -629,9 +629,12 @@ export class Editor{
         }
 
 
-    toggleDisplay = (on) => {
+    toggleDisplay = (on, app) => {
 
         // Set App if not in Existing Apps
+        if (app) this.setApp(app)
+
+
         if (!this.session.info.apps.find(a => a === this.props.currentApp)) {
              let filteredApps = this.session.info.apps.filter(a => 'graphs' in a.info || 'graph' in a.info)
             this.setApp(filteredApps[0])
@@ -640,7 +643,10 @@ export class Editor{
         if (this.props.currentApp) {
         // if (this.element){
             if (on === true || (on != false && this.container?.style?.display == 'none')){
+               
+                // if (app != null) app.ui.parent.insertAdjacentElement('beforeend', this.container) ?? 
                 this.parentNode.insertAdjacentElement('beforeend', this.container)
+               
                 setTimeout(() => {
                     this.container.style.display = ''
                 // this.container.style.opacity = 1
@@ -669,6 +675,7 @@ export class Editor{
                 this.shown = false
 
                 this.props.currentApp.ui.parent.appendChild(this.props.currentApp.ui.container)
+
                 this.defaultpreview.style.display = 'block'
                 this.responsive()
                 this.props.currentApp.graphs.forEach(g => {
@@ -1440,8 +1447,9 @@ export class Editor{
 
     deinit(){
         if (this.container){
-            this.container.style.opacity = '0'
-            setTimeout(() => {this.container.remove()}, 500)
+            // this.container.style.opacity = '0'
+            this.container.remove()
+            // setTimeout(() => {this.container.remove()}, 500)
         }
         window.removeEventListener('resize', this.responsive)
     }

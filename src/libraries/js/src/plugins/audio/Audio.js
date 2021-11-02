@@ -36,7 +36,6 @@ export class Audio {
 
                             if (this.props.file){
 
-                                console.log(this.ports.analyze.data)
                                 if (typeof this.props.file === 'string'){
                                     if (this.ports.analyze.data) await this._convertToBlob(this.props.file)
                                     else this._convertToAudioElement(this.props.file,()=>{resolve({data: true})})
