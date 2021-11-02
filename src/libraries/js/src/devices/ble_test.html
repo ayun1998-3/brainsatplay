@@ -820,14 +820,14 @@ boyerMoore(patternBuffer) {
         let start = Date.now();
         
         const ads = new ads131m08((newLinesInt) => {
-            let ch0 = ads.getLatestData('A0',newLinesInt)*ads.uVperStep;
-            let ch1 = ads.getLatestData('A1',newLinesInt)*ads.uVperStep;
-            let ch2 = ads.getLatestData('A2',newLinesInt)*ads.uVperStep;
-            let ch3 = ads.getLatestData('A3',newLinesInt)*ads.uVperStep;
-            let ch4 = ads.getLatestData('A4',newLinesInt)*ads.uVperStep;
-            let ch5 = ads.getLatestData('A5',newLinesInt)*ads.uVperStep;
-            let ch6 = ads.getLatestData('A6',newLinesInt)*ads.uVperStep;
-            let ch7 = ads.getLatestData('A7',newLinesInt)*ads.uVperStep;
+            let ch0 = ads.getLatestData('A0',1)*ads.uVperStep;
+            let ch1 = ads.getLatestData('A1',1)*ads.uVperStep;
+            let ch2 = ads.getLatestData('A2',1)*ads.uVperStep;
+            let ch3 = ads.getLatestData('A3',1)*ads.uVperStep;
+            let ch4 = ads.getLatestData('A4',1)*ads.uVperStep;
+            let ch5 = ads.getLatestData('A5',1)*ads.uVperStep;
+            let ch6 = ads.getLatestData('A6',1)*ads.uVperStep;
+            let ch7 = ads.getLatestData('A7',1)*ads.uVperStep;
             let output = [ch0,ch1,ch2,ch3,ch4,ch5,ch6,ch7];
 
             let elapsed = (Date.now() - start)*0.001;
