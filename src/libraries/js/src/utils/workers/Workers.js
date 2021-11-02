@@ -111,7 +111,6 @@ export class WorkerManager {
             }
         }
         else{
-
             this.workers.find((o)=>{
                 if(o.id === id) {
                     o.worker.postMessage(input,transfer); 

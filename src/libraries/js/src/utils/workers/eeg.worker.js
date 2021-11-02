@@ -60,7 +60,7 @@ self.onmessage = (event) => {
 }
 
 if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
-    addEventListener('message', self.onmessage);
+    //addEventListener('message', self.onmessage);
 } 
 
 manager.events.emit('newWorker',id);
