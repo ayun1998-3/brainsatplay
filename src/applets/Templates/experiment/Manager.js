@@ -20,7 +20,8 @@ export class Manager extends Plugin {
             cross: document.createElement('p'),
             start: document.createElement('div'),
             startButton: null,
-            model: null
+            model: null,
+            results: null,
         }
 
         this.props.container.id = this.props.id
@@ -286,13 +287,14 @@ export class Manager extends Plugin {
                         let prediction = classify(predictData)
                         console.log(prediction)
 
-                        let div = document.createElement('div')
-                        div.style.padding = '80px'
-                        div.style.textAlign = 'left'
+                        if (this.props.results) this.props.start.remove(this.props.results)
+                        this.props.results = document.createElement('div')
+                        this.props.results.style.padding = '80px'
+                        this.props.results.style.textAlign = 'left'
 
 
                         div.innerHTML += `<h2 style="margin: 0px">Hello</h2>`
-                        this.props.start.insertAdjacentElement('beforeend', div)
+                        this.props.start.insertAdjacentElement('beforeend', this.props.results)
 
 
 
