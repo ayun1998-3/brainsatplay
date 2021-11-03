@@ -1,7 +1,4 @@
-//Joshua Brewster, GPL (copyleft)
-
-import 'regenerator-runtime/runtime' //For async functions on node\\
-
+//Joshua Brewster, AGPL (copyleft)
 export class eeg32 { //Contains structs and necessary functions/API calls to analyze serial data for the FreeEEG32
 
     constructor(

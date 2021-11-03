@@ -1,6 +1,6 @@
 import {Session} from '../../../libraries/js/src/Session'
 import {DOMFragment} from '../../../libraries/js/src/ui/DOMFragment'
-import { WorkerManager } from '../../../libraries/js/src/utils/workers/Workers';
+import { WorkerManager } from '../../../libraries/js/src/utils/workers/WorkerManager';
 import { ThreadedCanvas } from '../../../libraries/js/src/utils/workers/ThreadedCanvas'
 import {DynamicParticles} from '../../../libraries/js/src/utils/graphics/DynamicParticles'
 

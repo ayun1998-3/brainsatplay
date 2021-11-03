@@ -3,7 +3,7 @@
 
 import { StateManager } from "./ui/StateManager";
 
-import { WorkerManager } from "./utils/workers/Workers"
+import { WorkerManager } from "./utils/workers/WorkerManager"
 import { Graph } from "./graph/Graph"
 
 import { Blink } from "./plugins/models/Blink"

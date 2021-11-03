@@ -2,8 +2,6 @@ import * as THREE from 'three'
 import { Texture } from 'three';
 import { GUI } from 'three/examples/jsm/libs/dat.gui.module'
 
-import {Math2} from '../mathUtils/Math2'
-
 import uvgrid from './uvgrid.png'
 
 /*
@@ -21,6 +19,7 @@ three.scene.add(this.meshes[0]);
     this.updateAllMaterialUniforms();
     three.renderer.render(three.scene, three.camera);
 */
+
 
 export class THREEShaderHelper {
 
@@ -58,9 +57,9 @@ void main(){
 }                    
 `;
 
-    constructor(session=undefined, canvas=undefined) {
+    constructor(canvas=undefined,session=undefined) {
 
-        if(!canvas || !session) {console.error('THREEShaderHelper needs a canvas and a session!'); return false;};
+        if(!canvas) {console.error('THREEShaderHelper needs a canvas!'); return false;};
 
         this.session = session;
         this.eegchannel = 0;
@@ -238,6 +237,26 @@ void main(){
         }
     }
 
+    interpolateArray(data, fitCount, scalar=1) {
+
+		var linearInterpolate = function (before, after, atPoint) {
+			return (before + (after - before) * atPoint)*scalar;
+		};
+
+		var newData = new Array();
+		var springFactor = new Number((data.length - 1) / (fitCount - 1));
+		newData[0] = data[0]; // for new allocation
+		for ( var i = 1; i < fitCount - 1; i++) {
+			var tmp = i * springFactor;
+			var before = new Number(Math.floor(tmp)).toFixed();
+			var after = new Number(Math.ceil(tmp)).toFixed();
+			var atPoint = tmp - before;
+			newData[i] = linearInterpolate(data[before], data[after], atPoint);
+		}
+		newData[fitCount - 1] = data[data.length - 1]; // for new allocation
+		return newData;
+	}
+
     deinit() {
         this.removeCanvasEventListeners();
     }
@@ -273,7 +292,7 @@ void main(){
         uniformNames=[],
         name='',
         author='',
-        atlas=this.session.atlas
+        atlas=this.session?.atlas
     ) {
         let geometry;
         if(typeof type === 'string') geometry = this.createMeshGeometry(type,width,height);
@@ -294,7 +313,7 @@ void main(){
 
         materal.uniforms = uniforms;
 
-        this.updateMaterialUniforms(material,uniformNames,atlas,type);
+        this.updateMaterialUniforms(material,uniformNames,type,atlas);
 
         this.currentViews.push(type);
         this.materials.push(material);
@@ -382,7 +401,7 @@ void main(){
     }
 
     //Updates dynamic uniforms for selected material, uniforms. Static uniforms (textures, meshes, etc) are set once.
-    updateMaterialUniforms(material=this.materials[0],uniformNames=this.shaderSettings[0].uniformNames,atlas=this.session.atlas,meshType=this.currentViews[matidx]) {
+    updateMaterialUniforms(material=this.materials[0],uniformNames=this.shaderSettings[0].uniformNames,meshType=this.currentViews[matidx],atlas=this.session?.atlas) {
         let time = Date.now();
         
         for(let name in uniformNames) {
@@ -436,89 +455,88 @@ void main(){
                 if(window.audio) {
                     material.uniforms.iFFT.value = Array.from(window.audio.getAnalyzerData().slice(0,256));
                 }
-            } else if (name === 'iHEG') {
-                if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                    if(atlas.data.heg[this.heg].ratio.length > 0) {
-                        if(!this.hegbaseline) this.hegbaseline = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1];
-                        let hegscore = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1] - this.hegbaseline;
-                        material.uniforms.iHEG.value = hegscore;
-                    }
-                }
-            } else if (name === 'iHRV') {
-                if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                
-                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                        if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
-                            let hrv = atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].hrv;
-                            material.uniforms.iHRV.value = hrv;
-                        }
-                    }
-                }
-            } else if (name === 'iHR') {
-                if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                
-                    if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
-                        let hr_mod = 60/atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].bpm;
-                        material.uniforms.iHR.value = hr_mod;
-                    }
-                }
-            } else if (name === 'iHB') {
-                if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                
-                    if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
-                        material.uniforms.iHB.value = 1/(0.001*(time-atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].t)) 
-                    }
-                }
-            } else if (name === 'iBRV') {
-                if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                    
-                    if(atlas.data.heg[this.heg].beat_detect.breaths.length > 0) {
-                        material.uniforms.iBRV = atlas.data.heg[this.heg].beat_detect.breaths[atlas.data.heg[this.heg].beat_detect.breaths.length-1].brv;
-                    }
-                }
-            } else if(atlas.settings.eeg === true && atlas.settings.analyzing === true) { 
-                let channel = this.channel;
-            
-                if (name === 'iFFT') {
-                    let data = atlas.getLatestFFTData(channel)[0];
-                    if (data.fft){
-                        let fft = Math2.interpolateArray(channel.fft,256);
-                        if(fft) material.uniforms.iFFT.value = fft;
-                    }
-                }
-                else if (name === 'iDelta') {
-                    material.uniforms.iDelta.value = atlas.getLatestFFTData(channel)[0].mean.delta;                 
-                } else if (name === 'iTheta') {
-                    material.uniforms.iTheta.value = atlas.getLatestFFTData(channel)[0].mean.theta;              
-                } else if (name === 'iAlpha1') {
-                    material.uniforms.iAlpha1.value = atlas.getLatestFFTData(channel)[0].mean.alpha1;               
-                } else if (name === 'iAlpha2') {
-                    material.uniforms.iAlpha2.value = atlas.getLatestFFTData(channel)[0].mean.alpha2;                  
-                } else if (name === 'iBeta') {
-                    material.uniforms.iBeta.value = atlas.getLatestFFTData(channel)[0].mean.beta;                   
-                } else if (name === 'iGamma') {
-                    material.uniforms.iGamma.value = atlas.getLatestFFTData(channel)[0].mean.lowgamma;
-                } else if (name === 'i40Hz') {
-                    material.uniforms.i40Hz.value = atlas.get40HzGamma(atlas.getEEGDataByChannel(channel))                  
-                } else if (name === 'iThetaBeta') {
-                    material.uniforms.iThetaBeta.value = atlas.getThetaBetaRatio(atlas.getEEGDataByChannel(channel))                 
-                } else if (name === 'iAlpha1Alpha2') {
-                    material.uniforms.iAlpha1Alpha2.value = atlas.getAlphaRatio(atlas.getEEGDataByChannel(channel))              
-                } else if (name === 'iAlphaBeta') {
-                    material.uniforms.iAlphaBeta.value = atlas.getAlphaBetaRatio(atlas.getEEGDataByChannel(channel)) 
-                } else if (name === 'iAlphaTheta') {
-                    material.uniforms.iAlphaTheta.value = atlas.getAlphaThetaRatio(atlas.getEEGDataByChannel(channel))
-                } else if (atlas.settings.analysis.eegcoherence === true && name === 'iFrontalAlpha1Coherence') {
-                    material.uniforms.iFrontalAlpha1Coherence.value = atlas.getCoherenceScore(atlas.getFrontalCoherenceData(),'alpha1') // atlas.getLatestCoherenceData(0)[0].mean.alpha1;
-                } else if (this.uniformSettings[name]) {
-                    if(this.uniformSettings[name].callback) {
-                        material.uniforms[name].value = this.uniformSettings[name].callback();
-                    }
-                }
             } else if (this.uniformSettings[name]) {
                 if(this.uniformSettings[name].callback) {
                     material.uniforms[name].value = this.uniformSettings[name].callback();
                 }
+            }
+            else if(atlas) {
+                if (name === 'iHEG') {
+                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                        if(atlas.data.heg[this.heg].ratio.length > 0) {
+                            if(!this.hegbaseline) this.hegbaseline = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1];
+                            let hegscore = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1] - this.hegbaseline;
+                            material.uniforms.iHEG.value = hegscore;
+                        }
+                    }
+                } else if (name === 'iHRV') {
+                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                    
+                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                            if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
+                                let hrv = atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].hrv;
+                                material.uniforms.iHRV.value = hrv;
+                            }
+                        }
+                    }
+                } else if (name === 'iHR') {
+                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                    
+                        if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
+                            let hr_mod = 60/atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].bpm;
+                            material.uniforms.iHR.value = hr_mod;
+                        }
+                    }
+                } else if (name === 'iHB') {
+                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                    
+                        if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
+                            material.uniforms.iHB.value = 1/(0.001*(time-atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].t)) 
+                        }
+                    }
+                } else if (name === 'iBRV') {
+                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                        
+                        if(atlas.data.heg[this.heg].beat_detect.breaths.length > 0) {
+                            material.uniforms.iBRV = atlas.data.heg[this.heg].beat_detect.breaths[atlas.data.heg[this.heg].beat_detect.breaths.length-1].brv;
+                        }
+                    }
+                } else if(atlas.settings.eeg === true && atlas.settings.analyzing === true) { 
+                    let channel = this.channel;
+                
+                    if (name === 'iFFT') {
+                        let data = atlas.getLatestFFTData(channel)[0];
+                        if (data.fft){
+                            let fft = this.interpolateArray(channel.fft,256);
+                            if(fft) material.uniforms.iFFT.value = fft;
+                        }
+                    }
+                    else if (name === 'iDelta') {
+                        material.uniforms.iDelta.value = atlas.getLatestFFTData(channel)[0].mean.delta;                 
+                    } else if (name === 'iTheta') {
+                        material.uniforms.iTheta.value = atlas.getLatestFFTData(channel)[0].mean.theta;              
+                    } else if (name === 'iAlpha1') {
+                        material.uniforms.iAlpha1.value = atlas.getLatestFFTData(channel)[0].mean.alpha1;               
+                    } else if (name === 'iAlpha2') {
+                        material.uniforms.iAlpha2.value = atlas.getLatestFFTData(channel)[0].mean.alpha2;                  
+                    } else if (name === 'iBeta') {
+                        material.uniforms.iBeta.value = atlas.getLatestFFTData(channel)[0].mean.beta;                   
+                    } else if (name === 'iGamma') {
+                        material.uniforms.iGamma.value = atlas.getLatestFFTData(channel)[0].mean.lowgamma;
+                    } else if (name === 'i40Hz') {
+                        material.uniforms.i40Hz.value = atlas.get40HzGamma(atlas.getEEGDataByChannel(channel))                  
+                    } else if (name === 'iThetaBeta') {
+                        material.uniforms.iThetaBeta.value = atlas.getThetaBetaRatio(atlas.getEEGDataByChannel(channel))                 
+                    } else if (name === 'iAlpha1Alpha2') {
+                        material.uniforms.iAlpha1Alpha2.value = atlas.getAlphaRatio(atlas.getEEGDataByChannel(channel))              
+                    } else if (name === 'iAlphaBeta') {
+                        material.uniforms.iAlphaBeta.value = atlas.getAlphaBetaRatio(atlas.getEEGDataByChannel(channel)) 
+                    } else if (name === 'iAlphaTheta') {
+                        material.uniforms.iAlphaTheta.value = atlas.getAlphaThetaRatio(atlas.getEEGDataByChannel(channel))
+                    } else if (atlas.settings.analysis.eegcoherence === true && name === 'iFrontalAlpha1Coherence') {
+                        material.uniforms.iFrontalAlpha1Coherence.value = atlas.getCoherenceScore(atlas.getFrontalCoherenceData(),'alpha1') // atlas.getLatestCoherenceData(0)[0].mean.alpha1;
+                    }
+                } 
             }
         }
 
@@ -574,87 +592,89 @@ void main(){
                     if(window.audio) {
                         value = Array.from(window.audio.getAnalyzerData().slice(0,256));
                     }
-                } else if (name === 'iHEG') {
-                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                        if(atlas.data.heg[this.heg].ratio.length > 0) {
-                            if(!this.hegbaseline) this.hegbaseline = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1];
-                            let hegscore = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1] - this.hegbaseline;
-                            value = hegscore;
-                        }
-                    }
-                } else if (name === 'iHRV') {
-                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                            if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
-                                let hrv = atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].hrv;
-                                value = hrv;
-                            }
-                        }
-                    }
-                } else if (name === 'iHR') {
-                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                        if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
-                            let hr_mod = 60/atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].bpm;
-                            value = hr_mod;
-                        }
-                    }
-                } else if (name === 'iHB') {
-                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                    
-                        if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
-                           value = 1/(0.001*(time-atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].t)) 
-                        }
-                    }
-                } else if (name === 'iBRV') {
-                    if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
-                        
-                        if(atlas.data.heg[this.heg].beat_detect.breaths.length > 0) {
-                            iBRV = atlas.data.heg[this.heg].beat_detect.breaths[atlas.data.heg[this.heg].beat_detect.breaths.length-1].brv;
-                        }
-                    }
-                } else if(atlas.settings.eeg === true && atlas.settings.analyzing === true) { 
-                    let channel = this.channel;
-                
-                    if (name === 'iFFT') {
-                        let data = atlas.getLatestFFTData(channel)[0];
-                        if (data.fft){
-                            let fft = Math2.interpolateArray(channel.fft,256);
-                            if(fft) value = fft;
-                        }
-                    }
-                    else if (name === 'iDelta') {
-                        value = atlas.getLatestFFTData(channel)[0].mean.delta;                 
-                    } else if (name === 'iTheta') {
-                        value = atlas.getLatestFFTData(channel)[0].mean.theta;              
-                    } else if (name === 'iAlpha1') {
-                        value = atlas.getLatestFFTData(channel)[0].mean.alpha1;               
-                    } else if (name === 'iAlpha2') {
-                        value = atlas.getLatestFFTData(channel)[0].mean.alpha2;                  
-                    } else if (name === 'iBeta') {
-                        value = atlas.getLatestFFTData(channel)[0].mean.beta;                   
-                    } else if (name === 'iGamma') {
-                        value = atlas.getLatestFFTData(channel)[0].mean.lowgamma;
-                    } else if (name === 'i40Hz') {
-                        value = atlas.get40HzGamma(atlas.getEEGDataByChannel(channel))                  
-                    } else if (name === 'iThetaBeta') {
-                        value = atlas.getThetaBetaRatio(atlas.getEEGDataByChannel(channel))                 
-                    } else if (name === 'iAlpha1Alpha2') {
-                        value = atlas.getAlphaRatio(atlas.getEEGDataByChannel(channel))              
-                    } else if (name === 'iAlphaBeta') {
-                        value = atlas.getAlphaBetaRatio(atlas.getEEGDataByChannel(channel)) 
-                    } else if (name === 'iAlphaTheta') {
-                        value = atlas.getAlphaThetaRatio(atlas.getEEGDataByChannel(channel))
-                    } else if (atlas.settings.analysis.eegcoherence === true && name === 'iFrontalAlpha1Coherence') {
-                        value = atlas.getCoherenceScore(atlas.getFrontalCoherenceData(),'alpha1') // atlas.getLatestCoherenceData(0)[0].mean.alpha1;
-                    } else if (this.uniformSettings[name]) {
-                        if(this.uniformSettings[name].callback) {
-                            value = this.uniformSettings[name].callback();
-                        }
-                    }
                 } else if (this.uniformSettings[name]) {
                     if(this.uniformSettings[name].callback) {
                         value = this.uniformSettings[name].callback();
                     }
+                } else if (atlas) {
+                    if (name === 'iHEG') {
+                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                            if(atlas.data.heg[this.heg].ratio.length > 0) {
+                                if(!this.hegbaseline) this.hegbaseline = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1];
+                                let hegscore = atlas.data.heg[this.heg].ratio[atlas.data.heg[this.heg].ratio.length-1] - this.hegbaseline;
+                                value = hegscore;
+                            }
+                        }
+                    } else if (name === 'iHRV') {
+                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                            if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                                if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
+                                    let hrv = atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].hrv;
+                                    value = hrv;
+                                }
+                            }
+                        }
+                    } else if (name === 'iHR') {
+                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                            if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
+                                let hr_mod = 60/atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].bpm;
+                                value = hr_mod;
+                            }
+                        }
+                    } else if (name === 'iHB') {
+                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                        
+                            if(atlas.data.heg[this.heg].beat_detect.beats.length > 0) {
+                               value = 1/(0.001*(time-atlas.data.heg[this.heg].beat_detect.beats[atlas.data.heg[this.heg].beat_detect.beats.length-1].t)) 
+                            }
+                        }
+                    } else if (name === 'iBRV') {
+                        if(atlas.data.heg.length>0 && atlas.settings.deviceConnected === true) {
+                            
+                            if(atlas.data.heg[this.heg].beat_detect.breaths.length > 0) {
+                                iBRV = atlas.data.heg[this.heg].beat_detect.breaths[atlas.data.heg[this.heg].beat_detect.breaths.length-1].brv;
+                            }
+                        }
+                    } else if(atlas.settings.eeg === true && atlas.settings.analyzing === true) { 
+                        let channel = this.channel;
+                    
+                        if (name === 'iFFT') {
+                            let data = atlas.getLatestFFTData(channel)[0];
+                            if (data.fft){
+                                let fft = this.interpolateArray(channel.fft,256);
+                                if(fft) value = fft;
+                            }
+                        }
+                        else if (name === 'iDelta') {
+                            value = atlas.getLatestFFTData(channel)[0].mean.delta;                 
+                        } else if (name === 'iTheta') {
+                            value = atlas.getLatestFFTData(channel)[0].mean.theta;              
+                        } else if (name === 'iAlpha1') {
+                            value = atlas.getLatestFFTData(channel)[0].mean.alpha1;               
+                        } else if (name === 'iAlpha2') {
+                            value = atlas.getLatestFFTData(channel)[0].mean.alpha2;                  
+                        } else if (name === 'iBeta') {
+                            value = atlas.getLatestFFTData(channel)[0].mean.beta;                   
+                        } else if (name === 'iGamma') {
+                            value = atlas.getLatestFFTData(channel)[0].mean.lowgamma;
+                        } else if (name === 'i40Hz') {
+                            value = atlas.get40HzGamma(atlas.getEEGDataByChannel(channel))                  
+                        } else if (name === 'iThetaBeta') {
+                            value = atlas.getThetaBetaRatio(atlas.getEEGDataByChannel(channel))                 
+                        } else if (name === 'iAlpha1Alpha2') {
+                            value = atlas.getAlphaRatio(atlas.getEEGDataByChannel(channel))              
+                        } else if (name === 'iAlphaBeta') {
+                            value = atlas.getAlphaBetaRatio(atlas.getEEGDataByChannel(channel)) 
+                        } else if (name === 'iAlphaTheta') {
+                            value = atlas.getAlphaThetaRatio(atlas.getEEGDataByChannel(channel))
+                        } else if (atlas.settings.analysis.eegcoherence === true && name === 'iFrontalAlpha1Coherence') {
+                            value = atlas.getCoherenceScore(atlas.getFrontalCoherenceData(),'alpha1') // atlas.getLatestCoherenceData(0)[0].mean.alpha1;
+                        } else if (this.uniformSettings[name]) {
+                            if(this.uniformSettings[name].callback) {
+                                value = this.uniformSettings[name].callback();
+                            }
+                        }
+                    } 
                 }
             
                 materialsfiltered.forEach(material => {
@@ -667,7 +687,7 @@ void main(){
     }
 
     //applies to main shader
-    setShader = (matidx=0, name='',vertexShader=``,fragmentShader=``,uniformNames=[],author='',atlas=this.session.atlas) => {
+    setShader = (matidx=0, name='',vertexShader=``,fragmentShader=``,uniformNames=[],author='',atlas=this.session?.atlas) => {
         this.shaderSettings[matidx].name = name;
         this.shaderSettings[matidx].vertexShader = vertexShader;
         this.shaderSettings[matidx].fragmentShader = fragmentShader;
@@ -684,7 +704,7 @@ void main(){
             uniforms:uniforms
         });
 
-        this.updateMaterialUniforms(this.materials[matidx],uniformNames,atlas,this.currentViews[matidx]); //get latest data
+        this.updateMaterialUniforms(this.materials[matidx],uniformNames,this.currentViews[matidx],atlas); //get latest data
         
         if(this.meshes[matidx]){
             this.meshes[matidx].material.dispose();
@@ -714,7 +734,14 @@ void main(){
         onchange();
     }
 
-    setShaderFromText = (matidx=0,fragmentShaderText=this.defaultFragmentTemplate,vertexShaderText=this.defaultVertexTemplate,name='',author='',onchange=()=>{this.startTime=Date.now()}) => {
+    setShaderFromText = (
+        matidx=0,
+        fragmentShaderText=this.defaultFragmentTemplate,
+        vertexShaderText=this.defaultVertexTemplate,
+        name='',
+        author='',
+        onchange=()=>{this.startTime=Date.now()}
+        ) => {
 
         this.fragmentTemplate = fragmentShaderText;
         this.vertexTemplate = vertexShaderText;

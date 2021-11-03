@@ -1,4 +1,4 @@
-import { WorkerManager } from "../../utils/workers/Workers"
+import { WorkerManager } from "../../utils/workers/WorkerManager"
 
 
 

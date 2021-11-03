@@ -1,6 +1,4 @@
-//Joshua Brewster, GPL (copyleft)
-
-import 'regenerator-runtime/runtime' //For async functions on node\\
+//Joshua Brewster, AGPL (copyleft)
 
 export class cyton { //Contains structs and necessary functions/API calls to analyze serial data for the OpenBCI Cyton and Daisy-Cyto
 

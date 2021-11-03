@@ -4,13 +4,13 @@ import {CallbackManager} from './workerCallbacks'
 
 // WEBPACK
 // import worker from './eeg.worker.js'
-import * as worker from './eeg.worker.js'
+import * as worker from './magic.worker.js'
 
 import { Events } from './Event';
 
 let defaultWorkerThreads = 0
 export class WorkerManager {
-    constructor(workerURL= new URL('./eeg.worker.js', import.meta.url, defaultWorkerThreads)){
+    constructor(workerURL= new URL('./magic.worker.js', import.meta.url, defaultWorkerThreads)){
         this.workerURL = workerURL;
         this.workerResponses = [];
         this.workers = [];

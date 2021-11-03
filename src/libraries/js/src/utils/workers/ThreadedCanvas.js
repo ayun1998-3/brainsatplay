@@ -1,4 +1,4 @@
-import { WorkerManager } from "./Workers"
+import { WorkerManager } from "./WorkerManager"
 
 //The animation should probably be an arrow function
 export class ThreadedCanvas {

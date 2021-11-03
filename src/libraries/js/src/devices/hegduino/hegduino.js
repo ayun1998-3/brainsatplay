@@ -1,7 +1,5 @@
 //Joshua Brewster, MIT License
 
-import 'regenerator-runtime/runtime' //for async calls
-
 export class hegduino {
     constructor(mode='usb',ondata=(newline)=>{},onconnect=()=>{},ondisconnect=()=>{},hostURL='http://192.168.4.1/') {
 
