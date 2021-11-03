@@ -79,6 +79,15 @@ export class WorkerManager {
       }
     }
 
+    addWorkerFunction(functionName,fstring,origin,id) {
+      if(functionName && fstring) {
+        if(typeof fstring === 'function') fstring = fstring.toString();
+        let dict = {foo:'addfunc',args:[functionName,fstring],origin:origin}; //post to the specific worker
+        if(!id) this.workers.forEach((w) => {this.postToWorker(dict,w.id);}); //post to all of the workers
+        else this.postToWorker(dict,id);
+      }
+    }
+
     runWorkerFunction(functionName,args=[],origin,id,transfer=undefined) {
         if(functionName) {
           if(functionName === 'transferClassObject') {

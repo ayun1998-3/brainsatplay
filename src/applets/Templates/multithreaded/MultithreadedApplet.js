@@ -215,12 +215,9 @@ export class MultithreadedApplet {
         window.workers.events.addEvent('render',this.origin,undefined,this.canvasWorkerId);
 
         //add some custom functions to the threads
-        window.workers.runWorkerFunction(
-            'addfunc',
-            [   
-                'add',
-                function add(args,origin){return args[0]+args[1];}.toString()
-            ],
+        window.workers.addWorkerFunction( 
+            'add',
+            function add(args,origin){return args[0]+args[1];}.toString(),
             this.origin,
             this.worker1Id
         );
@@ -230,48 +227,42 @@ export class MultithreadedApplet {
         //add a particle system
         window.workers.runWorkerFunction('transferClassObject',{particleClass:DynamicParticles.toString()},this.origin,this.worker1Id);
         // //add some custom functions to the threads
-        window.workers.runWorkerFunction(
-            'addfunc',
-            [   
-                'particleSetup',
-                function particleStep(args,origin,self){
-                    //console.log(self);
-                    self.particleObj = new self.particleClass(undefined,undefined,false,false);
-                    self.particleObj.setupRules([
-                        ['boids',4000,[450,450,450]],
-                        ['boids',5000,[450,450,450]],
-                        ['boids',700,[450,450,450]]]);
-                    let groups = [];
-                    self.particleObj.particles.forEach((group,j) => {
-                        groups.push([]);
-                        group.particles.forEach((particle) => {
-                            groups[j].push(particle.position);
-                        });
+        window.workers.addWorkerFunction(
+            'particleSetup',
+            function particleStep(args,origin,self){
+                //console.log(self);
+                self.particleObj = new self.particleClass(undefined,undefined,false,false);
+                self.particleObj.setupRules([
+                    ['boids',4000,[450,450,450]],
+                    ['boids',5000,[450,450,450]],
+                    ['boids',700,[450,450,450]]]);
+                let groups = [];
+                self.particleObj.particles.forEach((group,j) => {
+                    groups.push([]);
+                    group.particles.forEach((particle) => {
+                        groups[j].push(particle.position);
                     });
-                    //console.log(output)
-                    return groups;
-                }.toString()
-            ],
+                });
+                //console.log(output)
+                return groups;
+            }.toString(),
             this.origin,
             this.worker1Id
         );
         //add some custom functions to the threads
-        window.workers.runWorkerFunction(
-            'addfunc',
-            [   
-                'particleStep',
-                function particleStep(args,origin,self){
-                    self.particleObj.frame(args[0]);
-                    let groups = [];
-                    self.particleObj.particles.forEach((group,j) => {
-                        groups.push([]);
-                        group.particles.forEach((particle) => {
-                            groups[j].push(particle.position);
-                        });
+        window.workers.addWorkerFunction(
+            'particleStep',
+            function particleStep(args,origin,self){
+                self.particleObj.frame(args[0]);
+                let groups = [];
+                self.particleObj.particles.forEach((group,j) => {
+                    groups.push([]);
+                    group.particles.forEach((particle) => {
+                        groups[j].push(particle.position);
                     });
-                    return [groups,self.particleObj.currFrame];
-                }.toString()
-            ],
+                });
+                return [groups,self.particleObj.currFrame];
+            }.toString(),
             this.origin,
             this.worker1Id
         );
@@ -280,12 +271,9 @@ export class MultithreadedApplet {
         window.workers.runWorkerFunction('particleSetup',undefined,this.origin,this.worker1Id);
         window.workers.runWorkerFunction('particleStep',[performance.now()*0.001],this.origin,this.worker1Id);
 
-        window.workers.runWorkerFunction(
-            'addfunc',
-            [
-                'mul',
-                function mul(args,origin){return args[0]*args[1];}.toString()
-            ],
+        window.workers.addWorkerFunction(
+            'mul',
+            function mul(args,origin){return args[0]*args[1];}.toString(),
             this.origin,
             this.worker2Id
         );
