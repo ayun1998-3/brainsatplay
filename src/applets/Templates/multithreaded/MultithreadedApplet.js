@@ -287,7 +287,7 @@ export class MultithreadedApplet {
                 window.workers.runWorkerFunction('mul',[this.increment,2],this.origin,this.worker2Id);
                 console.log('multiply by 2 on thread 2')
             } else if (Array.isArray(res.output)) {
-                console.log('thread1 event',res.output[0][0][0],Date.now());
+                console.log('thread1 event',res.output,Date.now());
                 // setTimeout(()=>{window.workers.runWorkerFunction('particleStep',[res.output[1]],this.origin,this.worker1Id)},100);
             }
         });
