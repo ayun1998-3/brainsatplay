@@ -6,16 +6,16 @@
 import 'regenerator-runtime/runtime' 
 
 // Plugins
-import * as plugins from './src/plugins/plugins'
+import * as plugins from './src/plugins/index.js'
 export {plugins}
-// import {pluginManifest} from './src/plugins/pluginManifest'
-// export {pluginManifest}
 
 // Session Manager
 export {Session} from './src/Session.js'
 
 // App
 export {App} from './src/App.js'
+
+export {devices} from './src/devices/index.js'
 
 // export * from './src/analysis/Math2'
 

@@ -48,7 +48,7 @@ import { StateManager } from './ui/StateManager'
 import { DataAtlas } from './DataAtlas'
 
 // Device Plugins
-import { deviceList } from './devices/deviceList';
+import { devices } from './devices';
 
 // Event Router
 import { EventRouter } from './EventRouter'
@@ -353,7 +353,7 @@ export class Session {
 		if (typeof toggleButton === 'string') toggleButton = document.getElementById(toggleButton) // existing element
 
 		// Apply User Filter
-		let newDeviceList = (deviceFilter != null) ? deviceList.filter(d => deviceFilter.includes(d.name)) : deviceList
+		let newDeviceList = (deviceFilter != null) ? devices.filter(d => deviceFilter.includes(d.name)) : devices
 
 		// Apply Browser Filter
 		if (!this.checkIfChrome()) newDeviceList = newDeviceList.filter(d => d.chromeOnly != true)
@@ -550,9 +550,9 @@ export class Session {
 				deviceSelection.style.pointerEvents = 'auto'
 
 				// Apply Filter to UI
-				let newDeviceList = (filter != null) ? deviceList.filter(d => filter.includes(d.name)) : deviceList
+				let newDeviceList = (filter != null) ? devices.filter(d => filter.includes(d.name)) : devices
 				let companies = {}
-				deviceList.forEach(d => {
+				devices.forEach(d => {
 					let deviceContainer = document.getElementById(`brainsatplay-device-${d.id}`)
 					if (deviceContainer) {
 						let cleanCompanyString = d.company.replace(/[|&;$%@"<>()+,]/g, "")
@@ -1404,7 +1404,6 @@ export class Session {
 			// Load Zip
 			if (info.zip){
 				if (!info.zip.includes('.zip')) info.zip = info.zip + '/app.zip'
-
 				fetch(info.zip).then((res) => {
 					this.projects.helper.loadAsync(res.blob())
 					.then(async (file) => {
@@ -1456,6 +1455,7 @@ export class Session {
 
 		// Update Per-App Routes
 		this.info.apps.forEach(app => {
+			if (Array.isArray(app.analysis)) app.analysis = {default: app.analysis}
 			analysisSet.add(...[...app.analysis?.default ?? [], ...app.analysis?.dynamic ?? []])
 			if (thisApp == null || thisApp === app) this.updateApp(thisApp)
 		})
@@ -2417,17 +2417,20 @@ export class Session {
 		// cls: DeviceClass
 		// chromeOnly: boolean
 
-		deviceList.push(deviceInfo)
+		devices.push(deviceInfo)
 	}
 
 	loadDevice = (deviceInfo) => {
 		let device = createDevice(deviceInfo)
-		deviceList.push(device)
+		devices.push(device)
 	}
 
-	edit = (parent) => {
-		this.editor = new Editor(this, parent)
-        this.editor.addApp(this.app)
+	edit = (parent, appsToLoad) => {
+
+		if (!this.editor){
+			this.editor = new Editor(this, parent, appsToLoad)
+			this.editor.addApp(this.app)
+		} else this.editor.toggleDisplay(true)
 	}
 
 }
@@ -2468,7 +2471,7 @@ class deviceStream {
 
 		this.device = null, //Device object, can be instance of our device plugin classes.
 			this.atlas = null,
-			this.deviceConfigs = deviceList,
+			this.deviceConfigs = devices,
 			this.pipeToAtlas = pipeToAtlas;
 		//this.init(device,useFilters,pipeToAtlas,analysis);
 	}

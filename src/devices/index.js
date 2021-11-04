@@ -16,7 +16,7 @@ import { BlueberryPlugin } from './blueberry/blueberryPlugin';
 import { EpocPlugin } from './emotiv/EpocPlugin';
 
 
-export const deviceList = [
+export const devices = [
     {'name': 'Synthetic', id:'synthetic', company:'Brains@Play', variants: ['EEG','HEG'], analysis: ['eegcoherence'], cls: syntheticPlugin},
     {'name': 'Brainstorm', id:'brainstorm',company:'Brains@Play', analysis: ['eegcoherence'], cls: brainstormPlugin},
     {'name': 'Cortex API', id:'cortex', company:'Emotiv', analysis: ['eegcoherence'], cls: EpocPlugin},
@@ -34,5 +34,4 @@ export const deviceList = [
     {'name': 'Timeflux', id:'timefux', company:'Timeflux', analysis: ['eegcoherence'], cls: timefluxPlugin},
     {'name': 'Blueberry', id:'blueberry', company:'Blueberry', analysis: [], cls: BlueberryPlugin, chromeOnly: true},
     {'name': 'WebGazer', id:'webgazer', company:'WebGazer', analysis: [], cls: webgazerPlugin},
-
 ]

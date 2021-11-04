@@ -9,7 +9,7 @@ import { getAppletSettings } from "../utils/general/importUtils"
 import { Port } from './Port'
 
 export class Editor{
-    constructor(session, parent=document.body) {
+    constructor(session, parent=document.body, loadedApps={}) {
         // this.manager = manager
         this.session = session
 
@@ -25,20 +25,22 @@ export class Editor{
 
         this.toggle = null
 
+        this.loadedApps = loadedApps
+
         this.selectorToggle = null
         this.search = null
         this.state = new StateManager()
 
         this.lastMouseEvent = {}
-        this.editing = false
 
         this.files = {}
+
+        this.open = false
 
         this.props = {
             id: String(Math.floor(Math.random()*1000000)),
             projectContainer: null,
             projectDefaults: null,
-            open: false,
             lastClickedProjectCategory: '',
             galleries: {},
             currentApp: null,
@@ -311,15 +313,15 @@ export class Editor{
         })
 
         // // --------------- Templates --------------- 
-        // for (let key in appletManifest){
-        //     try {
-        //         let settings = appletManifest[key]
-        //         if (settings.graphs || settings.zip) {
-        //             if (settings.categories.includes('templates')) this.insertProject({destination: 'Templates', settings})
-        //             else this.insertProject({destination: 'Library', settings})
-        //         }
-        //     } catch (e) { console.log(e)}
-        // }
+        for (let key in this.loadedApps){
+            try {
+                let settings = this.loadedApps[key]
+                if (settings.graphs || settings.zip) {
+                    if (settings.categories.includes('templates')) this.insertProject({destination: 'Templates', settings})
+                    else this.insertProject({destination: 'Library', settings})
+                }
+            } catch (e) { console.log(e)}
+        }
     }
 
     async _createApp(settings){
@@ -639,7 +641,9 @@ export class Editor{
 
         if (this.props.currentApp) {
         // if (this.element){
-            if (on === true || (on != false && this.container?.style?.display == 'none')){
+            if (on === true || (on != false && this.open === false)){
+
+                this.open = true
                
                 // if (app != null) app.ui.parent.insertAdjacentElement('beforeend', this.container) ?? 
                 this.parentNode.insertAdjacentElement('beforeend', this.container)
@@ -666,6 +670,9 @@ export class Editor{
                     this._resizeGallery('Defaults')
                 },50)
             } else if (!on) {
+
+                this.open = false
+
                 this.container.style.display = 'none'
                 // this.container.style.opacity = 0
                 this.container.style.pointerEvents = 'none'

@@ -1,6 +1,9 @@
 
 export let dynamicImport = async (url) => {
-    let module = await import(url);
+
+    let getImportFunc = `async (url) => {return await import(url)}`
+    let getImport = eval(`(${getImportFunc})`);
+    let module = await getImport(url)
     return module;
 }
 

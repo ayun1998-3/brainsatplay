@@ -22,6 +22,7 @@ export class LiveEditor {
 
             // Internal Attributes
             this.ui
+
             this.props = {
                 id: Math.floor(Math.random()*10000000),
                 language: settings.language,
@@ -112,11 +113,9 @@ export class LiveEditor {
                     // this.body = this.getFunctionBody(this.target[this.function]);
                     // this.head = this.getFunctionHead(this.target[this.function]);
                     this.target[this.key] = this.copy;
-                } else if (['html', 'css'].includes(this.props.language)){
+                } else if (['html', 'css', 'glsl'].includes(this.props.language)){
                     this.target[this.key] = this.copy;   
                     // try{ eval(this.defaultScripts); } catch(er) {alert('Script error: ', er);}
-                } else if (this.props.language === 'glsl'){
-                    this.target = this.copy;
                 }
                 this.input.value = this.copy;
                 this._triggerCodeChange()
@@ -202,11 +201,15 @@ export class LiveEditor {
         }
     }
 
-    _updateSettings(settings){
+    _updateSettings(settings={}){
+
+        if (this.props.settings) settings = Object.assign(this.props.settings, settings)
+
         this.onSave = settings.onSave ?? (() => {})
         this.onInput = settings.onInput ?? (() => {})
         this.onOpen = settings.onOpen ?? (() => {})
         this.onClose = settings.onClose ?? (() => {})
+
 
         if (this.close && settings.showClose === false) this.close.style.display = 'none'
 
@@ -279,6 +282,7 @@ export class LiveEditor {
     onClose= () => {}
 
     save = () => {
+
             if (this.props.language === 'javascript'){
 
                 let newJs = undefined;

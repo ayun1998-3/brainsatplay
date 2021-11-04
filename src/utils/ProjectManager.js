@@ -557,8 +557,13 @@ app.init()`)
                     let settings
                     try {
 
+                        // Fool Webpack
+                        let evalFuncString = 'async (txt) => {return await import(txt)}'
+                        let evalFunc = eval(`(${evalFuncString})`)
+
+                        // Load module from data url
                         let moduleText = "data:text/javascript;base64," + btoa(info.settings);
-                        let module = await import(moduleText);
+                        let module = await evalFunc(moduleText)
                         settings = module.settings
                         
                         // Replace Random IDs with Classes

@@ -1,9 +1,6 @@
 import {Port} from "./Port"
 import {Edge} from "./Edge"
 // import {Event} from "../utils/workers/Event"
-import * as brainsatplay from '../../brainsatplay.js'
-// import {pluginManifest} from '../plugins/pluginManifest'
-// import {dynamicImport} from '../utils/general/importUtils'
 
 // Code Editor
 import {LiveEditor} from '../ui/LiveEditor'

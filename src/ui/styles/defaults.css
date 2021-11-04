@@ -941,6 +941,7 @@ select {
 
 .brainsatplay-default-node-div > .brainsatplay-display-node.clicked {
     box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05) inset, 0px 0px 50px rgba(255, 255, 255, 0.45);
+    z-index: 1;
 }
 
 .brainsatplay-display-node > .node-text {

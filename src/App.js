@@ -97,8 +97,6 @@ export class App {
 
         // Add Functionality to Applet
         this.info.graphs.forEach(g => this.addGraph(g)) // initialize all graphs
-
-
         
         // Create Base UI
         this.AppletHTML = this.ui.manager = new DOMFragment( // Fast HTML rendering container object
@@ -161,7 +159,7 @@ export class App {
         this._createDeviceManager(this.info.connect ?? {})
 
         // Toggle Editor
-        if (this.info.editor.show && this.session.editor) this.session.editor.toggleDisplay(true, this)
+        if ((this.info.editor.show) && this.session.editor) this.session.editor.toggleDisplay(true, this)
 
         // Resize App UI
         this.graphs.forEach(g => g._resizeUI())
@@ -217,7 +215,9 @@ export class App {
     }
 
     reload = async () => {
+
         if (this.session.editor) this.session.editor.toggleDisplay(false)
+
         this.info.graphs = this.export() // Replace settings
         await this.deinit(true) // soft
         await this.init()
