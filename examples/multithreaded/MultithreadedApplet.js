@@ -1,24 +1,20 @@
-import {Session} from '../../../libraries/js/src/Session'
-import {DOMFragment} from '../../../libraries/js/src/ui/DOMFragment'
-import { WorkerManager } from '../../../libraries/js/src/utils/workers/WorkerManager';
-import { ThreadedCanvas } from '../../../libraries/js/src/utils/workers/ThreadedCanvas'
-import {DynamicParticles} from '../../../libraries/js/src/utils/graphics/DynamicParticles'
-
-import * as settingsFile from './settings'
+import {DOMFragment} from '../src/ui/DOMFragment.js'
+import { WorkerManager } from '../src/utils/workers/WorkerManager.js';
+import { ThreadedCanvas } from '../src/utils/workers/ThreadedCanvas.js'
+import {DynamicParticles} from '../src/utils/graphics/DynamicParticles.js'
 
 //WIP WIP WIP WIP WIP WIP WIP
 export class MultithreadedApplet {
 
     constructor(
         parent=document.body,
-        bci=new Session(),
+        bci=new brainastplay.Session(),
         settings=[]
     ) {
     
         //-------Keep these------- 
         this.session = bci; //Reference to the Session to access data and subscribe
         this.parentNode = parent;
-        this.info = settingsFile.settings;
         this.settings = settings;
         this.AppletHTML = null;
         //------------------------
