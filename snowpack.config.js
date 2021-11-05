@@ -1,21 +1,11 @@
-// Snowpack Configuration File
-// See all supported options: https://www.snowpack.dev/reference/configuration
-
-require('dotenv').config()
-
-let secure
-if (process.env.SECURE == null) secure = true
-else secure = process.env.SECURE === 'true'
-
 /** @type {import("snowpack").SnowpackUserConfig } */
 module.exports = {
   mount: {
-      src: '/_dist_',
-      public: {url: "/", static: true, resolve: false}
+      src: '/src',
+      examples: {url: "/", static: true, resolve: false}
   },
   exclude: [
     '**/node_modules/**/*', 
-    // '**/src/libraries/js/dist/brainsatplay.js'
   ],
   plugins: [
     '@snowpack/plugin-dotenv',
@@ -34,8 +24,8 @@ module.exports = {
     polyfillNode: true
   },
   devOptions: {
-    port:1234,
-    secure: secure,
+    port:3000,
+    secure: false,
     open: "chrome",
     output: 'stream'
   },
@@ -44,11 +34,6 @@ module.exports = {
     clean: true,
     sourcemap: true,
     htmlFragments: true
-},
-alias: {
-  "src": "./src",
-  "styles": './src/styles',
-  /* ... */
 },
 }
 
