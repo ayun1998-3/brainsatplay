@@ -1,5 +1,5 @@
 // Code Editor
-import {LiveEditor} from '../ui/LiveEditor'
+import {LiveEditor} from '../ui/LiveEditor.js'
 
 export class Port {
     constructor (node, name, info={}) {
@@ -45,6 +45,14 @@ export class Port {
     }
 
     _createElements = () => {
+
+        
+        this.ui.label.innerHTML = `<span>${this.name}</span>`
+        this.ui.label.classList.add('node-label')
+        this.ui.label.setAttribute('name', this.name)
+        this.ui.latency.setAttribute('name', this.name)
+        this.ui.latency.classList.add('latency-display')
+
         Object.keys(this.edges).forEach(s => {
             this.ui[s] = document.createElement('div')
             this.ui[s].classList.add(`node-port-wrapper`)
@@ -99,19 +107,12 @@ export class Port {
             el.setAttribute('data-node', this.node.uuid)
             el.setAttribute('data-port', this.name)
         })
-
-        this.ui.label.innerHTML = `<span>${this.name}</span>`
-        this.ui.label.classList.add('node-label')
-        this.ui.label.setAttribute('name', this.name)
-        this.ui.latency.setAttribute('name', this.name)
-        this.ui.latency.classList.add('latency-display')
-
-
+        
         this.createGUI()
     }
 
     createGUI = () => {
-        if (this.node.app.session.editor) this.ui.gui = this.node.app.session.editor.createObjectEditor({[this.name]:this}, this.name)
+        if (this.node.app.editor) this.ui.gui = this.node.app.editor.createObjectEditor({[this.name]:this}, this.name)
     }
 
     deinit = () => {
@@ -127,11 +128,26 @@ export class Port {
     addEdge = (side, edge) => {
         this.edges[side].set(edge.uuid,edge)
         this.ui[side].children[0].classList.add('active') // Label Active Node
+
+        // Activate Dynamic Analyses (either input or output is active)
+        if (this.analysis) {
+            this.node.parent.app.analysis.dynamic.push(...this.analysis)
+            this.node.parent.app.session.updateApps(this.node.parent.app)           
+        }
     }
 
     removeEdge = (side, id) => {
         this.edges[side].delete(id)
         if (this.edges[side].size === 0)  this.ui[side].children[0].classList.remove('active') // Label Active Node
+
+        // Remove Dynamic Analyses
+        if (this.analysis) {
+            this.analysis.forEach(name => {
+                const index = this.node.parent.app.analysis.dynamic.indexOf(name);
+                if (index > -1) {this.node.parent.app.analysis.dynamic.splice(index, 1)}
+            })
+            this.node.parent.app.session.updateApps(this.node.parent.app)
+        }
     }
 
     // Only Set when Different
@@ -242,7 +258,7 @@ export class Port {
     setLatency = (val) => {
 
         // Animate Latency
-        let pct = Math.min(1,val/1)
+        let pct = Math.min(1,val/(1000/30)) // in milliseconds, relative to 30fps
 
         let map = [
             { pct: 0.0, color: { r: 0x39, g: 0xff, b: 0x14 } },
@@ -266,7 +282,7 @@ export class Port {
         let input = this.ui.gui.input
 
         // Filter for Displayable Inputs
-        if (input && this.node.app.session.editor.elementTypesToUpdate.includes(input.tagName) && input.type != 'file'){
+        if (input && this.node.app.editor.elementTypesToUpdate.includes(input.tagName) && input.type != 'file'){
             if (input.type === 'checkbox') {
                 oldValue = input.checked
                 input.checked = this.value

@@ -1,99 +1,99 @@
-import {Blank} from './Blank'
+import {Blank} from './Blank.js'
 
 // Algorithms
-import {CSP} from './algorithms/CSP'
-import {DataQuality} from './algorithms/DataQuality'
-import {FFT} from './algorithms/FFT'
-import {Filter} from './algorithms/Filter'
-import {Neurofeedback} from './algorithms/Neurofeedback'
-import {PCA} from './algorithms/PCA'
+import {CSP} from './algorithms/CSP.js'
+import {DataQuality} from './algorithms/DataQuality.js'
+import {FFT} from './algorithms/FFT.js'
+import {Filter} from './algorithms/Filter.js'
+import {Neurofeedback} from './algorithms/Neurofeedback.js'
+import {PCA} from './algorithms/PCA.js'
 
 // Audio
-import {Audio} from './audio/Audio'
-import {Microphone} from './audio/Microphone'
-import {Midi} from './audio/Midi'
-import {Mixer} from './audio/Mixer'
+import {Audio} from './audio/Audio.js'
+import {Microphone} from './audio/Microphone.js'
+import {Midi} from './audio/Midi.js'
+import {Mixer} from './audio/Mixer.js'
 
 // Biosignals
-import {Breath} from './biosignals/Breath'
-import {EEG} from './biosignals/EEG'
-import {HEG} from './biosignals/HEG'
+import {Breath} from './biosignals/Breath.js'
+import {EEG} from './biosignals/EEG.js'
+import {HEG} from './biosignals/HEG.js'
 
 // Canvas
-import {Canvas} from './canvas/Canvas'
-import {Circle} from './canvas/Circle'
-import {Line} from './canvas/Line'
+import {Canvas} from './canvas/Canvas.js'
+import {Circle} from './canvas/Circle.js'
+import {Line} from './canvas/Line.js'
 
 // Controls
-import {ERP} from './controls/ERP'
-import {Event} from './controls/Event'
-import {SSVEP} from './controls/SSVEP'
+import {ERP} from './controls/ERP.js'
+import {Event} from './controls/Event.js'
+import {SSVEP} from './controls/SSVEP.js'
 
 // Data
-import {Noise} from './data/Noise'
-import {Number} from './data/Number'
-import {Sine} from './data/Sine'
+import {Noise} from './data/Noise.js'
+import {Number} from './data/Number.js'
+import {Sine} from './data/Sine.js'
 
 // Debug
-import {Debug} from './debug/Debug'
+import {Debug} from './debug/Debug.js'
 
 // Displays
-import {BarChart} from './displays/BarChart'
-import {Spectrogram} from './displays/Spectrogram'
-import {TimeSeries} from './displays/TimeSeries'
+import {BarChart} from './displays/BarChart.js'
+import {Spectrogram} from './displays/Spectrogram.js'
+import {TimeSeries} from './displays/TimeSeries.js'
 
 // Haptics
-import {Buzz} from './haptics/Buzz'
+import {Buzz} from './haptics/Buzz.js'
 
 // Interfaces
-import {Cursor} from './interfaces/Cursor'
-import {DOM} from './interfaces/DOM'
-import {Plot} from './interfaces/Plot'
-import {Video} from './interfaces/Video'
+import {Cursor} from './interfaces/Cursor.js'
+import {DOM} from './interfaces/DOM.js'
+import {Plot} from './interfaces/Plot.js'
+import {Video} from './interfaces/Video.js'
 
 // Machine Learning
-import {LDA} from './machinelearning/LDA'
-import {Performance} from './machinelearning/Performance'
-import {Train} from './machinelearning/Train'
+import {LDA} from './machinelearning/LDA.js'
+import {Performance} from './machinelearning/Performance.js'
+import {Train} from './machinelearning/Train.js'
 
 
 // Models
-import {Blink} from './models/Blink'
-import {Focus} from './models/Focus'
+import {Blink} from './models/Blink.js'
+import {Focus} from './models/Focus.js'
 
 // Networking
-import {Brainstorm} from './networking/Brainstorm'
-import {OSC} from './networking/OSC'
-import {WebRTC} from './networking/WebRTC'
-import {Websocket} from './networking/Websocket'
+import {Brainstorm} from './networking/Brainstorm.js'
+import {OSC} from './networking/OSC.js'
+import {WebRTC} from './networking/WebRTC.js'
+import {Websocket} from './networking/Websocket.js'
 
 
 // Scene
-import {Shader} from './scene/shader/Shader'
-import {Geometry} from './scene/Geometry'
-import {Group} from './scene/Group'
-import {Light} from './scene/Light'
-import {Material} from './scene/Material'
-import {Object3D} from './scene/Object3D'
-import {Scene} from './scene/Scene'
-import {Trees} from './scene/Trees'
+import {Shader} from './scene/shader/Shader.js'
+import {Geometry} from './scene/Geometry.js'
+import {Group} from './scene/Group.js'
+import {Light} from './scene/Light.js'
+import {Material} from './scene/Material.js'
+import {Object3D} from './scene/Object3D.js'
+import {Scene} from './scene/Scene.js'
+import {Trees} from './scene/Trees.js'
 
 // Transforms
-import {Arithmetic} from './transforms/Arithmetic'
-import {Buffer} from './transforms/Buffer'
-import {Enumerate} from './transforms/Enumerate'
-import {Index} from './transforms/Index'
-import {Peak} from './transforms/Peak'
-import {Threshold} from './transforms/Threshold'
+import {Arithmetic} from './transforms/Arithmetic.js'
+import {Buffer} from './transforms/Buffer.js'
+import {Enumerate} from './transforms/Enumerate.js'
+import {Index} from './transforms/Index.js'
+import {Peak} from './transforms/Peak.js'
+import {Threshold} from './transforms/Threshold.js'
 
 // Utilities
-import {DataManager} from './utilities/DataManager'
-import {MapArray} from './utilities/MapArray'
-import {Move} from './utilities/Move'
-import {Scheduler} from './utilities/Scheduler'
-import {Storage} from './utilities/Storage'
-import {Thread} from './utilities/Thread'
-import {Unity} from './utilities/Unity'
+import {DataManager} from './utilities/DataManager.js'
+import {MapArray} from './utilities/MapArray.js'
+import {Move} from './utilities/Move.js'
+import {Scheduler} from './utilities/Scheduler.js'
+import {Storage} from './utilities/Storage.js'
+import {Thread} from './utilities/Thread.js'
+import {Unity} from './utilities/Unity.js'
 
 
 

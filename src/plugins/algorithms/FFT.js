@@ -20,7 +20,7 @@ export class FFT {
                     let arr =user.data
             
                     // Pass to Worker
-                    if (u.meta.label != this.name){
+                    if (user.meta.label != this.name){
                         if (Array.isArray(arr)){
                             this._analysisFunction(arr)
                             user.meta.label = this.name

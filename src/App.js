@@ -1,12 +1,10 @@
-import {Session} from './Session'
-import {DOMFragment} from './ui/DOMFragment'
-import {StateManager} from './ui/StateManager'
-import {Graph} from './graph/Graph'
-
-import './ui/styles/defaults.css'
+import {Session} from './Session.js'
+import {DOMFragment} from './ui/DOMFragment.js'
+import {StateManager} from './ui/StateManager.js'
+import {Graph} from './graph/Graph.js'
 
 // Utilities
-import { Dropdown } from "./ui/Dropdown";
+import { Dropdown } from "./ui/Dropdown.js";
 
 // Images
 import appletSVG from './ui/assets/th-large-solid.svg'
@@ -31,6 +29,7 @@ export class App {
 
         this.uuid = String(Math.floor(Math.random()*1000000)),
 
+        this.editor = null
         this.graphs = new Map() // graph execution
         this.devices = []
         this.state = new StateManager({}); // app-specific state maanger
@@ -159,7 +158,7 @@ export class App {
         this._createDeviceManager(this.info.connect ?? {})
 
         // Toggle Editor
-        if ((this.info.editor.show) && this.session.editor) this.session.editor.toggleDisplay(true, this)
+        if ((this.info.editor.show) && this.editor) this.editor.toggleDisplay(true, this)
 
         // Resize App UI
         this.graphs.forEach(g => g._resizeUI())
@@ -181,18 +180,19 @@ export class App {
             if (soft) {
                 if (this.intro?.deleteNode instanceof Function) this.intro.deleteNode()
                 // this._removeAllFragments()
-                if (this.session.editor) this.session.editor.init()
+                if (this.editor) this.editor.init()
             }
 
             // Hard Deinit
             else {
-                if (this.session.editor) this.session.editor.deinit()
+                if (this.editor) this.editor.deinit()
                 document.removeEventListener('keydown', this.shortcutManager);
                 this.AppletHTML.deleteNode();
                 this.AppletHTML = null
             }
 
             this.session.removeApp(this)
+
             this.props.elements.forEach(el => {
                 if (el) el.remove()
             })
@@ -216,7 +216,7 @@ export class App {
 
     reload = async () => {
 
-        if (this.session.editor) this.session.editor.toggleDisplay(false)
+        if (this.editor) this.editor.toggleDisplay(false)
 
         this.info.graphs = this.export() // Replace settings
         await this.deinit(true) // soft
@@ -251,6 +251,8 @@ export class App {
                 this.ui.container.insertAdjacentElement('beforeend', container);
 
                 let headers = [{label: 'Applet Menu', id:'options-menu'}]
+
+                let editLinkCreated = false
                 let options = [
                     {header: 'options-menu', content: '<div class="toggle">i</div><p>Info</p>', onclick: (el) => {
                         if (infoMask.style.opacity != 0) {
@@ -264,9 +266,12 @@ export class App {
                         }
                     }},
                     {header: 'options-menu', content: `<div class="toggle"><img src="${nodeSVG}"></div><p>Edit</p>`, id:"brainsatplay-visual-editor", onload: (el)=> {    
-                        if (this.session.editor) this.session.editor.setToggle(this, el)
+                        if (this.editor) this.editor.setToggle(this, el)
                     }, onclick: (el) => {
-                        // console.error('toggling')
+                        if (this.editor && !editLinkCreated) {
+                            this.editor.setToggle(this, el, true)
+                            editLinkCreated = true
+                        }
                     }},
                     // {header: 'options-menu', content: `<div class="toggle"><img src="${appletSVG}"></div><p>Browse Apps</p>`, id:"brainsatplay-browser", onclick: async (el) => {
                     //         if (appletMask.style.opacity != 0) {
@@ -503,17 +508,6 @@ export class App {
             })
         })
         return settings
-    }
-
-    // Save
-    save = async (e) => {
-        this.info.graphs = this.export() // Replace settings
-        await this.session.projects.save(this, () => {
-            if (this.session.editor) this.session.editor.download.classList.remove('disabled')
-        }, () => {
-           if (this.session.editor) this.session.editor.download.classList.add('disabled')
-        })
-        if (this.session.editor) this.session.editor.lastSavedProject = this.name
     }
 
     // UI Helper

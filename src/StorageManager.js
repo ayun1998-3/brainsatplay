@@ -1,10 +1,8 @@
+import {saveFile, readFile, readFiles} from './utils/DataManager.js'
 
 export class StorageManager{
-    constructor(session, method = 'local'){
-        
-        this.session = session
+    constructor(method = 'local'){
         this.defaultMethod = method
-
     }
 
     set(route, item, value, method=this.defaultMethod) {
@@ -36,7 +34,7 @@ export class StorageManager{
             // for (var key in localStorage) if (key.includes(`${route}_`)) matches.push(this.get(route, key, method))
 
             // IndexedDB
-            let files = await this.session.dataManager.readFiles(`/${route}/`)
+            let files = await readFiles(`/${route}/`)
             // res = Promise.all([res])
 
             let contents = []
@@ -84,7 +82,7 @@ export class StorageManager{
         let query = `/${route}/${item}`
         let file = JSON.stringify(value) ?? value.toString()
 
-        return this.session.dataManager.saveFile(file, query)
+        return saveFile(file, query)
     }
 
     // Get Methods
@@ -112,7 +110,7 @@ export class StorageManager{
             // }
 
             // IndexedDB
-            let res = await this.session.dataManager.readFile(`/${route}/${item}`)
+            let res = await readFile(`/${route}/${item}`)
 
             if (res != undefined) {
 

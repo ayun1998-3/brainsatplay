@@ -1,12 +1,108 @@
 //Load and save CSV data
-import { Session } from '../Session';
-import { StateManager } from '../ui/StateManager';
-import {CSV} from './general/csv'
+import { Session } from '../Session.js';
+import { StateManager } from '../ui/StateManager.js';
+import {CSV} from './general/csv.js'
 
+let fsInited = false
 import * as BrowserFS from 'browserfs'
 const fs = BrowserFS.BFSRequire('fs');
 const BFSBuffer = BrowserFS.BFSRequire('buffer').Buffer;
 
+
+// ----------------------------- Generic Functions for BrowserFS -----------------------------
+export const initFS = (oninit=()=>{}, onerror=()=>{}) => {
+    if (fsInited) return true
+    else {
+    return new Promise (resolve => {
+        let oldmfs = fs.getRootFS();
+        BrowserFS.FileSystem.IndexedDB.Create({}, (e, rootForMfs) => {
+            if (e) throw e;
+            if (!rootForMfs) {
+                onerror();
+                throw new Error(`Error creating BrowserFS`);
+            }
+            BrowserFS.initialize(rootForMfs); //fs now usable with imports after this
+
+        let p1 = _checkDirectoryExistence(fs, 'data')
+        let p2 = _checkDirectoryExistence(fs, 'projects')
+        let p3 = _checkDirectoryExistence(fs, 'extensions')
+        let p4 = _checkDirectoryExistence(fs, 'settings')
+        let p5 = _checkDirectoryExistence(fs, 'plugins')
+
+        Promise.all([p1,p2, p3, p4, p5]).then((values) => {
+            oninit();
+            fsInited = true
+            resolve(true)
+        })
+    })
+})
+    }
+}
+
+export const readFiles = async (path) => {
+    if (!fsInited) await initFS()
+    return new Promise(resolve => {
+        fs.readdir(path, function(e, output) {
+            resolve(output)
+        });
+    })
+}
+
+export const readFile = async (path) => {
+    if (!fsInited) await initFS()
+    return new Promise(resolve => {
+        fs.readFile(path, function(e, output) {
+            resolve(output)
+        });
+    })
+}
+
+export const saveFile = async (content, path) => {
+    
+    if (!fsInited) await initFS()
+    // Assumes content is text
+    return new Promise(async resolve => {
+
+        await _checkDirectoryExistence(fs, path.split('/')[1])
+
+        fs.writeFile(path,content,(e)=>{
+            if(e) throw e;
+            resolve(content)
+        });
+    })
+}
+
+let directories = {}
+export const _checkDirectoryExistence = (fs, directory) => {
+    return new Promise(resolve => {
+        if (directories[directory] === 'exists' || directories[directory] === 'created'){
+            resolve()
+        } else {
+            fs.exists(`/${directory}`, (exists) => {
+                if (exists) {
+                    directories[directory] = 'exists'
+                    console.log(`/${directory} exists!`)
+                    resolve();
+                }
+                else if (directories[directory] === 'creating'){
+                    console.log(directory + ' is still being created.')
+                }
+                else {
+                    console.log('creating ' + directory)
+                    directories[directory] = 'creating'
+                    fs.mkdir(directory, (err) => {
+                        if (err) throw err;
+                        directories[directory] = 'created'
+                        setTimeout(resolve, 500)
+                    });
+                }
+
+            });
+        }
+    });
+}
+
+// ----------------------------- Complete DataManager Class -----------------------------
 export class DataManager {
     constructor(session=new Session(), onload = this.onload) {
         this.session = session;
@@ -24,7 +120,9 @@ export class DataManager {
         this.infoSub = null;
         this.deviceSubs=[];
 
-        this.directories = {}
+        this.saveBCISession = document.getElementById("saveBCISession")
+        this.newBCISession = document.getElementById("newBCISession")
+
     }
 
     deinit = () => {
@@ -216,59 +314,9 @@ export class DataManager {
     //----------------------
 
 
-    initFS = (oninit=()=>{}, onerror=()=>{}) => {
-        let oldmfs = fs.getRootFS();
-        BrowserFS.FileSystem.IndexedDB.Create({}, (e, rootForMfs) => {
-            if (e) throw e;
-            if (!rootForMfs) {
-                onerror();
-                throw new Error(`Error creating BrowserFS`);
-            }
-            BrowserFS.initialize(rootForMfs); //fs now usable with imports after this
+    initFS = initFS
 
-        let p1 = this._checkDirectoryExistence(fs, 'data')
-        let p2 = this._checkDirectoryExistence(fs, 'projects')
-        let p3 = this._checkDirectoryExistence(fs, 'extensions')
-        let p4 = this._checkDirectoryExistence(fs, 'settings')
-        let p5 = this._checkDirectoryExistence(fs, 'plugins')
-
-        Promise.all([p1,p2, p3, p4, p5]).then((values) => {
-            oninit();
-        })
-
-    })
-    }
-
-    _checkDirectoryExistence(fs, directory){
-        return new Promise(resolve => {
-
-            if (this.directories[directory] === 'exists' || this.directories[directory] === 'created'){
-                resolve()
-            } else {
-                fs.exists(`/${directory}`, (exists) => {
-                    if (exists) {
-                        this.directories[directory] = 'exists'
-                        console.log(`/${directory} exists!`)
-                        resolve();
-                    }
-                    else if (this.directories[directory] === 'creating'){
-                        console.log(directory + ' is still being created.')
-                    }
-                    else {
-                        console.log('creating ' + directory)
-                        this.directories[directory] = 'creating'
-                        fs.mkdir(directory, (err) => {
-                            if (err) throw err;
-                            this.directories[directory] = 'created'
-                            setTimeout(resolve, 500)
-                        });
-                    }
-
-                });
-            }
-
-        });
-    }
+    _checkDirectoryExistence = _checkDirectoryExistence
 
 
     setupAutosaving = () => {
@@ -300,7 +348,7 @@ export class DataManager {
                             if(o.randomId === randomId);
                                 return true;
                         })) {
-                            document.getElementById("saveBCISession").removeEventListener('click',newsession);
+                            if (this.saveBCISession) this.saveBCISession.removeEventListener('click',newsession);
                             return false;
                         }
                         this.newSession(undefined,thisDevice,deviceIdx);
@@ -334,7 +382,7 @@ export class DataManager {
                                 if(o.randomId === randomId);
                                     return true;
                             })) {
-                                document.getElementById("saveBCISession").removeEventListener('click',save);
+                                if (this.saveBCISession) this.saveBCISession.removeEventListener('click',save);
                                 return false;
                             }
                             //console.log(this.session.deviceStreams)
@@ -343,8 +391,8 @@ export class DataManager {
                             this.autoSaveEEGChunk(this.state.data['saveCounter'+deviceName+deviceIdx], undefined, deviceName+deviceIdx, undefined, undefined, thisDevice.device.atlas);
                             this.state.data['saveCounter'+deviceName+deviceIdx] = row.count;
                         }
-                        document.getElementById("saveBCISession").addEventListener('click',save);
-                        document.getElementById("newBCISession").addEventListener('click',newsession)
+                        if (this.saveBCISession) this.saveBCISession.addEventListener('click',save);
+                        if (this.newBCISession) this.newBCISession.addEventListener('click',newsession)
 
                     } else if (mainDeviceType === 'heg') {
                         let hegindex = thisDevice.device.atlas.data.heg.length-1;
@@ -375,15 +423,15 @@ export class DataManager {
                                 if(o.randomId === randomId);
                                     return true;
                             })) {
-                                document.getElementById("saveBCISession").removeEventListener('click',save);
+                                if (this.saveBCISession) this.saveBCISession.removeEventListener('click',save);
                                 return false;
                             }
                             this.autoSaveHEGChunk(this.state.data['saveCounter'+deviceName+deviceIdx], undefined, deviceName+deviceIdx, undefined, thisDevice.device.atlas);
                             this.state.data['saveCounter'+deviceName+deviceIdx] = thisDevice.device.atlas.data.heg[hegindex].count;
                         }
-                        document.getElementById("saveBCISession").addEventListener('click',save);
+                        if (this.saveBCISession) this.saveBCISession.addEventListener('click',save);
 
-                        document.getElementById("newBCISession").addEventListener('click',newsession);
+                        if (this.newBCISession) this.newBCISession.addEventListener('click',newsession);
                     }
                 }
             }
@@ -484,33 +532,11 @@ export class DataManager {
     }
 
     // Assumes content is text
-    saveFile(content, path){
-        return new Promise(async resolve => {
+    saveFile = saveFile
 
-            await this._checkDirectoryExistence(fs, path.split('/')[1])
+    readFiles = readFiles // exported
 
-            fs.writeFile(path,content,(e)=>{
-                if(e) throw e;
-                resolve(content)
-            });
-        })
-    }
-
-    readFiles(path){
-        return new Promise(resolve => {
-            fs.readdir(path, function(e, output) {
-                resolve(output)
-            });
-        })
-    }
-
-    readFile(path){
-        return new Promise(resolve => {
-            fs.readFile(path, function(e, output) {
-                resolve(output)
-            });
-        })
-    }
+    readFile = readFile // exported
 
     readFileText(path){
         fs.open(path, 'r', (e, fd) => {

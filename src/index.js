@@ -5,17 +5,24 @@
 
 import 'regenerator-runtime/runtime' 
 
+// Default CSS Stylesheet
+import './ui/styles/defaults.css' 
+
 // Plugins
-import * as plugins from './src/plugins/index.js'
+import * as plugins from './plugins/index.js'
 export {plugins}
 
 // Session Manager
-export {Session} from './src/Session.js'
+export {Session} from './Session.js'
 
 // App
-export {App} from './src/App.js'
+export {App} from './App.js'
 
-export {devices} from './src/devices/index.js'
+export {devices} from './devices/index.js'
+
+// Editor
+export {Editor} from './graph/Editor.js'
+
 
 // export * from './src/analysis/Math2'
 

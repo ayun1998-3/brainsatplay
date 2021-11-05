@@ -3,7 +3,7 @@ const path = require('path');
 const WorkerPlugin = require('worker-plugin');
 
 module.exports = {
-  entry: path.join(__dirname, 'brainsatplay.js'),
+  entry: path.join(__dirname, 'src', 'index.js'),
   output: {
     filename: 'brainsatplay.js',
     path: path.join(__dirname, 'dist'),
@@ -11,12 +11,19 @@ module.exports = {
       name: 'brainsatplay', 
       type: 'umd',      
     },
-    globalObject: 'this',
+    // globalObject: 'this',
     publicPath: ''
   },
   optimization: {
     minimize: false,
   },
+  // devServer: {
+  //   static: {
+  //     directory: path.join(__dirname, 'examples'),
+  //   },
+  //   compress: true,
+  //   port: 9000
+  // },
   module: {
     rules: [
       {

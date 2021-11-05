@@ -1,4 +1,7 @@
 import {settings} from './blank/settings.js' // blank demo
+import * as brainsatplay from './src/index.js' // blank demo
+// console.log(brainsatplay)
+// window.brainsatplay = brainsatplay
 
 // ------------------ Session ------------------
 let session = new brainsatplay.Session()
@@ -16,5 +19,10 @@ let app =  new brainsatplay.App(
 app.init()
 
 // ------------------ Editor ------------------
-session.edit(document.body) // Edit the application (optional)
+let editor = new brainsatplay.Editor(document.body) // Edit the application (optional)
 
+// Add Global App
+if (session.app) editor.addApp(session.app)
+
+// Add Local App
+editor.addApp(app)

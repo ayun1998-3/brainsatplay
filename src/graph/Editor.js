@@ -1,17 +1,21 @@
-import { StateManager } from '../ui/StateManager'
+import { StateManager } from '../ui/StateManager.js'
 
 // Project Selection
 // import {appletManifest} from '../../../../platform/appletManifest' // MUST REMOVE LINKS TO PLATFORM
-import { getAppletSettings } from "../utils/general/importUtils"
+import { getAppletSettings } from "../utils/general/importUtils.js"
+import { ProjectManager } from '../utils/ProjectManager.js'
+import {getLibraryVersion, load, getSettings} from '../utils/projectUtils.js'
 
 
 // Node Interaction
-import { Port } from './Port'
+import { Port } from './Port.js'
 
 export class Editor{
-    constructor(session, parent=document.body, loadedApps={}) {
-        // this.manager = manager
-        this.session = session
+    constructor(parent=document.body, loadedApps={}) {
+
+        // Create Project Manager
+		this.projects = new ProjectManager()
+		this.projects.init()
 
         this.parentNode = (typeof parent === 'string') ? document.getElementById(parent) : parent 
 
@@ -127,20 +131,22 @@ export class Editor{
                     this.portEditor = this.container.querySelector(`[id="${this.props.id}portEditor"]`)
                     this.edit = this.container.querySelector(`[id="${this.props.id}edit"]`)
                     this.delete = this.container.querySelector(`[id="${this.props.id}delete"]`)
+                    this.saveButton = this.container.querySelector(`[id="${this.props.id}save"]`)
+                    this.tabs = this.container.querySelector(`[id="${this.props.id}ViewTabs"]`)
                 // } // setup function, moved to init
             // )
 
         window.addEventListener('resize', this.responsive)
 
 
-        // Setup UI
+        // Setup UI (only once)
         this.insertProjects()
 
         // Setup User Interactions
         let publishButton = this.container.querySelector(`[id="${this.props.id}publish"]`)
         publishButton.onclick = () => {
             this.props.currentApp.updateGraph()
-            this.props.currentApp.session.projects.publish(this.props.currentApp)
+            // this.projects.publish(this.props.currentApp)
         }
         publishButton.classList.add('disabled')
 
@@ -148,9 +154,11 @@ export class Editor{
         this.delete.style.display = 'none'
 
         this.download.onclick = () => {
-            this.session.projects.download(this.props.currentApp, undefined, () => {this.download.classList.remove('disabled')}, () => {this.download.classList.add('disabled')})
+            this.projects.download(this.props.currentApp, undefined, () => {this.download.classList.remove('disabled')}, () => {this.download.classList.add('disabled')})
         }
 
+        this.saveButton.onclick = () => {this.save(this.props.currentApp)}
+        this.reload.onclick = () => {this.props.currentApp.reload()}
 
         this.exit.onclick = () => {this.toggleDisplay()}
 
@@ -163,6 +171,7 @@ export class Editor{
         // Search for Plugins
         this.createPluginSearch(this.mainPage)
 
+        // Start the Editor
         this.setApp()
     }
 
@@ -174,23 +183,53 @@ export class Editor{
                 if (e.key === 'e') { // Toggle Editor
                     e.preventDefault();
                     this.toggleDisplay()
-                    
                 }
                 else if (e.key === 's') { // Save Application
                     if (this.shown){
                         e.preventDefault();
                         this.props.currentApp.graphs.forEach(g => g.save())
-                        this.props.currentApp.save()
+                        this.save(this.props.currentApp)
                     }
                 }
         }
     }
 
+    // Save App
+    save = async (app) => {
+        app.info.graphs = app.export() // Replace settings
+        await this.projects.save(app, () => {
+            this.download.classList.remove('disabled')
+        }, () => {
+            this.download.classList.add('disabled')
+        })
+        this.lastSavedProject = app.name
+    }
+
     // Apps
     setApp = (app) => {
-        if (app){
+        if (app != this.props.currentApp){
+
+            // Swap Focused Editor UI
+            if (this.open && app.uuid !== 'global') {
+
+                // Move Out
+                this.props.currentApp.ui.parent.appendChild(this.props.currentApp.ui.container)
+                this.props.currentApp.graphs.forEach(g => g._resizeUI() )
+
+                // Move In
+                this.preview.appendChild(app.ui.container)
+                app.graphs.forEach(g => g._resizeUI() )
+            }
+
             this.props.currentApp = app
-            this.reload.onclick = app.reload
+
+            // let graphFiles = this.files[app.uuid].graphs
+            // Object.keys(graphFiles).find(uuid => {
+            //     if (graphFiles[uuid]?.files?.graph?.tab) {
+            //         graphFiles[uuid]?.files?.graph?.tab.click()
+            //         return true
+            //     }
+            // })
             this.init()
         }
     }
@@ -198,6 +237,8 @@ export class Editor{
     // Initialization
     init = async () => {
 
+            this.portEditor.innerHTML = ''
+            
             this.settings = Object.assign({parentId: this.props.currentApp?.ui?.parent?.id, show: false, create: true}, this.props.currentApp?.info?.editor ?? {})
 
             if (!document.getElementById(this.settings.parentId)) this.settings.parentId = this.props.currentApp?.ui?.parent?.id
@@ -212,9 +253,10 @@ export class Editor{
             if (this.settings.show) this.toggleDisplay(true)
         }
 
-    setToggle = (app, toggle = this.settings.toggle) => {
+    setToggle = (app, toggle = this.settings?.toggle, activate=false) => {
         this.toggle = (typeof toggle === 'string') ? this.props.currentApp.ui.container.querySelector(`[id="${toggle}"]`) : toggle
         if (this.toggle) this.toggle.addEventListener('click', () => {this.toggleDisplay(undefined, app)})
+        if (activate) this.toggleDisplay(undefined, app)
     }
 
     insertProject = ({settings, destination}) => {
@@ -238,15 +280,12 @@ export class Editor{
                 // Import App Only when Necessary
                 let fullSettings = await getAppletSettings(settings)
 
-                // Rename Template Projects
-                if (destination !== 'My Project'){
-                    fullSettings = Object.assign({}, fullSettings)
-                    if (fullSettings.name === 'Blank Project') fullSettings.name = 'My Project'
-                }
+                // Copy Template Projects
+                if (destination !== 'My Project') fullSettings = Object.assign({}, fullSettings)
 
                 // Create Application
                 if (fullSettings.name === 'Load from File') {
-                    let loadedSettings = await this.session.projects.loadFromFile()
+                    let loadedSettings = await this.projects.loadFromFile()
                     if (loadedSettings) await this._createApp(loadedSettings)
                 } else {
                     if (((this.lastSavedProject === this.props.currentApp.info.name) || this.props.lastClickedProjectCategory == 'My Projects') && destination === 'My Projects' && this.props.currentApp.info.name === fullSettings.name) await this._createApp(this.props.currentApp.info)
@@ -301,13 +340,13 @@ export class Editor{
         this.insertProject({settings: {name: 'Load from File'}, destination: 'Defaults'})
 
         // --------------- Get Project Settings Files --------------- 
-        let projectSet = await this.session.projects.list()
+        let projectSet = await this.projects.list()
         for (let key in projectSet) projectSet[key] = Array.from(projectSet[key])
 
         // --------------- Local --------------- 
         projectSet.local.map(async str => {
-            let files = await this.session.projects.getFilesFromDB(str)
-            await this.session.projects.load(files).then(settings => {
+            let files = await this.projects.getFilesFromDB(str)
+            await load(files).then(settings => {
                 this.insertProject({destination: 'My Projects', settings})
             })
         })
@@ -326,7 +365,7 @@ export class Editor{
 
     async _createApp(settings){
         
-        settings = await this.session.getSettings(settings) // filter through to get external .zip files
+        settings = await getSettings(settings) // filter through to get external .zip files
 
         settings.editor = {
             parentId: this.props.currentApp.ui.parent,
@@ -341,34 +380,40 @@ export class Editor{
 
     createViewTabs = () => {
 
-        let parentNode = this.container.querySelector(`[id="${this.props.id}ViewTabs"]`)
-
         // Add Tab Div
         let tabs = document.createElement('div')
         tabs.classList.add('tab')
-        parentNode.insertAdjacentElement('afterbegin', tabs)
+        this.tabs.insertAdjacentElement('afterbegin', tabs)
     }
     
     removeGraph = (graph) => {
         if (this.files[graph.app.uuid].graphs[graph.uuid]){
             for (const key in this.files[graph.app.uuid].graphs[graph.uuid].files){
                 let elements = this.files[graph.app.uuid].graphs[graph.uuid].files[key]
-                if (elements.tab){
-                    elements.tab.querySelector('.closeIcon').click()
-                }
+                if (elements.close) elements.close.click()
             }
+
             delete this.files[graph.app.uuid].graphs[graph.uuid]
 
-            // Remove App
+            // Auto-Remove App from Editor
             if (Object.keys(this.files[graph.app.uuid].graphs).length === 0){
                 this.files[graph.app.uuid].element.remove()
                 delete this.files[graph.app.uuid]
+
+            // Only Graph-Based Apps
+            this.setApp(this.files[Object.keys(this.files)[0]].app) // set first app
             }
         }
     }
 
     addApp = (app) => {
+
+        // TODO: Filter non-compliant structures 
         if (!this.files[app.uuid]) {
+
+            // Tack on an Editor to the App
+            app.editor = this // TODO: Fix since this arbitrarily adds an object to the apps...
+            // Create Elements to Represent the App
             let element = document.createElement('div')
 
             let header = document.createElement('div')
@@ -398,6 +443,14 @@ export class Editor{
             else this.filesidebar.container.insertAdjacentElement('beforeend', element)
 
             this.files[app.uuid] = {app, graphs: {}, element}
+
+            // Add Initial Graphs
+            app.graphs.forEach(g => {
+                this.addGraph(g)
+            })
+
+            // Initialize Current App OR Overwrite Global
+            if (!this.props.currentApp || this.props.currentApp.uuid === 'global') this.setApp(app)
         }
     }
 
@@ -412,17 +465,14 @@ export class Editor{
             this.files[graph.app.uuid].graphs[graph.uuid].elements.code = (graph.ui.code instanceof Function) ? graph.ui.code() : graph.ui.code 
             this.files[graph.app.uuid].graphs[graph.uuid].elements.graph = (graph.ui.graph instanceof Function) ? graph.ui.graph() : graph.ui.graph 
 
+            // Derive Display Settings
             let graphs = graph.info.graphs.length // initial nodes
             let nodes = graph.info.nodes.length // initial nodes
             let parentnodes = graph.parent?.info?.nodes?.length // initial nodes
-
+            let showGraph = graph.app.uuid !== 'global' && type === 'Graph' && (nodes > 0 || (graphs === 0 && (parentnodes === 0 || parentnodes == undefined)))
             
-            let showGraph = type === 'Graph' && (nodes > 0 || (graphs === 0 && (parentnodes === 0 || parentnodes == undefined)))
+            // Create File Representation
             this.createFileElement(this.files[graph.app.uuid].graphs[graph.uuid], {graph: showGraph})
-            let save = this.container.querySelector(`[id="${this.props.id}save"]`)
-            
-            // TODO
-            save.onclick = this.props.currentApp?.save
     }
 
     addCloseIcon(parent, callback){
@@ -431,16 +481,18 @@ export class Editor{
 
         if (callback){
             closeIcon.innerHTML = 'x'
-            closeIcon.onclick = () => {
-                callback()
+            closeIcon.onclick = (ev) => {
+                callback(ev)
             }
         }
 
         if (parent.style.position != 'absolute') parent.style.position = 'relative'
         parent.insertAdjacentElement('beforeend', closeIcon)
+        return closeIcon
     }
 
     addTab(o, type, onOpen=()=>{}, lock=false){
+
         if (o.files[type].tab == null){
             let tab = document.createElement('button')
             tab.classList.add('tablinks')
@@ -456,23 +508,17 @@ export class Editor{
 
             let isGraph = !!o.graph
 
-            let defaultOnClose = () => {
-                o.files[type].tab.remove()
-                o.files[type].tab = null
+            let defaultOnClose = (ev) => {
+                ev.stopPropagation()
+                let toOpen = tab.previousElementSibling ?? tab.nextElementSibling
+
+                if (toOpen) toOpen.click()
+                if (o.files[type].tab) o.files[type].tab.remove()
+                delete o.files[type].tab
+                o.elements[type].style.display = 'none'
             }
 
-            if (isGraph){
-                let onClose = () => {
-                    if (tab.previousElementSibling){ // do not remove if last tab
-                        tab.style.display = 'none'
-                        tab.previousElementSibling.click()
-                    }
-                    defaultOnClose()
-                }
-                this.addCloseIcon(tab,onClose)
-            } else {
-                this.addCloseIcon(tab, defaultOnClose)
-            }
+            o.files[type].close = this.addCloseIcon(tab, defaultOnClose)
 
             tab.onclick = () => {
 
@@ -490,6 +536,7 @@ export class Editor{
                                         file.elements[type].style.display = ''
                                         tab.classList.add('active')
                                         onOpen(file.elements[type])
+                                        this.setApp(this.files[app].app) // swap to the app that this corresponds to
                                     }
                                 }
                             }
@@ -551,7 +598,7 @@ export class Editor{
                 categories: [],
                 instructions: "",
                 image: null,
-                version: app.info.version ?? 'experimental', //this.session.projects.version,
+                version: app.info.version ?? 'experimental',
 
                 display: {
                   production: false,
@@ -633,12 +680,6 @@ export class Editor{
         // Set App if not in Existing Apps
         if (app) this.setApp(app)
 
-
-        if (!this.session.info.apps.find(a => a === this.props.currentApp)) {
-             let filteredApps = this.session.info.apps.filter(a => 'graphs' in a.info || 'graph' in a.info)
-            this.setApp(filteredApps[0])
-        }
-
         if (this.props.currentApp) {
         // if (this.element){
             if (on === true || (on != false && this.open === false)){
@@ -689,98 +730,6 @@ export class Editor{
         }
     }
 
-    removeEdge(e, ignoreManager=false){
-        e.parent.removeEdge(e)
-        if (!ignoreManager) this.manager.removeEdge(this.props.currentApp.props.id, e.structure)
-    }
-
-
-    animate(source,target,latencyArr){
-        if (this.shown){
-            if (latencyArr) {
-                latencyArr.forEach(o => {
-                    this.animateLatency(o.node,o.port,o.latency)
-                })
-            }
-            this.animateNode(source,'source')
-            this.animateNode(target,'target')
-            this.animateEdge(source,target)
-        }
-    }
-    
-    getColorfromMap = (pct, map) => {
-        for (var i = 1; i < map.length - 1; i++) {
-            if (pct < map[i].pct) {
-                break;
-            }
-        }
-        var lower = map[i - 1];
-        var upper = map[i];
-        var range = upper.pct - lower.pct;
-        var rangePct = (pct - lower.pct) / range;
-        var pctLower = 1 - rangePct;
-        var pctUpper = rangePct;
-        var color = {
-            r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
-            g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
-            b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
-        };
-        return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
-        // or output as hex if preferred
-    };
-
-    animateLatency(node, port, latency){
-        let instance = node
-        let pct = Math.min(1,latency/1)
-
-        let map = [
-            { pct: 0.0, color: { r: 0x39, g: 0xff, b: 0x14 } },
-            { pct: 0.5, color: { r: 0xfa, g: 0xed, b: 0x27 } },
-            { pct: 1.0, color: { r: 0xff, g: 0x14, b: 0x39 } } 
-        ];
-        
-        if (instance){
-            let el = instance.portLabels.querySelector(`.latency-display[name="${port}"]`)
-            el.style.width = `${pct*100}%`
-            el.style.background = this.getColorfromMap(pct, map)
-        }
-    }
-
-    animateNode(node,type){
-        let instance = node
-        if (instance){
-            let portEl = instance.element.querySelector(`.${type}-ports`).querySelector(`.port-${node.port}`)
-            if (portEl) {
-                portEl.classList.add('updated')
-                portEl.setAttribute('data-update', Date.now())
-                setTimeout(()=>{
-                    if (portEl.getAttribute('data-update') < Date.now() - 450){
-                        portEl.classList.remove('updated')
-                    }
-                }, 500)
-            }
-        }
-    }
-
-    animateEdge(source,target){
-        let instance = source
-        instance.edges.forEach(e=>{
-            if(e.structure.source.port === source.port){
-                if (e.structure.target){
-                    if (e.structure.target.node === target.name && e.structure.target.port == target.port){
-                        e.node.curve.classList.add('updated')
-                        e.node.curve.setAttribute('data-update', Date.now())
-                        setTimeout(()=>{
-                            if (e.node.curve.getAttribute('data-update') < Date.now() - 450){
-                                e.node.curve.classList.remove('updated')
-                            }
-                        }, 500)
-                    }
-                }
-            }
-        })
-    }
-
 
     createObjectEditor(toParse, key){
 
@@ -807,10 +756,11 @@ export class Editor{
         if (!!toParse[key] && toParse[key].edit != false){ // only parse ports that exist on initialization
 
             // Port Type
-            let defaultType
-            if (toParse[key].output?.type === null) defaultType = toParse[key].input?.type // Input if output is null
-            else if (toParse[key].output?.type === undefined) defaultType = typeof toParse[key].data // Data type if output is undefined
-            else defaultType = toParse[key].output?.type // Otherwise specified output type
+            let defaultType = toParse[key].output?.type  // Otherwise specified output type
+            if (defaultType == null) {
+                if (defaultType === null) defaultType = toParse[key].input?.type // Input if output is null
+                if (defaultType == null) defaultType = typeof toParse[key].data // Last option: Data type if output is undefined
+            }
 
             if (typeof defaultType !== 'string' && defaultType?.name) defaultType = defaultType.name
             // Catch Functions
@@ -822,15 +772,13 @@ export class Editor{
 
             let specifiedOptions = toParse[key].options
             let optionsType = typeof specifiedOptions
-
             let input
-
-
         // Cannot Handle Objects or Elements
+
         if (defaultType && defaultType != 'undefined' && defaultType != 'Element'){
             if (optionsType == 'object' && specifiedOptions != null){
                     let options = ``
-                    toParse[key].options.forEach(option => {
+                    specifiedOptions.forEach(option => {
                         let attr = ''
                         if (option === toParse[key].data) attr = 'selected'
                         options += `<option value="${option}" ${attr}>${option}</option>`
@@ -1168,7 +1116,8 @@ export class Editor{
             this.matchOptions()
         }
 
-        this.library = await this.session.projects.getLibraryVersion(this.props.currentApp?.info?.version)
+        let version = this.props.currentApp?.info?.version
+        this.library = await getLibraryVersion(version)
 
         let usedClasses = []
         this.classRegistry = this.library.plugins
@@ -1347,7 +1296,7 @@ export class Editor{
                 if (classInfo.label === 'Add New Plugin') {
                     Object.assign(classInfo, {
                         class:this.library.plugins.Blank,
-                        name: this.search.value,
+                        name: (this.search.value) ? this.search.value : 'blank'
                     })
                 }
 
@@ -1406,8 +1355,7 @@ export class Editor{
 
 
     responsive = () => {
-        let tabContainer = this.container.querySelector(`[id="${this.props.id}ViewTabs"]`)
-        if (tabContainer){
+        if (this.tabs){
             let mainWidth =  this.container.offsetWidth - this.sidebar.offsetWidth - this.filesidebar.container.offsetWidth
             this.mainPage.style.width = `${mainWidth}px`
             if (this.preview.innerHTML != '') {

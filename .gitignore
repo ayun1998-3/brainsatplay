@@ -7,4 +7,5 @@ _site
 .sass-cache
 .jekyll-metadata
 .idea
+.ext
 # .env

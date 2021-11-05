@@ -1,9 +1,7 @@
 //Template system to feed into the deviceStream class for creating possible configurations. 
 //Just fill out the template functions accordingly and add this class (with a unique name) to the list of usable devices.
-import { DOMFragment } from '../../ui/DOMFragment';
-import {DataAtlas} from '../../DataAtlas'
-import {BiquadChannelFilterer} from '../../utils/signal_processing/BiquadFilters'
-import { TorusGeometry } from 'three';
+import { DOMFragment } from '../../ui/DOMFragment.js';
+import {DataAtlas} from '../../DataAtlas.js'
 
 export class webgazerPlugin {
     constructor(mode, onconnect=this.onconnect, ondisconnect=this.ondisconnect) {

@@ -11,7 +11,7 @@ let counter = 0;
 self.onmessage = (event) => {
   // define gpu instance
   // console.log("worker executing...", event)
-  //console.time("worker");
+  // console.time("worker");
   let input;
   if(event.data.output) input = event.data.output; //from events
   else input = event.data;
@@ -55,7 +55,7 @@ self.onmessage = (event) => {
   //if(event.data.eventName) console.log("event sent to thread", event.data)
   if(!emitted) manager.events.workerCallback(event.data); //checks for eventName tag
 
-  //console.timeEnd("worker");
+  // console.timeEnd("worker");
   return dict;
 }
 
@@ -64,3 +64,5 @@ if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScop
 } 
 
 manager.events.emit('newWorker',id);
+
+export default self

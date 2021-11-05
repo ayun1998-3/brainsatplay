@@ -139,12 +139,10 @@ export class Neurofeedback {
                 output: {type: null},
             },
 
-            output: {
-                // edit: false,
-                data: 'Mean',
-                options: ['Mean', 'Channels'],
+            channels: {
+                edit: false,
                 input: {type: null},
-                output: {type: null},
+                output: {type: Array},
             },
 
             element: {
@@ -176,15 +174,15 @@ export class Neurofeedback {
                             arr.push(this.props.feedbackInfo[this.ports.metric.data].function(o) ?? 0)
                         })
                         
-                        if (this.ports.output.data === 'Channels') user.data = arr
-                        else user.data = this.session.atlas.mean(arr)
+                        this.update('channels', {data: arr})
+                        user.data = this.session.atlas.mean(arr)
                     }
     
                 } catch (e) {
                     console.error(e)
                     arr.push(0)
-                    if (this.ports.output.data === 'Channels') user.data = arr
-                    else user.data = this.session.atlas.mean(arr)
+                    this.update('channels', {data: arr})
+                    user.data = this.session.atlas.mean(arr)
                 }       
                     
                 // Output to User Data Object

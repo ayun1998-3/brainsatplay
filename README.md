@@ -8,11 +8,9 @@ Explore our documentation [here](https://docs.brainsatplay.com/docs/intro).
 [![GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](hhttps://www.gnu.org/licenses/gpl-3.0)
 [![stability-alpha](https://img.shields.io/badge/stability-alpha-f4d03f.svg)](https://github.com/mkenney/software-guides/blob/master/STABILITY-BADGES.md#alpha)
 
-### Building the App in this Repo
+### Testing with Examples
 
-Clone this repo and unzip contents to a folder.
-
-Open Folder via command line (VS Code recommended, latest NodeLTS with latest NPM required)
+Clone this repo and open the folder via command line (VS Code recommended, latest NodeLTS with latest NPM required)
 
 ```bash
 npm install
@@ -22,7 +20,7 @@ npm install
 npm start
 ```
 
-Follow the url given for localhost (usually localhost:1234) for the local build. Hot reloading is enabled for editing via Parcel.
+Follow the url given for localhost (usually localhost:3000) for the local build. Hot reloading is enabled for editing via Webpack.
 
 ### Library Usage
 #### Node.js

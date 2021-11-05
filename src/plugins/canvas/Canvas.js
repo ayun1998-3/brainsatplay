@@ -47,7 +47,7 @@ export class Canvas {
                     return {data: this.ports.element.data}
                 }
             },
-            autoanimate: {data: false}
+            animate: {data: false}
         }
     }
 
@@ -63,7 +63,7 @@ export class Canvas {
 
         const animate = () => {
 
-            if (this.props.looping && this.ports.autoanimate.data){
+            if (this.props.looping && this.ports.animate.data){
                 this._clearCanvas()
 
                 // Manage Draw Objects

@@ -1,18 +1,17 @@
-import JSZip from 'jszip'
 import fileSaver from 'file-saver';
-import * as experimental from '../../brainsatplay'
+import * as projectUtils from './projectUtils.js'
+import {saveFile, readFile, readFiles} from './DataManager.js'
+import * as blobUtils from './general/blobUtils.js'
 
 let latest = '0.0.38'
 let cdnLink = `https://cdn.jsdelivr.net/npm/brainsatplay@${latest}`;
 
-import * as blobUtils from './general/blobUtils'
+// ---------------------- Project Manager ----------------------
+// A class to manage Brains@Play projects
 
 export class ProjectManager {
-    constructor(
-        session
-        ) {
-        this.helper = new JSZip();
-        this.session = session
+    constructor() {
+        this.helper = projectUtils.zipHelper
         this.folders = {
             app: null
         }
@@ -45,34 +44,60 @@ export class ProjectManager {
 
     init = async () => {
         this.version = this.latest
-        this.getLibraryVersion('experimental')
-        if (!this.local && this.platform) this.getLibraryVersion(this.version)
+        projectUtils.getLibraryVersion('experimental')
+        if (!this.local && this.platform) projectUtils.getLibraryVersion(this.version)
 
         // WAITING TAKES TOO DANG LONG
-        // await this.getLibraryVersion('experimental')
-        // if (!this.local && this.platform) await this.getLibraryVersion(this.version)
+        // await projectUtils.getLibraryVersion('experimental')
+        // if (!this.local && this.platform) await projectUtils.getLibraryVersion(this.version)
     }
 
-    getLibraryVersion = async (version='experimental') => {
-
-        if (version==='experimental') return this.libraries[version] = experimental
-        else  {
-            this.libraries[version] = await Promise.resolve(new Promise(resolve => {
-                if (this.libraries[version] == null){
-                    let script = document.createElement('script')
-                    script.src = `https://cdn.jsdelivr.net/npm/brainsatplay@${version}`
-                    script.async = true;
-                    script.onload = () => {
-                        if (window.brainsatplay) resolve(window.brainsatplay)
-                        script.remove()
-                    }
-                    document.body.appendChild(script);
-                } else resolve(this.libraries[version])
-            }))
-
-            return this.libraries[version]
-        }
+    // ---------------------- Interaction Macros ----------------------
+    async download(app, filename = app.info.name ?? 'brainsatplay', onsuccess, onerror) {
+        await this.generateZip(app, (zip) => {
+            fileSaver.saveAs(zip, `${filename}.zip`);
+        }, onsuccess, onerror)
     }
+
+    // async publish(app) {
+    //     let dataurl = await this.appToDataURL(app)
+    //     await saveFile(dataurl, `/projects/${app.info.name}`)  
+    //     fetch(this.publishURL, {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-type': 'application/json; charset=UTF-8'
+    //         },
+    //         body: JSON.stringify({
+    //             name: app.info.name,
+    //             authorId: this.session.info.auth.username,
+    //             dataurl
+    //         })
+    //     }).then(res => res.json()).then(async data => {
+    //         console.log('App Published!')
+    //     }).catch(function (error) {
+    //         console.warn('Something went wrong.', error);
+    //     });
+    // }
+
+    async appToDataURL(app, onsuccess, onerror){
+        return new Promise(async resolve => {
+            await this.generateZip(app, (blob) => {
+                onsuccess()
+                blobUtils.blobToDataURL(blob, async (dataurl) => {
+                    resolve(dataurl)
+                })
+            }, onerror)
+        })
+    }
+
+
+    async save(app, onsuccess, onerror) {
+        let dataurl = await this.appToDataURL(app, onsuccess, onerror)
+        await saveFile(dataurl, `/projects/${app.info.name}`)  
+        console.log('App Saved!')
+    }
+
+    // ---------------------- Project Saving ----------------------
 
     addDefaultFiles() {
         this.helper.file("index.html", this.createDefaultHTML(`<script src="./index.js" type="module"></script>`))
@@ -117,8 +142,8 @@ app.init()`)
         let classInfo = o.classes.map(this.classToFile)
 
         // Check Ability to Load
-        let settings = await this.load([o, ...classInfo])
-        let library = await this.getLibraryVersion(settings.version)
+        let settings = await projectUtils.load([o, ...classInfo])
+        let library = await projectUtils.getLibraryVersion(settings.version)
         let instance = (library.Application instanceof Function) ? new library.Application(settings) : new library.App(settings)
 
         await instance.init().then(() => {
@@ -129,9 +154,7 @@ app.init()`)
         // Combine Custom Plugins into the Compact File
         let combined = ``;
         o.classes.forEach(c => combined += c.prototype.constructor.toString()) // Combine Custom Plugins into the Compact File
-        o.classes.forEach(c => {
-            this.session.storage.set('plugins',c.name, c)
-        }) // save separately
+        // o.classes.forEach(c => { this.session.storage.set('plugins',c.name, c)}) // save separately
         combined += o.combined;
 
         this.folders.app.file(o.filename, o.content)
@@ -182,85 +205,6 @@ app.init()`)
     addClass = (info) => {
         return this.folders.app.file(info.filename, info.content)
     }
-
-    loadFromFile() {
-        return new Promise(async (resolve) => {
-            let fileArray = await new Promise(resolve => {
-                let input = document.createElement('input')
-                input.type = 'file'
-                input.accept = ".zip"
-                input.click()
-
-                input.onchange = (e) => {
-                    let fileList = input.files;
-                    for (let file of fileList) {
-                        this.helper.loadAsync(file)
-                            .then(async (zip) => {
-                                let fileArray = await this.getFilesFromZip(zip)
-                                resolve(fileArray)
-                            })
-                    }
-                }
-            })
-            let settings = await this.load(fileArray)
-            resolve(settings)
-        })
-    }
-
-    iterateFiles = (zip, base='') => {
-        return new Promise(async resolve => {
-            let fileArray = []
-            let i = 0
-            for (let filename in zip.files) {
-                let includesBase = filename.includes(base) && filename !== base
-                if (includesBase){
-                    if (filename[filename.length - 1] === '/'){
-                        this.iterateFiles(zip, filename).then((res) => {
-                            fileArray.push(...res)
-                            i++
-                            if (i == Object.keys(zip.files).length) resolve(fileArray)
-                        })
-                    } else {
-                        let split = filename.split(base)
-                        if (split.length === 2 && split[1] != '') {
-                            zip.file(filename).async("string").then((content) => {
-                                fileArray.push({ content, filename: filename.split(base)[1] })
-                                i++
-                                if (i == Object.keys(zip.files).length) resolve(fileArray)
-                            })
-                        }
-                    }
-                } else i++
-                if (i == Object.keys(zip.files).length) resolve(fileArray)
-            }
-        })
-    }
-
-    getFilesFromZip(zip){
-        return new Promise(async resolve => {
-            let fileArray = await this.iterateFiles(zip, 'app/') // flatten all files in the app directory
-            resolve(fileArray)
-        })
-    }
-
-    getPluginRegistry = (lib) =>{
-        let keys = Object.keys(lib.plugins)
-        console.log('isESModule',lib.plugins[keys[keys.length - 1]].__esModule)
-        if (lib.plugins[keys[keys.length - 1]].__esModule === true){
-            const plugins = {}
-            for (let type in lib.plugins) {
-
-                if (lib.plugins[type].__esModule === true){
-                    for (let name in lib.plugins[type]) {
-                        let className = lib.plugins[type][name].name
-                        plugins[className] = lib.plugins[type][name]
-                    }
-                } else plugins[lib.plugins[type].name] = lib.plugins[type]
-            }
-            return plugins
-        } else return lib.plugins
-    }
-
     async appToFile(app) {
 
         let info = JSON.parse(JSON.stringify(app.info))
@@ -279,7 +223,7 @@ app.init()`)
 
         if (info.version === this.latest) info.version = 'experimental' // experimental defaults to the packaged version
 
-        let library = await this.getLibraryVersion(info.version)
+        let library = await projectUtils.getLibraryVersion(info.version)
         let plugins = this.getPluginRegistry(library)
         
         let imports = ``
@@ -342,71 +286,47 @@ app.init()`)
         return { filename: `${cls.name}.js`, content: cls.toString() + `\nexport {${cls.name}}`, combined: cls.toString() + `\n` }
     }
 
-    async download(app, filename = app.info.name ?? 'brainsatplay', onsuccess, onerror) {
-        await this.generateZip(app, (zip) => {
-            fileSaver.saveAs(zip, `${filename}.zip`);
-        }, onsuccess, onerror)
-    }
+    // ---------------------- Project Loading ----------------------
 
-    async publish(app) {
-        let dataurl = await this.appToDataURL(app)
-        await this.session.dataManager.saveFile(dataurl, `/projects/${app.info.name}`)  
-        fetch(this.publishURL, {
-            method: 'POST',
-            headers: {
-                'Content-type': 'application/json; charset=UTF-8'
-            },
-            body: JSON.stringify({
-                name: app.info.name,
-                authorId: this.session.info.auth.username,
-                dataurl
+    loadFromFile() {
+        return new Promise(async (resolve) => {
+            let fileArray = await new Promise(resolve => {
+                let input = document.createElement('input')
+                input.type = 'file'
+                input.accept = ".zip"
+                input.click()
+
+                input.onchange = (e) => {
+                    let fileList = input.files;
+                    for (let file of fileList) {
+                        this.helper.loadAsync(file)
+                            .then(async (zip) => {
+                                let fileArray = await projectUtils.getFilesFromZip(zip)
+                                resolve(fileArray)
+                            })
+                    }
+                }
             })
-        }).then(res => res.json()).then(async data => {
-            console.log('App Published!')
-        }).catch(function (error) {
-            console.warn('Something went wrong.', error);
-        });
-    }
-
-    async appToDataURL(app, onsuccess, onerror){
-        return new Promise(async resolve => {
-            await this.generateZip(app, (blob) => {
-                onsuccess()
-                blobUtils.blobToDataURL(blob, async (dataurl) => {
-                    resolve(dataurl)
-                })
-            }, onerror)
+            let settings = await projectUtils.load(fileArray)
+            resolve(settings)
         })
     }
 
+    getPluginRegistry = (lib) =>{
+        let keys = Object.keys(lib.plugins)
+        if (lib.plugins[keys[keys.length - 1]].__esModule === true){
+            const plugins = {}
+            for (let type in lib.plugins) {
 
-    async save(app, onsuccess, onerror) {
-        let dataurl = await this.appToDataURL(app, onsuccess, onerror)
-        await this.session.dataManager.saveFile(dataurl, `/projects/${app.info.name}`)  
-        console.log('App Saved!')
-      
-    }
-
-    async getPublishedApps() {
-        return new Promise((resolve, reject) => {
-            let apps = []
-            if (this.serverResolved){
-                fetch(this.publishURL, {
-                    method: 'GET',
-                }).then(res => res.json()).then(data => {
-                    data.forEach(async(url) => {
-                        let files = await this.getFilesFromDataURL(url)
-                        let project = await this.load(files)
-                        apps.push(project)
-                        if (apps.length === data.length) resolve(apps)
-                    })
-                }).catch((error) => {
-                    console.warn('Server down.');
-                    this.serverResolved = false
-                    resolve(apps)
-                });
-            } else resolve(apps)
-        })
+                if (lib.plugins[type].__esModule === true){
+                    for (let name in lib.plugins[type]) {
+                        let className = lib.plugins[type][name].name
+                        plugins[className] = lib.plugins[type][name]
+                    }
+                } else plugins[lib.plugins[type].name] = lib.plugins[type]
+            }
+            return plugins
+        } else return lib.plugins
     }
 
     async list() {
@@ -414,52 +334,18 @@ app.init()`)
             local: [],
             published: []
         }
-        projects.local = new Set(await this.session.dataManager.readFiles(`/projects/`))
+        projects.local = new Set(await readFiles(`/projects/`))
         return projects
-    }
-
-    async getFilesFromDataURL(url){
-        let fileArray = []
-        return new Promise(async (resolve, reject) => {
-            let blob = blobUtils.dataURLtoBlob(url.toString('utf-8'))
-
-            if (blob){
-                this.helper.loadAsync(blob)
-                .then(async (zip) => {
-                    let arr = await this.getFilesFromZip(zip)
-                    arr.forEach((o,i) => {
-                        fileArray.push(o)
-                        if (i == arr.length - 1) resolve(fileArray)
-                    })
-                })
-            } else console.error('Not a data url')
-        })
-    }
-
-
-    // Only save if a class instance can be created from the constructor string
-    checkIfSaveable(node){
-
-        let editable = false
-        try {
-            let constructor = node.info.class.prototype.constructor.toString() // save original class
-            let cls = eval(`(${constructor})`)
-            let instance = new cls(node.info, node.parent) // This triggers the catch
-            editable = true
-        }
-        catch (e) {}
-
-        return editable
     }
 
     async getFilesFromDB(name) {
         // console.log('LOADING PROJECTS FROM DB')
         return new Promise(async (resolve, reject) => {
-            let projects = await this.session.dataManager.readFiles(`/projects/`)
+            let projects = await readFiles(`/projects/`)
             let file = projects.filter(s => s.includes(name))
             file = file[0]
-            let url = await this.session.dataManager.readFile(`/projects/${file}`)
-            let blob = await this.getFilesFromDataURL(url)
+            let url = await readFile(`/projects/${file}`)
+            let blob = await projectUtils.getFilesFromDataURL(url)
             resolve(blob)
         })
     }
@@ -529,9 +415,9 @@ app.init()`)
                     let library;
                     let version = info.settings.match(/['"]?version['"]?:\s*"([^"]+)/)
                     if (version){
-                        library = await this.getLibraryVersion(version[1])
+                        library = await projectUtils.getLibraryVersion(version[1])
                     } else {
-                        library = await this.getLibraryVersion('experimental')
+                        library = await projectUtils.getLibraryVersion('experimental')
                     }
 
 
@@ -576,7 +462,6 @@ app.init()`)
                                 if (n?.class && classMap[n.class]?.class) n.class = classMap[n.class]?.class
                             })
                         })
-                        // settings = this.session.graph.parseParamsForSettings(settings)
                         resolve(settings)
                     } catch (e) {
                         console.error(e);

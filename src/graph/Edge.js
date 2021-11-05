@@ -26,7 +26,7 @@ export class Edge {
             this.subscription
             
             // Create UI
-            if (this.parent.app.session.editor){
+            if (this.parent.app.editor){
                 this._createUI()
             }
 
@@ -59,12 +59,6 @@ export class Edge {
       sP.addEdge('output', this)
       tP.addEdge('input', this)
 
-      // Activate Dyhamic Analyses
-  
-      if (tP.analysis && (tP.edges.input.size > 0 || tP.type === null) && (tP.edges.output.size > 0 || tP.type === null)) this.parent.app.analysis.dynamic.push(...tP.analysis)
-      if (sP.analysis && (sP.edges.input.size > 0 || sP.type === null) && (sP.edges.output.size > 0 || sP.type === null)) this.parent.app.analysis.dynamic.push(...sP.analysis)
-
-
       // Update Brainstorm ASAP
       let brainstormTarget = this.target.node.className === 'Brainstorm'
 
@@ -90,15 +84,16 @@ export class Edge {
 
     deinit = () => {
 
-        // this.parent.app.state.unsubscribeTrigger(this.uuid, this.subscription); //unsub state
+        // Delete Edge from Connected Nodes and Ports
         if (this.source.node) this.source.node.edges.delete(this.uuid)
         if (this.target.node) this.target.node.edges.delete(this.uuid)
         if (this.source.port) this.source.port.removeEdge('output',this.uuid)
         if (this.target.port) this.target.port.removeEdge('input',this.uuid)
 
+        // Delete Edge in Parent Map                               
         if (this.parent.edges.get(this.uuid)) this.parent.edges.delete(this.uuid)
 
-
+        // Remove Edge from UI
         if (this.element) this.element.remove()
 
     }

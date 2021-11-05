@@ -1,12 +1,14 @@
-import {Port} from "./Port"
-import {Edge} from "./Edge"
-// import {Event} from "../utils/workers/Event"
+import {Port} from "./Port.js"
+import {Edge} from "./Edge.js"
+// import {Event} from "../utils/workers/Event.js"
 
 // Code Editor
-import {LiveEditor} from '../ui/LiveEditor'
+import {LiveEditor} from '../ui/LiveEditor.js'
+import {checkIfSaveable} from '../utils/projectUtils.js'
 
 // Node Interaction
-import * as dragUtils from '../ui/dragUtils'
+import * as dragUtils from '../ui/dragUtils.js'
+import * as plugins from '../plugins/index.js'
 
 // A Graph is a collection of Plugins (subgraphs) that execute together as specified by Edges
 
@@ -30,8 +32,8 @@ export class Graph {
 
         // Reference to Higher Levels of the Application
         this.parent = parent;
-        this.app = this.parent.app
-        this.session = this.app.session // NOTE: may become out of sync
+        this.app = this.parent?.app // TODO: make optional
+        this.session = this.app?.session // TODO: make optional
 
         // Global Properties
         this.props = {  }
@@ -60,7 +62,7 @@ export class Graph {
             relYParent: null
         }
 
-        if (this.app.session.editor && !(this.parent instanceof Graph) && edit) this.app.session.editor.addGraph(this) // place top-level graph as a tab
+        if (this.app.editor && !(this.parent instanceof Graph) && edit) this.app.editor.addGraph(this) // place top-level graph as a tab
     }
 
 
@@ -89,15 +91,15 @@ export class Graph {
         }
 
         // Remove Editor Tab
-        if (this.app.session.editor) {
-            let files = this.app.session.editor.files[this.uuid]?.files
+        if (this.app.editor) {
+            let files = this.app.editor.files[this.uuid]?.files
             for (let type in files) {
                 for (let key in files[type]){
                     let el = files[type][key]
                     if (!!el && !(el instanceof Function)) el.remove()
                 }
             }
-            if (this.app.session.editor) this.app.session.editor.removeGraph(this)
+            if (this.app.editor) this.app.editor.removeGraph(this)
         }
 
     }
@@ -210,8 +212,8 @@ export class Graph {
                 if (typeof str === 'string') {
                     // let module = await dynamicImport(pluginManifest[o.class].folderUrl) // classname
                     // o.class = module[o.class]
-                    if (this.app.session.editor?.classRegistry) o.class = this.app.session.editor.classRegistry[str]
-                    if (o.class == null || typeof o.class === 'string') o.class = this.app.session.projects.libraries.experimental.plugins[str]
+                    if (this.app.editor?.classRegistry) o.class = this.app.editor.classRegistry[str]
+                    if (o.class == null || typeof o.class === 'string') o.class = plugins[str] // Reference included plugins for this library
                 }
                 
                 // Create Node based on User-Defined Plugin Class
@@ -248,7 +250,7 @@ export class Graph {
 
                 this.nodes.set(o.instance.uuid, o.instance) // set immediately
 
-                if (this.app.session.editor) this.app.session.editor.addGraph(o.instance) // place in editor as a tab
+                if (this.app.editor) this.app.editor.addGraph(o.instance) // place in editor as a tab
 
                 // this.analysis.add(...Array.from(nodeInfo.analysis))
 
@@ -292,7 +294,8 @@ export class Graph {
 
             if (this.ui.graph && !(this.ui.graph instanceof Function)) this.insertNode(o.instance) // UI
 
-            if (this.app?.props?.ready && this.app.session.updateApp instanceof Function) this.app.session.updateApp(this.app)
+            // Update Event Parameters
+            if (this.app?.props?.ready && this.app.session.updateApp instanceof Function) this.app.session.updateApps(this.app)
             
             return o
     }
@@ -300,6 +303,9 @@ export class Graph {
     removeNode = (o) => {
         o.deinit()
         this.nodes.delete(o.uuid)
+
+        // Update Event Parameters
+        if (this.app?.props?.ready && this.app.session.updateApp instanceof Function) this.app.session.updateApps(this.app)
     }
     
 
@@ -675,7 +681,7 @@ export class Graph {
 
             settings.onSave = (cls) => {
 
-                let editable = this.app.session.projects.checkIfSaveable(cls) // TODO: Display somewhere on the code editor
+                let editable = checkIfSaveable(cls) // TODO: Display somewhere on the code editor
 
                 // Test if Editable
                 if (editable){
@@ -753,10 +759,10 @@ export class Graph {
             if (left) node.ui.element.style.left = left[1]
         } else if (this.app.session?.editor?.nextNode) {
             let rect = this.ui.graph.getBoundingClientRect()
-            let position = this._mapPositionFromScale(this.app.session.editor.nextNode.position, rect)
+            let position = this._mapPositionFromScale(this.app.editor.nextNode.position, rect)
             node.ui.element.style.top = `${position.x}px`
             node.ui.element.style.left = `${position.y}px`
-            this.app.session.editor.nextNode = null
+            this.app.editor.nextNode = null
         }
 
         node.style = node.ui.element.style.cssText // Set initial translation
@@ -826,7 +832,7 @@ export class Graph {
             nodeElement.classList.add('clicked')
 
             // Port GUI
-            let portEditor = this.app.session.editor.portEditor
+            let portEditor = this.app.editor.portEditor
             portEditor.innerHTML = ''
 
             for (let key in node.ports){
@@ -835,23 +841,23 @@ export class Graph {
             }
 
             // Edit and Delete Buttons
-            this.app.session.editor.delete.style.display = ''
-            this.app.session.editor.delete.onclick = () => {
+            this.app.editor.delete.style.display = ''
+            this.app.editor.delete.onclick = () => {
                 this.removeNode(node)
             }
 
-            node.editable = this.app.session.projects.checkIfSaveable(node)
+            node.editable = checkIfSaveable(node)
 
             if (node.editable){
-                this.app.session.editor.edit.style.display = ''
-                this.app.session.editor.edit.onclick = (e) => {
-                    let files = this.app.session.editor.files[node.uuid].files
+                this.app.editor.edit.style.display = ''
+                this.app.editor.edit.onclick = (e) => {
+                    let files = this.app.editor.files[this.app.uuid].graphs[node.uuid].files
                     let graphtoggle = files.graph?.tab ?? files.graph?.toggle
                     let codetoggle = files.code?.tab ?? files.code?.toggle
 
                     if (codetoggle) codetoggle.click()
                 }
-            } else this.app.session.editor.edit.style.display = 'none'
+            } else this.app.editor.edit.style.display = 'none'
         }
     }
 

@@ -128,7 +128,7 @@ export class Dropdown {
 
         if (o.onclick instanceof Function){
             option.onclick = () => {
-                o.onclick()
+                o.onclick(option)
                 this.shutDropdown()
             }
         }

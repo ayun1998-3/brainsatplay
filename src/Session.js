@@ -34,46 +34,36 @@ Frontend Execution
 - Session/App State(s)
 
 */
-import 'regenerator-runtime/runtime' //fixes async calls in this bundler
-
-
-// Default CSS Stylesheet
-import './ui/styles/defaults.css'
 
 // UI
-import { DOMFragment } from './ui/DOMFragment';
+import { DOMFragment } from './ui/DOMFragment.js';
 
 // Managers
-import { StateManager } from './ui/StateManager'
-import { DataAtlas } from './DataAtlas'
+import { StateManager } from './ui/StateManager.js'
+import { DataAtlas } from './DataAtlas.js'
 
 // Device Plugins
-import { devices } from './devices';
+import { devices } from './devices/index.js';
 
 // Event Router
-import { EventRouter } from './EventRouter'
+import { EventRouter } from './EventRouter.js'
 
 // Data Manager
-import { DataManager } from './utils/DataManager'
-
-// Editor
-import { Editor } from './graph/Editor'
+import { DataManager } from './utils/DataManager.js'
 
 // Project Manager
-import { App } from './App'
-import { ProjectManager } from './utils/ProjectManager'
-import { NotificationManager } from './ui/NotificationManager'
-import { StorageManager } from './StorageManager'
+import { App } from './App.js'
+import {getSettings} from './utils/projectUtils.js'
+import { NotificationManager } from './ui/NotificationManager.js'
+import { StorageManager } from './StorageManager.js'
 
 // MongoDB Realm
-import { LoginWithGoogle, LoginWithRealm } from './ui/login';
+import { LoginWithGoogle, LoginWithRealm } from './ui/login.js';
 import * as Realm from "realm-web";
-
-export let DataMgr = null;
 
 /**
  * ```javascript
- * import {Session} from 'brainsatplay'
+ * import {Session} from 'brainsatplay.js'
  * ```
  */
 
@@ -98,7 +88,6 @@ export class Session {
 		username = 'guest',
 		password = '',
 		urlToConnect = 'https://brainsatplay.azurewebsites.net',//'https://server.brainsatplay.com'
-		initFS = false
 	) {
 		this.deviceStreams = [];
 		this.state = new StateManager({
@@ -127,17 +116,10 @@ export class Session {
 		this.streamObj.deviceStreams = this.deviceStreams; //reference the same object
 
 		this.dataManager = new DataManager(this);
-		this.storage = new StorageManager(this)
+
+		// App-Wide Helper Classes
+		this.storage = new StorageManager()
 		this.notifications = new NotificationManager()
-
-		DataMgr = this.dataManager;
-
-		if (initFS) this.initFS();
-
-		// Create Project Manager
-		this.projects = new ProjectManager(this)
-		this.projects.init()
-
 
 		// Create Session-Level Editor
 		this.app = new App({name: 'Global', shortcuts: false}, undefined, this)
@@ -234,12 +216,10 @@ export class Session {
 			this.state.addToState(stateId, newStream.info); //Device info accessible from state
 
 			onconnect(newStream);
-			this.onconnected();
 		}
 
 		newStream.ondisconnect = () => {
 			ondisconnect(newStream);
-			this.ondisconnected();
 			if (this.deviceStreams[i]) {
 				this.deviceStreams[i].device.atlas.deinit()
 				this.deviceStreams.splice(i, 1);
@@ -261,8 +241,9 @@ export class Session {
 		// Add Device Stream Graphs to Session Apps
 		if (newStream.device.atlas.graph){
 			newStream.device.atlas.graph.replaceApp(this.app)
-			if (this.editor) this.editor.addGraph(newStream.device.atlas.graph)
+			if (this.app.editor) this.app.editor.addGraph(newStream.device.atlas.graph)
 		}
+
 		// Initialize Route Management Interface
 		let contentChild = document.getElementById(`brainsatplay-device-${device.split('_')[0]}`)
 
@@ -281,10 +262,6 @@ export class Session {
 
 		return newStream
 	}
-
-	onconnected = () => { }
-
-	ondisconnected = () => { }
 
 
 	/**
@@ -1397,50 +1374,9 @@ export class Session {
 
 
 	// App Management
-	getSettings = async (info) => {
-
-		return new Promise((resolve, reject)=> {
-			
-			// Load Zip
-			if (info.zip){
-				if (!info.zip.includes('.zip')) info.zip = info.zip + '/app.zip'
-				fetch(info.zip).then((res) => {
-					this.projects.helper.loadAsync(res.blob())
-					.then(async (file) => {
-						let fileArray = await this.projects.getFilesFromZip(file)
-						let loadedInfo = await this.projects.load(fileArray, false)
-						if (!loadedInfo){
-							console.log(`falling back to link: ${info.link}`)
-							if (info.link) {
-								window.open(info.link, "_blank"); // redirect
-
-								// Back to Home
-								// window.history.pushState({ additionalInformation: 'Updated URL to Applet Browser' }, '', `${window.location.origin}`)
-								// document.getElementById("preset-selector").value = 'default'
-
-								reject('Redirected to external location')
-							} else reject('Required information not provided')
-						} else {
-							console.log(`creating app from external zip`)
-							resolve(loadedInfo)
-						} 
-					})
-				})
-			} 
-
-			// Redirect to New Page (external)
-			else if (info.link) {
-				window.open(info.link, "_blank");
-				reject('Redirected to external location')
-			}
-
-			// Swap to App (platform)
-			else resolve(info)
-		})
-	}
 
 	createApp = async (info, parentNode = document.body, session = this, config = []) => {
-		info = await this.getSettings(info)
+		info = await getSettings(info)
 		return new App(info, parentNode, session, config)
 	}
 
@@ -2401,8 +2337,8 @@ export class Session {
 		return arr
 	}
 
-	initFS = (oninit = () => { console.log("BrowserFS ready!"); this.dataManager.setupAutosaving(); }, onerror = () => { }) => {
-		this.session.dataManager.initFS(oninit, onerror);
+	initFS = async (oninit = () => { console.log("BrowserFS ready!"); this.dataManager.setupAutosaving(); }, onerror = () => { }) => {
+		await this.dataManager.initFS(oninit, onerror);
 	}
 
 
@@ -2424,15 +2360,6 @@ export class Session {
 		let device = createDevice(deviceInfo)
 		devices.push(device)
 	}
-
-	edit = (parent, appsToLoad) => {
-
-		if (!this.editor){
-			this.editor = new Editor(this, parent, appsToLoad)
-			this.editor.addApp(this.app)
-		} else this.editor.toggleDisplay(true)
-	}
-
 }
 
 //-------------------------------------------------------------------------------------------------------
