@@ -81,15 +81,18 @@ export class CallbackManager {
     this.ANIMFRAMETIME = performance.now(); //ms based on UTC stamps
     this.threeWorker = undefined;
 
+    //args = array of expected arguments
+    //origin = optional tag on input object
+    //self = this. scope for variables within the callbackmanager
 
     this.callbacks = [
       {
-        case: 'ping', callback: (args) => {
+        case: 'ping', callback: (args,origin,self) => {
           return 'pong';
         }
       },
       {
-        case: 'list', callback: (args) => {
+        case: 'list', callback: (args,origin,self) => {
           let list = [];
           this.callbacks.forEach((obj) => {
             list.push(obj.case);
@@ -376,6 +379,17 @@ export class CallbackManager {
         }
       }
     ];
+  }
+
+  runCallback(foo,input=[],origin) {
+    let output = 'function not defined';
+    this.callbacks.find((o,i) => {
+      if (o.case === foo) {
+        if (input) output = o.callback(input, origin, this);
+        return true;
+      }
+    });
+    return output;
   }
 
   checkEvents(foo, origin) {

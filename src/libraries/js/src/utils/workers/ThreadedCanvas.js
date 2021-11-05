@@ -2,7 +2,7 @@ import { WorkerManager } from "./WorkerManager"
 
 //The animation should probably be an arrow function
 export class ThreadedCanvas {
-    constructor(name= `canvas_${Math.round(Math.random()*100000)}`,canvas, context='2d', animation=undefined, setValues=undefined, workerId=undefined, transfer=undefined) { 
+    constructor(name= `canvas_${Math.round(Math.random()*100000)}`,canvas, context=undefined, animation=undefined, setValues=undefined, workerId=undefined, transfer=undefined) { 
         if(!canvas) throw new Error('Input a canvas element or Id')
         this.name = name;
         this.workerId = workerId;
@@ -11,9 +11,17 @@ export class ThreadedCanvas {
         this.canvas = canvas;
         this.context = context;
 
-        if(animation) {
-            this.init();
+        if(!this.workerId) {
+            this.initWorker();
             if(typeof setValues === 'object') window.workers.postToWorker({foo:'setValues',args:setValues,origin:this.name},this.workerId,transfer);
+        }
+        if(canvas) {
+            this.setCanvas(canvas);
+        }
+        if(context) { 
+            this.setContext(context);
+        }
+        if(animation) {
             this.setAnimation(animation);
         }
         
@@ -37,8 +45,9 @@ export class ThreadedCanvas {
     //you can reference canvas/this.canvas and context/this.context in the function 
     //Set values then reference this.x etc as well, to have controllable values
     setAnimation(animationFunction) {
-        if(typeof animationFunction !== 'function') return false;
-        let fstring = animationFunction.toString();
+        let fstring = animationFunction;
+        if(typeof animationFunction === 'function') fstring = animationFunction.toString();
+        else if(typeof animationFunction !== 'string') return false;
         //console.log(fstring)
         window.workers.postToWorker({origin:this.name,foo:'setAnimation',input:[fstring]},this.workerId)
     }
@@ -79,7 +88,7 @@ export class ThreadedCanvas {
         window.workers.postToWorker({origin:this.name,foo:'resizecanvas',input:[w,h]},this.workerId);
     }
 
-    init() {
+    initWorker() {
         if(!this.workerId) {
             if (window.workers == null){
                 window.workers = new WorkerManager()
@@ -90,6 +99,13 @@ export class ThreadedCanvas {
         }
         this.setCanvas();
         this.setContext();
+    }
+
+    init(animation) {
+        if(!this.workerId) this.initWorker();
+        this.setCanvas();
+        this.setContext();
+        if(animation) this.setAnimation(animation);
     }
 
     deinit() {

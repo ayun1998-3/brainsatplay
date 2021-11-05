@@ -37,7 +37,7 @@ export class DataManager {
         });
 
         this.onload = onload;
-
+        this.fs = fs;
         this.sub = this.state.subscribe('loaded',(loaded)=>{this.onload(loaded);});
         this.infoSub = null;
         this.deviceSubs=[];

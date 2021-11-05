@@ -202,12 +202,28 @@ export class MultithreadedApplet {
         this.canvasWorker = new ThreadedCanvas(
             this.origin,                                              //name given for the worker origin tag 
             this.canvas,                                              //canvas element to transfer to offscreencanvas
-            '2d',                                                     //canvas context setting
-            this.draw,                                                //pass the custom draw function
-            {angle:0,angleChange:0.000,bgColor:'black',cColor:'red'}, //'this' values, canvas and context/ctx are also available under 'self' for now, these can be mutated like uniforms with the 'setValues' command
+            undefined,                                                //canvas context setting
+            undefined,//this.draw,                                    //pass the custom draw function
+            undefined,//{angle:0,angleChange:0.000,bgColor:'black',cColor:'red'}, //'this' values, canvas and context/ctx are also available under 'self' for now, these can be mutated like uniforms with the 'setValues' command
             this.canvasWorkerId                                       //optional worker id to use, otherwise it sets up its own worker
         );    // This also gets a worker
 
+        window.workers.runWorkerFunction('initThree',[
+            function setup(args,origin,self){
+                let three = self.threeUtil.three
+            }.toString(),
+            function draw(args,origin,self){
+                
+            }.toString(),
+            function clear(args,origin,self){
+                
+            }.toString(),
+        ],this.origin,this.canvasWorkerId);
+            
+        //once the render completes release the input
+        window.workers.events.subEvent('render',(res)=>{
+            //console.log('render thread event',res,Date.now());
+        });
 
         //add some events to listen to thread results
         window.workers.events.addEvent('thread1process',this.origin,undefined,this.worker1Id);
@@ -217,7 +233,7 @@ export class MultithreadedApplet {
         //add some custom functions to the threads
         window.workers.addWorkerFunction( 
             'add',
-            function add(args,origin){return args[0]+args[1];}.toString(),
+            function add(args){return args[0]+args[1];}.toString(),
             this.origin,
             this.worker1Id
         );
@@ -226,6 +242,7 @@ export class MultithreadedApplet {
         
         //add a particle system
         window.workers.runWorkerFunction('transferClassObject',{particleClass:DynamicParticles.toString()},this.origin,this.worker1Id);
+        
         // //add some custom functions to the threads
         window.workers.addWorkerFunction(
             'particleSetup',
@@ -249,6 +266,7 @@ export class MultithreadedApplet {
             this.origin,
             this.worker1Id
         );
+
         //add some custom functions to the threads
         window.workers.addWorkerFunction(
             'particleStep',
@@ -306,12 +324,6 @@ export class MultithreadedApplet {
             }
         });
 
-
-        //once the render completes release the input
-        window.workers.events.subEvent('render',(res)=>{
-            //console.log('render thread event',res,Date.now());
-        });
-
         //on input event send to thread 1
         document.getElementById(this.props.id+'input').onclick = () => {
             //console.log('clicked', this.pushedUpdateToThreads); 
@@ -340,3 +352,175 @@ export class MultithreadedApplet {
     }
 
 } 
+
+
+
+
+
+
+
+
+const mouseEventHandler = makeSendPropertiesHandler([
+    'ctrlKey',
+    'metaKey',
+    'shiftKey',
+    'button',
+    'pointerType',
+    'clientX',
+    'clientY',
+    'pageX',
+    'pageY',
+  ]);
+  const wheelEventHandlerImpl = makeSendPropertiesHandler([
+    'deltaX',
+    'deltaY',
+  ]);
+  const keydownEventHandler = makeSendPropertiesHandler([
+    'ctrlKey',
+    'metaKey',
+    'shiftKey',
+    'keyCode',
+  ]);
+  
+  function wheelEventHandler(event, sendFn) {
+    event.preventDefault();
+    wheelEventHandlerImpl(event, sendFn);
+  }
+  
+  function preventDefaultHandler(event) {
+    event.preventDefault();
+  }
+  
+  function copyProperties(src, properties, dst) {
+    for (const name of properties) {
+        dst[name] = src[name];
+    }
+  }
+  
+  function makeSendPropertiesHandler(properties) {
+    return function sendProperties(event, sendFn) {
+      const data = {type: event.type};
+      copyProperties(event, properties, data);
+      sendFn(data);
+    };
+  }
+  
+  function touchEventHandler(event, sendFn) {
+    const touches = [];
+    const data = {type: event.type, touches};
+    for (let i = 0; i < event.touches.length; ++i) {
+      const touch = event.touches[i];
+      touches.push({
+        pageX: touch.pageX,
+        pageY: touch.pageY,
+      });
+    }
+    sendFn(data);
+  }
+  
+  // The four arrow keys
+  const orbitKeys = {
+    '37': true,  // left
+    '38': true,  // up
+    '39': true,  // right
+    '40': true,  // down
+  };
+
+  function filteredKeydownEventHandler(event, sendFn) {
+    const {keyCode} = event;
+    if (orbitKeys[keyCode]) {
+      event.preventDefault();
+      keydownEventHandler(event, sendFn);
+    }
+  }
+  
+  let nextProxyId = 0;
+  class ElementProxy {
+    constructor(element, workerId, eventHandlers) {
+        this.id = nextProxyId++;
+        this.workerId = workerId;
+        const sendEvent = (data) => {
+        window.workers.runWorkerFunction(
+            'proxyHandler',
+            [{type:'event',id:id,data:data}],
+            this.origin,
+            this.workerId);
+        };
+  
+        // register an id
+        window.workers.runWorkerFunction(
+            'proxyHandler',
+            [{type:'makeProxy',id:id}],
+            this.origin,
+            this.workerId
+            );
+        sendSize();
+        for (const [eventName, handler] of Object.entries(eventHandlers)) {
+            element.addEventListener(eventName, function(event) {
+            handler(event, sendEvent);
+            });
+        }
+    
+        function sendSize() {
+            const rect = element.getBoundingClientRect();
+            sendEvent({
+            type: 'size',
+            left: rect.left,
+            top: rect.top,
+            width: element.clientWidth,
+            height: element.clientHeight,
+            });
+        }
+    
+        // really need to use ResizeObserver
+        window.addEventListener('resize', sendSize);
+    }
+  }
+  
+  function startWorker(canvas, workerId) {
+        canvas.focus();
+        const offscreen = canvas.transferControlToOffscreen();
+        const worker = workerId;
+    
+        const eventHandlers = {
+        contextmenu: preventDefaultHandler,
+        mousedown: mouseEventHandler,
+        mousemove: mouseEventHandler,
+        mouseup: mouseEventHandler,
+        pointerdown: mouseEventHandler,
+        pointermove: mouseEventHandler,
+        pointerup: mouseEventHandler,
+        touchstart: touchEventHandler,
+        touchmove: touchEventHandler,
+        touchend: touchEventHandler,
+        wheel: wheelEventHandler,
+        keydown: filteredKeydownEventHandler,
+        };
+        const proxy = new ElementProxy(canvas, worker, eventHandlers);
+        
+        //setup offscreencanvas 
+        window.workers.runWorkerFunction(
+            'proxyHandler',
+            [{type:'start',canvas:offscreen,elementId:proxy.id}],
+            this.origin,
+            this.canvasWorkerId
+        );
+
+
+        console.log('using OffscreenCanvas');  /* eslint-disable-line no-console */
+  }
+  
+  function startMainPage(canvas) {
+        init({canvas, inputElement: canvas});
+        console.log('using regular canvas');  /* eslint-disable-line no-console */
+  }
+  
+  function main() {  /* eslint consistent-return: 0 */
+        const canvas = document.querySelector('#c');
+        if (canvas.transferControlToOffscreen) {
+        startWorker(canvas);
+        } else {
+        startMainPage(canvas);
+        }
+  }
+  
