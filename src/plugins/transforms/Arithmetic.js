@@ -1,19 +1,11 @@
 
-
+import * as arithmetic from './arithmetic/index.js'
 export class Arithmetic {
     
     static id = String(Math.floor(Math.random()*1000000))
     static category = 'tranforms'
 
-    constructor(info, graph, params={}) {
-        
-        
-        
-        
-
-        this.props = {
-            input: []
-        }
+    constructor() {
 
         this.ports = {
             modifier: {
@@ -23,56 +15,34 @@ export class Arithmetic {
             },
 
             add: {
-                data: 0,
-                input: {type: undefined},
-                output: {type: undefined},
+                input: {type: 'number'},
+                output: {type: 'number'},
                 onUpdate: (user) => { 
-                    console.log(user, this.ports.modifier.data)           
-
-                    let wasArray = Array.isArray(user.data)
-                    if (!wasArray) user.data = [user.data]
-                    user.data = user.data.map(v => v += this._parseProperFormat(this.ports.modifier.data))
-                    if (!wasArray) user.data = user.data[0]
-
-                    console.log(user)
+                    user.data = arithmetic.add(user.data, this.ports.modifier.data)
                     return user
                 }            
             },
             subtract: {
-                data: 0,
-                input: {type: undefined},
-                output: {type: undefined},
+                input: {type: 'number'},
+                output: {type: 'number'},
                 onUpdate: (user) => {
-            
-                        let wasArray = Array.isArray(user.data)
-                        if (!wasArray) user.data = [user.data]
-                        user.data = user.data.map(v => v -= this._parseProperFormat(this.ports.modifier.data))
-                        if (!wasArray) user.data = user.data[0]
-            
+                    user.data = arithmetic.subtract(user.data, this.ports.modifier.data)
                     return user
                 }
             },
             multiply: {
-                data: 0,
-                input: {type: undefined},
-                output: {type: undefined},
+                input: {type: 'number'},
+                output: {type: 'number'},
                 onUpdate: (user) => {
-                    let wasArray = Array.isArray(user.data)
-                    if (!wasArray) user.data = [user.data]
-                    user.data = user.data.map(v => v *= this._parseProperFormat(this.ports.modifier.data))
-                    if (!wasArray) user.data = user.data[0]
+                    user.data = arithmetic.multiply(user.data, this.ports.modifier.data)
                     return user
                 }
             },
             divide: {
-                data: 0,
-                input: {type: undefined},
-                output: {type: undefined},
+                input: {type: 'number'},
+                output: {type: 'number'},
                 onUpdate: (user) => {
-                        let wasArray = Array.isArray(user.data)
-                        if (!wasArray) user.data = [user.data]
-                        user.data = user.data.map(v => v /= this._parseProperFormat(this.ports.modifier.data))
-                        if (!wasArray) user.data = user.data[0]
+                    user.data = arithmetic.divide(user.data, this.ports.modifier.data)
                     return user
                 }
             },
@@ -81,7 +51,7 @@ export class Arithmetic {
                 input: {type: Array},
                 output: {type: 'number'},
                 onUpdate: (user) => {
-                    user.data = user.data.reduce((a,b) => a + b)/ user.data.length
+                    user.data = arithmetic.mean(user.data, this.ports.modifier.data)
                     return user
                 }
             },
@@ -90,20 +60,10 @@ export class Arithmetic {
                 input: {type: Array},
                 output: {type: 'number'},
                 onUpdate: (user) => {
-                    user.data = user.data.reduce((a,b) => a + b)
+                    user.data = arithmetic.sum(user.data, this.ports.modifier.data)
                     return user
                 }
             }
         }
-    }
-
-    init = () => {}
-
-    deinit = () => {}
-
-    _parseProperFormat = (val) => {
-        if (typeof val === 'boolean') val = val ? 1 : 0;
-        else val = Number.parseFloat(val)
-        return val
     }
 }

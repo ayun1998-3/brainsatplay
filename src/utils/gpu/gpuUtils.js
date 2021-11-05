@@ -1,4 +1,4 @@
-import { GPU } from 'gpu.js'
+import './gpu-browser.min.js' // becomes a window variable
 import { addGpuFunctions, createGpuKernels as krnl } from './gpuUtils-functs';
 
 //By Joshua Brewster, Dovydas Stirpeika (MIT License)
