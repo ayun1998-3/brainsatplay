@@ -2,6 +2,7 @@ import {DOMFragment} from '../src/ui/DOMFragment.js'
 import { WorkerManager } from '../src/utils/workers/WorkerManager.js';
 import { ThreadedCanvas } from '../src/utils/workers/ThreadedCanvas.js'
 import {DynamicParticles} from '../src/utils/graphics/DynamicParticles.js'
+import { initElementProxy } from '../../src/utils/workers/ProxyElement.js';
 
 //WIP WIP WIP WIP WIP WIP WIP
 export class MultithreadedApplet {
@@ -202,18 +203,20 @@ export class MultithreadedApplet {
             undefined,//this.draw,                                    //pass the custom draw function
             undefined,//{angle:0,angleChange:0.000,bgColor:'black',cColor:'red'}, //'this' values, canvas and context/ctx are also available under 'self' for now, these can be mutated like uniforms with the 'setValues' command
             this.canvasWorkerId                                       //optional worker id to use, otherwise it sets up its own worker
-        );    // This also gets a worker
+        );    // This also makes a worker if no workerId is supplied
+
+        initElementProxy(this.canvas,this.canvasWorkerId,this.origin);
 
         window.workers.runWorkerFunction('initThree',[
-            function setup(args,origin,self){
-                let three = self.threeUtil.three
-            }.toString(),
-            function draw(args,origin,self){
+            // function setup(args,origin,self){
+            //     //let three = self.threeUtil.three
+            // }.toString(),
+            // function draw(args,origin,self){
                 
-            }.toString(),
-            function clear(args,origin,self){
+            // }.toString(),
+            // function clear(args,origin,self){
                 
-            }.toString(),
+            // }.toString(),
         ],this.origin,this.canvasWorkerId);
             
         //once the render completes release the input
@@ -349,174 +352,3 @@ export class MultithreadedApplet {
 
 } 
 
-
-
-
-
-
-
-
-const mouseEventHandler = makeSendPropertiesHandler([
-    'ctrlKey',
-    'metaKey',
-    'shiftKey',
-    'button',
-    'pointerType',
-    'clientX',
-    'clientY',
-    'pageX',
-    'pageY',
-  ]);
-  const wheelEventHandlerImpl = makeSendPropertiesHandler([
-    'deltaX',
-    'deltaY',
-  ]);
-  const keydownEventHandler = makeSendPropertiesHandler([
-    'ctrlKey',
-    'metaKey',
-    'shiftKey',
-    'keyCode',
-  ]);
-  
-  function wheelEventHandler(event, sendFn) {
-    event.preventDefault();
-    wheelEventHandlerImpl(event, sendFn);
-  }
-  
-  function preventDefaultHandler(event) {
-    event.preventDefault();
-  }
-  
-  function copyProperties(src, properties, dst) {
-    for (const name of properties) {
-        dst[name] = src[name];
-    }
-  }
-  
-  function makeSendPropertiesHandler(properties) {
-    return function sendProperties(event, sendFn) {
-      const data = {type: event.type};
-      copyProperties(event, properties, data);
-      sendFn(data);
-    };
-  }
-  
-  function touchEventHandler(event, sendFn) {
-    const touches = [];
-    const data = {type: event.type, touches};
-    for (let i = 0; i < event.touches.length; ++i) {
-      const touch = event.touches[i];
-      touches.push({
-        pageX: touch.pageX,
-        pageY: touch.pageY,
-      });
-    }
-    sendFn(data);
-  }
-  
-  // The four arrow keys
-  const orbitKeys = {
-    '37': true,  // left
-    '38': true,  // up
-    '39': true,  // right
-    '40': true,  // down
-  };
-
-  function filteredKeydownEventHandler(event, sendFn) {
-    const {keyCode} = event;
-    if (orbitKeys[keyCode]) {
-      event.preventDefault();
-      keydownEventHandler(event, sendFn);
-    }
-  }
-  
-  let nextProxyId = 0;
-  class ElementProxy {
-    constructor(element, workerId, eventHandlers) {
-        this.id = nextProxyId++;
-        this.workerId = workerId;
-        const sendEvent = (data) => {
-        window.workers.runWorkerFunction(
-            'proxyHandler',
-            [{type:'event',id:id,data:data}],
-            this.origin,
-            this.workerId);
-        };
-  
-        // register an id
-        window.workers.runWorkerFunction(
-            'proxyHandler',
-            [{type:'makeProxy',id:id}],
-            this.origin,
-            this.workerId
-            );
-        sendSize();
-        for (const [eventName, handler] of Object.entries(eventHandlers)) {
-            element.addEventListener(eventName, function(event) {
-            handler(event, sendEvent);
-            });
-        }
-    
-        function sendSize() {
-            const rect = element.getBoundingClientRect();
-            sendEvent({
-            type: 'size',
-            left: rect.left,
-            top: rect.top,
-            width: element.clientWidth,
-            height: element.clientHeight,
-            });
-        }
-    
-        // really need to use ResizeObserver
-        window.addEventListener('resize', sendSize);
-    }
-  }
-  
-  function startWorker(canvas, workerId) {
-        canvas.focus();
-        const offscreen = canvas.transferControlToOffscreen();
-        const worker = workerId;
-    
-        const eventHandlers = {
-        contextmenu: preventDefaultHandler,
-        mousedown: mouseEventHandler,
-        mousemove: mouseEventHandler,
-        mouseup: mouseEventHandler,
-        pointerdown: mouseEventHandler,
-        pointermove: mouseEventHandler,
-        pointerup: mouseEventHandler,
-        touchstart: touchEventHandler,
-        touchmove: touchEventHandler,
-        touchend: touchEventHandler,
-        wheel: wheelEventHandler,
-        keydown: filteredKeydownEventHandler,
-        };
-        const proxy = new ElementProxy(canvas, worker, eventHandlers);
-        
-        //setup offscreencanvas 
-        window.workers.runWorkerFunction(
-            'proxyHandler',
-            [{type:'start',canvas:offscreen,elementId:proxy.id}],
-            this.origin,
-            this.canvasWorkerId
-        );
-
-
-        console.log('using OffscreenCanvas');  /* eslint-disable-line no-console */
-  }
-  
-  function startMainPage(canvas) {
-        init({canvas, inputElement: canvas});
-        console.log('using regular canvas');  /* eslint-disable-line no-console */
-  }
-  
-  function main() {  /* eslint consistent-return: 0 */
-        const canvas = document.querySelector('#c');
-        if (canvas.transferControlToOffscreen) {
-        startWorker(canvas);
-        } else {
-        startMainPage(canvas);
-        }
-  }
-  
