@@ -49,7 +49,6 @@ export class Shader {
             let type = (typeArr.length + nameArr.length > 2) ? Array : typeArr[0]
 
             // remove square brackets for arrays
-            console.log(name, type)
             this._setPort(name, type)
         })
 

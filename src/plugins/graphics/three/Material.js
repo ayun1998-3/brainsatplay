@@ -125,8 +125,6 @@ export class Material  {
         if (typeof uniforms === 'object'){
             this._filterMisformattedUniforms(uniforms) // Conduct on original object
             this.props.uniforms = Object.assign(this.props.uniforms, uniforms) // Deep copy to keep params and props separate
-            
-            for (let name in this.props.uniforms) console.log(name, this.props.uniforms[name])
             this._replaceUniformsWithThreeObjects(this.props.uniforms)
         }
     }
