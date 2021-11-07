@@ -238,9 +238,6 @@ export class Graph {
                             await o.instance.addPort(port, o.instance.ports[port]) 
                         }
                     }))
-
-                    // Update Parameters on Port
-                    o.instance.updateParams(o.params)
                 } 
 
                 // Wrap Node Inside a Graph
@@ -256,20 +253,34 @@ export class Graph {
 
                  // Download Dependencies
                  for (let name in o.instance.dependencies){
-                     await new Promise(resolve => {
+                     await new Promise(async resolve => {
                          if (window[name]){
                             o.instance.dependencies[name] = window[name]
                             resolve()
                          } else {
-                            let script = document.createElement('script')
-                            script.src = o.instance.dependencies[name]
-                            script.async = true;
-                            script.onload = () => {
-                                o.instance.dependencies[name] = window[name]
-                                script.remove()
+
+                            // NOTE: Import required for three.js. Not sure if it works for others...
+                           
+                            try {
+
+                                let module = await import(o.instance.dependencies[name])
+                                window[name] = o.instance.dependencies[name] = module
                                 resolve()
+
+                            } catch {
+
+                                let script = document.createElement('script')
+                                script.src = o.instance.dependencies[name]
+                                script.async = true;
+                                script.onload = async () => {
+
+                                    // Normal
+                                    if (window[name]) o.instance.dependencies[name] = window[name]
+                                    script.remove()
+                                    resolve()
+                                }
+                                document.body.appendChild(script);
                             }
-                            document.body.appendChild(script);
                         }
                     })
                  }
@@ -287,6 +298,10 @@ export class Graph {
 
                 // Initialize Node   
                 await o.instance.init()
+
+                // Update Parameters on Ports (i.e. tune the node to your specs)
+                o.instance.updateParams(o.params)
+
 
                 // Configure
                 if (o.instance.configure instanceof Function ) o.instance.configure(this.app.settings)

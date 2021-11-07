@@ -1,17 +1,12 @@
-import * as THREE from 'three'
-
-
 class Trees {
 
     static id = String(Math.floor(Math.random()*1000000))
-    static category = 'scene'
+    static category = 'graphics'
 
     constructor(info, graph, params={}) {
         
-
-        // Generic Plugin Attributes
-        
-        
+        let version = '0.134.0'
+        this.dependencies = {THREE: `https://cdn.skypack.dev/three@${version}`}
 
 
         // UI Identifier
@@ -32,7 +27,6 @@ class Trees {
                 input: {type: null},
                 output: {type: Object, name: 'Mesh'},
                 onUpdate: () => {
-                    console.log('ADDING TREE')
                     return {data: this.props.groups}
                 }
             },
@@ -41,14 +35,22 @@ class Trees {
                 input: {type: 'number'},
                 output: {type: null},
                 onUpdate: (user) => {
-                    this.ports.count.data = user.data
+                    this._generate(user.data)
                 }
             },
         }
     }
 
     init = () => {
-        // const hemisphereLight = new THREE.HemisphereLight(0xff0000, 0x0000ff, 0.8)
+
+    }
+
+    _generate = (count) => {
+
+        this._deinit()
+        this.props.groups = []
+
+        // const hemisphereLight = new this.dependencies.THREE.HemisphereLight(0xff0000, 0x0000ff, 0.8)
         // this.props.meshes.add(hemisphereLight)
         function brand(){
             return 2 * (Math.random() - 0.5)
@@ -98,23 +100,23 @@ class Trees {
             return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
         }
 
-        for (let n = 0; n < this.ports.count.data; n++){
+        for (let n = 0; n < count; n++){
 
-            const initialSphereGeometry = new THREE.SphereGeometry(this.props.maxSize,this.props.segments,this.props.segments)
-            const woodMaterial = new THREE.MeshToonMaterial({color: 0xBF784E})
-            const initialSphere = new THREE.Mesh(initialSphereGeometry,woodMaterial)
+            const initialSphereGeometry = new this.dependencies.THREE.SphereGeometry(this.props.maxSize,this.props.segments,this.props.segments)
+            const woodMaterial = new this.dependencies.THREE.MeshToonMaterial({color: 0xBF784E})
+            const initialSphere = new this.dependencies.THREE.Mesh(initialSphereGeometry,woodMaterial)
 
-            let group = new THREE.Group()
+            let group = new this.dependencies.THREE.Group()
             group.add(initialSphere)
 
             var funMaterials = []
             for(var i =0; i < 1000; i++){
-                funMaterials.push(new THREE.MeshToonMaterial({color: Math.random() * 0xFFFFFF}))
+                funMaterials.push(new this.dependencies.THREE.MeshToonMaterial({color: Math.random() * 0xFFFFFF}))
             }
 
             const addASphere = ( sizeDistribution, minHeight, maxHeight,minRadius, maxRadius) => {
                 var y = map_range(Math.random(),0,1,minHeight,maxHeight)
-                let nInitPos = new THREE.Vector3(brand()*maxRadius,y,brand()*maxRadius)
+                let nInitPos = new this.dependencies.THREE.Vector3(brand()*maxRadius,y,brand()*maxRadius)
                 let nScale = map_range(Math.random(),0,1,sizeDistribution[0],sizeDistribution[1])
                 
                 //get nearest sphere
@@ -129,10 +131,10 @@ class Trees {
                     // let nPos = nInitPos.sub(nearestSphere.position).normalize().multiplyScalar(nScale + nearestSphere.scale.x)
                     let nPos = nInitPos.sub(nearestSphere.position).normalize().multiplyScalar(this.props.maxSize *nScale + this.props.maxSize * nearestSphere.scale.x)
                     let funMaterial = funMaterials[Math.floor(Math.random() * funMaterials.length)]
-                    let nSphere = new THREE.Mesh(initialSphereGeometry,funMaterial)
-                    // let nSphere = new THREE.Mesh(initialSphereGeometry,woodMaterial)
+                    let nSphere = new this.dependencies.THREE.Mesh(initialSphereGeometry,funMaterial)
+                    // let nSphere = new this.dependencies.THREE.Mesh(initialSphereGeometry,woodMaterial)
                     nSphere.scale.set(nScale,nScale,nScale)
-                    let temp = new THREE.Vector3().copy(nearestSphere.position)
+                    let temp = new this.dependencies.THREE.Vector3().copy(nearestSphere.position)
                     temp.add(nPos)
                     nSphere.position.add(temp)
                     group.add(nSphere)
@@ -167,7 +169,7 @@ class Trees {
                 
                     if(group.children.length < 10){
                         growing = true
-                        group = new THREE.Group()
+                        group = new this.dependencies.THREE.Group()
                         group.add(initialSphere)
                         sphereCounter = 0
                         stage = 0
@@ -182,11 +184,16 @@ class Trees {
             this.props.groups.push(group)
         }
 
-        this.ports.add.data = this.props.groups
-        this.update('add',{forceUpdate: true})
+        this.update('add',{forceUpdate: true, data: this.props.groups})
     }
 
-    deinit = () => {}
+    _deinit = () => {
+        this.props.groups.forEach(g => g.parent.remove(g))
+    } 
+
+    deinit = () => {
+        this._deinit()
+    }
 }
 
 export {Trees}

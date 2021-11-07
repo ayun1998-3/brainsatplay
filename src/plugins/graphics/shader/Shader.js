@@ -2,17 +2,14 @@ import fragmentShader from './fragment.glsl'
 export class Shader {
 
     static id = String(Math.floor(Math.random()*1000000))
-    static category = 'scene'
+    static category = 'graphics'
 
     constructor(info, graph, params={}) {
         
-        
-        
-        
-
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
-            uniforms: {}
+            uniforms: {},
+            restrictedUniforms: ['iTime', 'iResolution']
         }
 
         this.ports = {
@@ -46,31 +43,42 @@ export class Shader {
         let result = [...glsl.matchAll(re)]
 
         result.forEach((match) => {
+            let nameArr = match[2].split('[')
+            let typeArr = match[1].split('[')
+            let name = match[2].split('[')[0]
+            let type = (typeArr.length + nameArr.length > 2) ? Array : typeArr[0]
+
             // remove square brackets for arrays
-            this._setPort(match)
+            console.log(name, type)
+            this._setPort(name, type)
+        })
+
+        Object.keys(this.props.uniforms).forEach(name => {
+            if (!result.includes(name)) this.removePort(name)
         })
     }
 
-    _setPort = (match) => {
-        let nameArr = match[2].split('[')
-        let typeArr = match[1].split('[')
-        let name = match[2].split('[')[0]
-        let type = (typeArr.length + nameArr.length > 2) ? Array : typeArr[0]
+    _setPort = (name, type) => {
 
-        // Set Uniform
-        if (this.props.uniforms[name] == null) this.props.uniforms[name] = {value: 0}
+            // Set default uniform value
 
-        // Set Port
-        this.addPort(name, {
-            input: {type},
-            data: this.props.uniforms[name].value,
-            output: {type: null},
-            onUpdate: (user) => {
-                if (!isNaN(user.data) || Array.isArray(user.data)) {
-                    if (Array.isArray(user.data)) this.props.uniforms[name].value = user.data.flat(2)
-                    else this.props.uniforms[name].value = user.data // Passed by reference at the beginning
-                }
+            if (this.props.uniforms[name] == null) {
+                this.props.uniforms[name] = {value: this.params.uniforms[name] ?? 0}
             }
-        })
+
+            // Set Port
+            if (!this.ports[name]){
+                this.addPort(name, {
+                    input: {type},
+                    data: this.props.uniforms[name].value,
+                    output: {type: null},
+                    onUpdate: (user) => {
+                        if (!isNaN(user.data) || Array.isArray(user.data)) {
+                            if (Array.isArray(user.data)) this.props.uniforms[name].value = user.data.flat(2)
+                            else this.props.uniforms[name].value = user.data // Passed by reference at the beginning
+                        }
+                    }
+                })
+            }
     }
 }

@@ -1,35 +1,34 @@
-import * as THREE from 'three'
-import { StateManager } from '../../ui/StateManager'
-
 
 export class Light {
 
     static id = String(Math.floor(Math.random()*1000000))
     static category = 'scene'
+    static hidden = true
 
     constructor(info, graph, params={}) {
         
         
-        
+        let version = '0.134.0'
+        this.dependencies = {THREE: `https://cdn.skypack.dev/three@${version}`}
+
 
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
             mesh: null,
-            state: new StateManager(),
+            // state: new StateManager(),
             lastRendered: Date.now()
         }
 
-        this.props.mesh = new THREE.AmbientLight( 0xFFFFFF ); //new THREE.DirectionalLight();
 
         this.ports = {
             add: {
                 edit: false,
-                data: this.props.mesh,
+                data: null,
                 input: {type: null},
                 output: {type: Object, name: 'Mesh'},
                 onUpdate: () => {
                     if (this.props.mesh == null){
-                        this.props.mesh = new THREE.AmbientLight( this.ports.color.data );
+                        this.props.mesh = new this.dependencies.THREE.AmbientLight( this.ports.color.data );
                         this.props.mesh.target.position.set( 0, 0, - 2 );
                     }
                     this.props.mesh.position.set( this.ports.x.data, this.ports.y.data, this.ports.z.data );
@@ -79,17 +78,12 @@ export class Light {
             distance: {data: 100, min: 0, max:1000, step: 0.01},
             decay: {data: 1, min: 0, max:10, step: 0.01},
         }
-
-
-        // Subscribe to Changes in Parameters
-        this.props.state.addToState('params', this.ports, () => {
-            if (Date.now() - this.props.lastRendered > 500){
-                this.props.lastRendered = Date.now()
-            }
-        })
     }
 
-    init = () => {}
+    init = () => {
+        this.props.mesh = new this.dependencies.THREE.AmbientLight( 0xFFFFFF ); //new this.dependencies.THREE.DirectionalLight();
+        this.update('add', {forceUpdate: true, data: this.props.mesh})
+    }
 
     deinit = () => {
         if (this.props.mesh){

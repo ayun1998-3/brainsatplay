@@ -194,7 +194,9 @@ export class Port {
         port.data = port.value ?? port.data // backwards compatibility (< 0.0.36)
         port.value = port.data
 
-        let res = (this.onchange instanceof Function) ? await this.onchange(port) : port // set in constructor
+        let res
+        if (this.onchange instanceof Function) res = await this.onchange(port) // try onchange function
+        if (!res) res = port // default to input port values
 
         let tock = performance.now()
         let latency = tock - tick

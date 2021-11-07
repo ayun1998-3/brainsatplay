@@ -1,49 +1,47 @@
-import * as THREE from 'three'
-import { StateManager } from '../../ui/StateManager'
-import vertexShader from './shader/vertex.glsl'
-import blankFragment from './shader/blankFragment.glsl'
+import vertexShader from '../shader/vertex.glsl'
+import blankFragment from '../shader/blankFragment.glsl'
 
 export class Material  {
 
     static id = String(Math.floor(Math.random()*1000000))
     static category = 'scene'
 
-    constructor(info, graph, params={}) {
+    constructor() {
+
+        let version = '0.134.0'
+        this.dependencies = {THREE: `https://cdn.skypack.dev/three@${version}`}
 
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
             material: null,
-            state: new StateManager(),
+            // state: new StateManager(),
             lastRendered: Date.now(),
             uniforms: {},
             defaultColor: '#ffffff',
             lastMaterialType: null
         }
         
-        this.props.material = new THREE.MeshBasicMaterial({color: this.props.defaultColor});
-
         this.ports = {
             default: {
                 edit: false,
-                data: this.props.material,
                 input: {type: null},
                 output: {type: Object, name: 'Material'},
                 onUpdate: () => {
-                    switch(this.ports.type.data){
+                    switch(this.props.lastMaterialType){
                         case 'PointsMaterial':
-                            this.props.material = new THREE.PointsMaterial()
+                            this.props.material = new this.dependencies.THREE.PointsMaterial()
                             break
                         case 'MeshBasicMaterial':
-                            this.props.material = new THREE.MeshBasicMaterial( {color: this.ports.color.data} );
+                            this.props.material = new this.dependencies.THREE.MeshBasicMaterial( {color: this.ports.color.data} );
                             break
                         case 'MeshStandardMaterial':
-                            this.props.material = new THREE.MeshStandardMaterial( {color: this.ports.color.data} );
+                            this.props.material = new this.dependencies.THREE.MeshStandardMaterial( {color: this.ports.color.data} );
                             break
                         case 'ShaderMaterial':
 
                             this._replaceUniformsWithThreeObjects(this.props.uniforms) // Conduct on original object
 
-                            this.props.material = new THREE.ShaderMaterial({
+                            this.props.material = new this.dependencies.THREE.ShaderMaterial({
                                 vertexShader: this.ports.vertexShader.data,
                                 fragmentShader: this.ports.fragmentShader.data,
                                 uniforms: this.props.uniforms
@@ -51,12 +49,14 @@ export class Material  {
                             break
                     }
             
-                    this.props.material.side = THREE.DoubleSide
-                    this.props.material.transparent = this.ports.transparent.data
-                    this.props.material.wireframe = this.ports.wireframe.data
-                    this.props.material.depthWrite = this.ports.depthWrite.data
-                    this.props.material.alphaTest = this.ports.alphaTest.data
-                    this.props.material.size = this.ports.size.data
+                    if (this.props.material){
+                        this.props.material.side = 2 // double side
+                        this.props.material.transparent = this.ports.transparent.data
+                        this.props.material.opacity = this.ports.opacity.data
+                        this.props.material.wireframe = this.ports.wireframe.data
+                        this.props.material.depthWrite = this.ports.depthWrite.data
+                        this.props.material.alphaTest = this.ports.alphaTest.data
+                    }
 
                     return {data: this.props.material}
                 }
@@ -73,7 +73,7 @@ export class Material  {
                 output: {type: null},
                 onUpdate: (user) => {
                     this.props.lastMaterialType = user.data
-                    return user
+                    this.update('default', {forceUpdate: true})
                 }
             },
             fragmentShader: {
@@ -96,25 +96,21 @@ export class Material  {
                         this._passShaderMaterial()
                 }
             },
-            color: {data: this.props.defaultColor, input: {type: 'color'}, output: {type: null}},
-            transparent: {data: false, input: {type: 'boolean'}, output: {type: null}},
-            wireframe: {data: false, input: {type: 'boolean'}, output: {type: null}},
-            depthWrite: {data: false, input: {type: 'boolean'}, output: {type: null}},
-            alphaTest: {data: 0, min: 0, max: 1, step: 0.01, input: {type: 'number'}, output: {type: null}},
-            size: {data: 0, min: 0, step: 0.01, input: {type: 'number'}, output: {type: null}},
+            color: {data: this.props.defaultColor, input: {type: 'color'}, output: {type: null}, onUpdate: (user) => {
+                if (this.props.material?.color) this.props.material.color = new this.dependencies.THREE.Color(user.data)
+            }},
+            transparent: {data: false, input: {type: 'boolean'}, output: {type: null},onUpdate: (user) => {this.props.material.transparent = user.data}},
+            opacity: {data: 1, min: 0, max: 1, step: 0.01, input: {type: 'number'}, output: {type: null}, onUpdate: (user) => {this.props.material.opacity = user.data}},
+            wireframe: {data: false, input: {type: 'boolean'}, output: {type: null}, onUpdate: (user) => {this.props.material.wireframe = user.data}},
+            depthWrite: {data: true, input: {type: 'boolean'}, output: {type: null}, onUpdate: (user) => {this.props.material.depthWrite = user.data}},
+            alphaTest: {data: 0, min: 0, max: 1, step: 0.01, input: {type: 'number'}, output: {type: null}, onUpdate: (user) => {this.props.material.alphaTest = user.data}},
+            // size: {data: 0, min: 0, step: 0.01, input: {type: 'number'}, output: {type: null}},
         }
     }
 
     init = () => {
-
-        // Subscribe to Changes in Parameters
-        this.props.state.addToState('params', this.ports, () => {
-                this.props.lastRendered = Date.now()
-                this.update('default',{forceUpdate: true})
-        })
-
+        this.update('default', {forceUpdate: true}) // create default material
         this.update('type',this.ports.type) // FIX: Shouldn't be necessary
-        
         this._passShaderMaterial()
     }
 
@@ -129,13 +125,14 @@ export class Material  {
         if (typeof uniforms === 'object'){
             this._filterMisformattedUniforms(uniforms) // Conduct on original object
             this.props.uniforms = Object.assign(this.props.uniforms, uniforms) // Deep copy to keep params and props separate
+            
+            for (let name in this.props.uniforms) console.log(name, this.props.uniforms[name])
             this._replaceUniformsWithThreeObjects(this.props.uniforms)
         }
     }
 
     _filterMisformattedUniforms = (uniforms) => {
         for (let key in uniforms){
-            // console.log(uniforms[key])
             // Remove Misformatted Uniforms
             if (typeof uniforms[key] !== 'object' || !('value' in uniforms[key])) delete uniforms[key]
         }
@@ -147,20 +144,23 @@ export class Material  {
 
             // Remove Misformatted Uniforms
             if (typeof uniforms[key] === 'object' && !('value' in uniforms[key])) delete uniforms[key]
-           
+
+                       
             // Try Making Colors from Strings
-            else if (typeof value === 'string') uniforms[key].value = new THREE.Color(value)
+            else if (typeof value === 'string') uniforms[key].value = new this.dependencies.THREE.Color(value)
             
+
             // Make Vectors from Properly Formatted Objects
-            else if (typeof value === 'object' && 'x' in value && 'y' in value) uniforms[key].value = new THREE.Vector2(value.x, value.y)
+            else if (typeof value === 'object' && 'x' in value && 'y' in value) uniforms[key].value = new this.dependencies.THREE.Vector2(value.x, value.y)
         }
+
+        // console.log(uniforms)
 
     }
 
     _passShaderMaterial = () => {
-        if (this.ports.vertexShader.data && this.ports.fragmentShader.data) {
-            this.ports.type.data = 'ShaderMaterial'
-            this.update('default',{forceUpdate: true})
+        if (!!this.ports.vertexShader.data && !!this.ports.fragmentShader.data) {
+            this.update('type',{data: 'ShaderMaterial'})
         }
         else this.ports.type.data = this.props.lastMaterialType || 'MeshBasicMaterial'
     }

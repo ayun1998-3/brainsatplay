@@ -20,9 +20,21 @@ import {EEG} from './biosignals/EEG.js'
 import {HEG} from './biosignals/HEG.js'
 
 // Canvas
-import {Canvas} from './canvas/Canvas.js'
-import {Circle} from './canvas/Circle.js'
-import {Line} from './canvas/Line.js'
+import {Canvas} from './graphics/two/Canvas.js'
+import {Circle} from './graphics/two/Circle.js'
+import {Line} from './graphics/two/Line.js'
+
+// Three
+import {Geometry} from './graphics/three/Geometry.js'
+import {Group} from './graphics/three/Group.js'
+import {Light} from './graphics/three/Light.js'
+import {Material} from './graphics/three/Material.js'
+import {Object3D} from './graphics/three/Object3D.js'
+import {Scene} from './graphics/three/Scene.js'
+
+// Shader
+import {Shader} from './graphics/shader/Shader.js'
+
 
 // Controls
 import {ERP} from './controls/ERP.js'
@@ -67,16 +79,6 @@ import {OSC} from './networking/OSC.js'
 import {WebRTC} from './networking/WebRTC.js'
 import {Websocket} from './networking/Websocket.js'
 
-
-// Scene
-import {Shader} from './scene/shader/Shader.js'
-import {Geometry} from './scene/Geometry.js'
-import {Group} from './scene/Group.js'
-import {Light} from './scene/Light.js'
-import {Material} from './scene/Material.js'
-import {Object3D} from './scene/Object3D.js'
-import {Scene} from './scene/Scene.js'
-import {Trees} from './scene/Trees.js'
 
 // Transforms
 import {Arithmetic} from './transforms/Arithmetic.js'
@@ -175,7 +177,6 @@ export {
     Material,
     Object3D,
     Scene,
-    Trees,
 
     // Transforms,
     Arithmetic,

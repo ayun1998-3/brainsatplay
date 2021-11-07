@@ -1,53 +1,50 @@
-import * as THREE from 'three'
-import { StateManager } from '../../ui/StateManager'
-
 export class Geometry {
 
     static id = String(Math.floor(Math.random()*1000000))
-    static category = 'scene'
+    static category = 'graphics'
 
-    constructor(info, graph, params={}) {
+    constructor() {
+        
+        let version = '0.134.0'
+        this.dependencies = {THREE: `https://cdn.skypack.dev/three@${version}`}
         
         this.props = {
             id: String(Math.floor(Math.random() * 1000000)),
             geometry: null,
-            state: new StateManager(),
-            lastRendered: Date.now()
+            // state: new StateManager(),
+            lastRendered: Date.now(),
+            type: 'SphereGeometry'
         }
-
-        this.props.geometry = new THREE.SphereGeometry()
 
         this.ports = {
             default: {
                 edit: false,
-                data: this.props.geometry,
                 input: {type: null},
                 output: {type: Object, name: 'Geometry'},
                 onUpdate: () => {
 
-                    switch(this.ports.type.data){
+                    switch(this.props.type){
                         case 'SphereGeometry':
-                            this.props.geometry = new THREE.SphereGeometry( this.ports.radius.data, this.ports.segments.data, this.ports.segments.data );
+                            this.props.geometry = new this.dependencies.THREE.SphereGeometry( 1, this.props.segments, this.props.segments );
                             break
                         case 'PlaneGeometry':
-                            this.props.geometry = new THREE.PlaneGeometry(this.ports.radius.data,this.ports.radius.data,this.ports.segments.data,this.ports.segments.data);
+                            this.props.geometry = new this.dependencies.THREE.PlaneGeometry(1,1,this.props.segments,this.props.segments);
                             break
                         // case 'TetrahedronGeometry':
-                        //     this.props.geometry = new THREE.TetrahedronGeometry(this.ports.radius,this.ports.segments);
+                        //     this.props.geometry = new this.dependencies.THREE.TetrahedronGeometry(this.ports.radius,this.ports.segments);
                         //     break
                         case 'TorusGeometry':
-                            this.props.geometry = new THREE.TorusGeometry(this.ports.radius.data);
+                            this.props.geometry = new this.dependencies.THREE.TorusGeometry(1);
                             break
                         case 'BoxGeometry':
-                            this.props.geometry = new THREE.BoxGeometry(this.ports.radius.data,this.ports.radius.data,this.ports.radius.data);
+                            this.props.geometry = new this.dependencies.THREE.BoxGeometry(1,1,1);
                             break
                         case 'BufferGeometry':
-                            if (!(this.props.geometry instanceof THREE.BufferGeometry)){
-                                console.error('BUFFER GEOMETRIES MUST BE MADE OUTSIDE')
+                            if (!(this.props.geometry instanceof this.dependencies.THREE.BufferGeometry)){
+                                console.error('BUFFER GEOMETRIES MADE ELSEWHERE')
                             }
                             break
-                    }
-            
+                    }            
                     return {data: this.props.geometry}
                 }
             },
@@ -59,13 +56,19 @@ export class Geometry {
                 'TorusGeometry', 
                 'BoxGeometry',
                 'BufferGeometry'
-            ]},
-            radius: {data: 1},
-            segments: {data: 32, min: 0, max:100, step: 1},
-            count: {data: 100, min: 0, max: 10000, step:1.0},
+            ],
+            onUpdate: (user) => {
+                this.props.type = user.data
+                this.update('default', {forceUpdate: true})
+            }
+            },
+
+            segments: {data: 32, min: 1, max:100, step: 1, onUpdate: (user) => {this.props.segments = user.data; this.update('default', {forceUpdate: true})}},
+            // count: {data: 100, min: 0, max: 10000, step:1.0, onUpdate: () => {this.update('default', {forceUpdate: true}}},
 
             // Set Vertices Directly
             attributes: {
+                edit: false,
                 input: {type: undefined},
                 output: {type: Object},
                 onUpdate: (user) => {
@@ -84,7 +87,9 @@ export class Geometry {
                 output: {type: null},
                 onUpdate: (user) => {
                     let buffer = []
-                    let model = this.props.originalModel || this.ports.model.data
+
+                    let model = this.props.originalModel || this.ports.model?.data
+                    if (model){
                     let n = (model.length / 3)
                     let desiredCount = user.data * n
                     let used = [];
@@ -108,19 +113,15 @@ export class Geometry {
                        this.update('attributes', attributes)
                     }
                 }
+                }
             }, 
 
         }
     }
 
     init = () => {
-        // Subscribe to Changes in Parameters
-        this.update('default',{forceUpdate: true})
-
-        this.props.state.addToState('params', this.ports, () => {
-            this.props.lastRendered = Date.now()
-            this.update('default',{forceUpdate: true})
-        })
+        if (!this.props.geometry) this.props.geometry = new this.dependencies.THREE.SphereGeometry()
+        this.update('default',{forceUpdate: true, data: this.props.geometry })
     }
 
     deinit = () => {
@@ -130,12 +131,13 @@ export class Geometry {
     }
     
     _regenerate = (user) => {
-        this.props.geometry = new THREE.BufferGeometry()
+        this.props.geometry = new this.dependencies.THREE.BufferGeometry()
         for (let attribute in user.value){
             let info = user.value[attribute]
-            this.props.geometry.setAttribute(attribute, new THREE.Float32BufferAttribute( info.buffer, info.size ) );
+            this.props.geometry.setAttribute(attribute, new this.dependencies.THREE.Float32BufferAttribute( info.buffer, info.size ) );
             if (attribute === 'position') this.props.originalModel = [...info.buffer]
         }
+        this.update('default',{forceUpdate: true})
     }
 
 }

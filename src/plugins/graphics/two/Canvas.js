@@ -4,7 +4,7 @@
 export class Canvas {
 
     static id = String(Math.floor(Math.random()*1000000))
-    static category = 'canvas'
+    static category = 'graphics'
     
     constructor(info, graph, params={}) {
         
@@ -27,6 +27,7 @@ export class Canvas {
 
         this.ports = {
             draw: {
+                edit: false,
                 input: {type: Object},
                 output: {type: null},
                 onUpdate: (user) => {

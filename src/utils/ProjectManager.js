@@ -3,7 +3,7 @@ import * as projectUtils from './projectUtils.js'
 import {saveFile, readFile, readFiles} from './DataManager.js'
 import * as blobUtils from './general/blobUtils.js'
 
-let latest = '0.0.38'
+let latest = '0.0.39'
 let cdnLink = `https://cdn.jsdelivr.net/npm/brainsatplay@${latest}`;
 
 // ---------------------- Project Manager ----------------------

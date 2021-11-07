@@ -1,5 +1,9 @@
-import {settings} from './blank/settings.js' // blank demo
-import * as brainsatplay from './src/index.js' // blank demo
+// import {settings} from './blank/settings.js' // blank demo
+import {settings} from './app/settings.js' // breath garden
+
+
+import * as brainsatplay from './src/index.js'
+
 // console.log(brainsatplay)
 // window.brainsatplay = brainsatplay
 

@@ -1,18 +1,17 @@
-import * as THREE from 'three'
-
-
 export class Group {
 
     static id = String(Math.floor(Math.random()*1000000))
-    static category = 'scene'
+    static category = 'graphics'
+    static hidden = true
 
     constructor(info, graph, params={}) {
         
-        
+        let version = '0.134.0'
+        this.dependencies = {THREE: `https://cdn.skypack.dev/three@${version}`}
         
 
         this.props = {
-            group: new THREE.Group()
+            group: null
         }
         
 
@@ -56,6 +55,12 @@ export class Group {
     }
 
     init = () => {
+
+
+        this.props.group = new this.dependencies.THREE.Group()
+        this.update('default', {forceUpdate: true, data: this.props.group})
+
+
         this.ports.rotatex.onUpdate(this.ports.rotatex)
         this.ports.rotatey.onUpdate(this.ports.rotatey)
         this.ports.rotatez.onUpdate(this.ports.rotatez)

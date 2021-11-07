@@ -8,12 +8,16 @@ export class Arithmetic {
     constructor() {
 
         this.ports = {
+
+            // Modifies the Input Value of a Transformation
             modifier: {
                 data: 0,
                 input: {type: 'number'},
                 output: {type: null},
             },
 
+
+            // Tranformations
             add: {
                 input: {type: 'number'},
                 output: {type: 'number'},
