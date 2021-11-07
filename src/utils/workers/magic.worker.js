@@ -8,7 +8,7 @@ let ctx = manager.canvas.context;
 let context = ctx; //another common reference
 let counter = 0;
 
-self.onmessage = (event) => {
+self.onmessage = async (event) => {
   // define gpu instance
   // console.log("worker executing...", event)
   // console.time("worker");
@@ -34,9 +34,8 @@ self.onmessage = (event) => {
     let eventSetting = manager.checkEvents(input.foo,input.origin);
     //console.log(event)
 
-    output = manager.checkCallbacks(event);  // output some results!
+    output = await manager.checkCallbacks(event);  // output some results!
     counter++; //just tracks the number of calls made to the worker
-  
     dict = {output: output, foo: input.foo, origin: input.origin, id:id, counter:counter};
     if(eventSetting) {manager.EVENTS.emit(eventSetting.eventName,dict); emitted = true;} //if the origin and foo match an event setting on the thread, this emits output as an event
     else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {

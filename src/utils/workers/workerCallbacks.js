@@ -181,8 +181,9 @@ export class CallbackManager {
         case:'startProxy', callback: (args, origin, self) => {
           //pass element proxy and element id
           const pmgr = new ProxyManager();
-          self[args[1]] = args[0]; //local reference to input element proxy self[proxyId] = elementProxy;
-          const proxy = pmgr.getProxy(args[1]); 
+          if(args.element === 'offscreen' || args.element === 'canvas') args.element = self.canvas;
+          self[args.proxyId] = args.element; //local reference to input element proxy self[proxyId] = elementProxy;
+          const proxy = pmgr.getProxy(args.proxyId); 
           proxy.ownerDocument = proxy; // HACK!
           self.document = {};  // HACK!
           
@@ -222,20 +223,21 @@ export class CallbackManager {
             this.ANIMATING = false;
             cancelAnimationFrame(this.ANIMATION);
           }
-          if (!this.threeUtil) {
-            let module = await dynamicImport('./workerThreeUtils.js');
-            this.threeUtil = new module.threeUtil(this.canvas);
-          }
-          if (args[0]) { //first is the setup function
-            this.threeUtil.setup = parseFunctionFromText(args[0]);
-          }
-          if (args[1]) { //next is the draw function (for 1 frame)
-            this.threeUtil.draw = parseFunctionFromText(args[1]);
-          }
-          if (args[2]) {
-            this.threeUtil.clear = parseFunctionFromText(args[2]);
-          }
-          this.threeUtil.setup();
+          // if (!this.threeUtil) {
+          //   let module = await dynamicImport('./_dist_/utils/workers/workerThreeUtils.js');
+          //   this.threeUtil = new module.threeUtil(this.canvas);
+          // }
+          // if (args[0]) { //first is the setup function
+          //   this.threeUtil.setup = parseFunctionFromText(args[0]);
+          // }
+          // if (args[1]) { //next is the draw function (for 1 frame)
+          //   this.threeUtil.draw = parseFunctionFromText(args[1]);
+          // }
+          // if (args[2]) {
+          //   this.threeUtil.clear = parseFunctionFromText(args[2]);
+          // }
+          // this.threeUtil.setup();
+          return true;
         }
       },
       {
@@ -245,12 +247,14 @@ export class CallbackManager {
             cancelAnimationFrame(this.ANIMATION);
           }
           if (!this.threeUtil) {
-            let module = await dynamicImport('./workerThreeUtils.js');
+            let module = await dynamicImport('./_dist_/utils/workers/workerThreeUtils.js');
+            console.log(module);
             this.threeUtil = new module.threeUtil(self.canvas, self);
           }
           if (this.threeUtil) {
             this.threeUtil.setup(args,origin,self);
           }
+          return true;
         }
       },
       {
@@ -258,6 +262,7 @@ export class CallbackManager {
           if (this.threeUtil) {
             this.threeUtil.clear(args,origin,self);
           }
+          return true;
         }
       },
       {case: 'setAnimation', callback: (args, origin, self) => { //pass a draw function to be run on an animation loop. Reference this.canvas and this.context or canvas and context. Reference values with this.x etc. and use setValues to set the values from another thread
@@ -444,14 +449,14 @@ export class CallbackManager {
     ];
   }
 
-  runCallback(foo,input=[],origin) {
+  async runCallback(foo,input=[],origin) {
     let output = 'function not defined';
-    this.callbacks.find((o,i) => {
+    await Promise.all(this.callbacks.find(async (o,i) => {
       if (o.case === foo) {
-        if (input) output = o.callback(input, origin, this);
+        if (input) output = await o.callback(input, origin, this);
         return true;
       }
-    });
+    }));
     return output;
   }
 
@@ -471,16 +476,16 @@ export class CallbackManager {
     return found;
   }
 
-  checkCallbacks(event) {
+  async checkCallbacks(event) {
     let output = 'function not defined';
     if(!event.data) return output;
-    this.callbacks.find((o, i) => {
+    await Promise.all(this.callbacks.find(async (o,i) => {
       if (o.case === event.data.foo || o.case === event.data.case) {
-        if (event.data.input) output = o.callback(event.data.input, event.data.origin, this);
-        else if (event.data.args) output = o.callback(event.data.args, event.data.origin, this);
+        if (event.data.input) output = await o.callback(event.data.input, event.data.origin, this);
+        else if (event.data.args) output = await o.callback(event.data.args, event.data.origin, this);
         return true;
       }
-    });
+    }));
     return output;
   }
 }

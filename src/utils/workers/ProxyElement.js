@@ -11,7 +11,6 @@ export class ElementProxy {
     this.id = Math.floor(Math.random()*10000);
 
     this.eventHandlers = eventHandlers;
-    this.element = element;
     this.origin = origin;
     this.workerId = workerId;
 
@@ -20,7 +19,7 @@ export class ElementProxy {
     const sendEvent = (data) => {
         window.workers.runWorkerFunction(
             'proxyHandler',
-            [this.id,{type:'event',id:id,data:data}],
+            [this.id,{type:'event',id:this.id,data:data}],
             this.origin,
             this.workerId
         );
@@ -29,30 +28,30 @@ export class ElementProxy {
     // register an id
     window.workers.runWorkerFunction(
         'proxyHandler',
-        [this.id,{type:'makeProxy',id:id}],
+        [this.id,{type:'makeProxy',id:this.id}],
         this.origin,
         this.workerId
     );
 
-    sendSize();
 
     for (const [eventName, handler] of Object.entries(this.eventHandlers)) {
-        this.element.addEventListener(eventName, function(event) {
-            handler(event, sendEvent);
-        });
+      element.addEventListener(eventName, function(event) {
+        handler(event, sendEvent);
+      });
     }
 
-    function sendSize() {
-        const rect = this.element.getBoundingClientRect();
+    const sendSize = () => {
+        const rect = element.getBoundingClientRect();
         sendEvent({
-            type: 'size',
-            left: rect.left,
-            top: rect.top,
-            width: this.element.clientWidth,
-            height: this.element.clientHeight,
+          type: 'size',
+          left: rect.left,
+          top: rect.top,
+          width: element.clientWidth,
+          height: element.clientHeight,
         });
     }
 
+    //sendSize();
     // really need to use ResizeObserver
     window.addEventListener('resize', sendSize);
   }
@@ -134,8 +133,6 @@ const mouseEventHandler = makeSendPropertiesHandler([
 
   //do this on main thread
   export const initElementProxy = (element, workerId, origin) => {
-    element.focus();
-    const worker = workerId;
 
     const eventHandlers = {
         contextmenu: preventDefaultHandler,
@@ -151,14 +148,18 @@ const mouseEventHandler = makeSendPropertiesHandler([
         wheel: wheelEventHandler,
         keydown: filteredKeydownEventHandler,
     };
-    const proxy = new ElementProxy(element, worker, eventHandlers);
     
+    const proxy = new ElementProxy(element, origin, workerId, eventHandlers);
+    let transfer = undefined;
+    if(element.constructor.name !== 'OffscreenCanvas') transfer = [element]; //'offscreen' 
+    else element = 'offscreen'; //else assume its been transferred
     //setup element proxy 
     window.workers.runWorkerFunction(
         'startProxy',
-        [element,proxy.id],
+        {element:element,id:proxy.id},
         origin,
-        workerId
+        workerId,
+        transfer
     );
 
     return proxy;

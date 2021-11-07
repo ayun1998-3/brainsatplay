@@ -205,19 +205,22 @@ export class MultithreadedApplet {
             this.canvasWorkerId                                       //optional worker id to use, otherwise it sets up its own worker
         );    // This also makes a worker if no workerId is supplied
 
-        initElementProxy(this.canvas,this.canvasWorkerId,this.origin);
+        initElementProxy(this.canvasWorker.offscreen,this.canvasWorkerId,this.origin);
 
-        window.workers.runWorkerFunction('initThree',[
-            // function setup(args,origin,self){
-            //     //let three = self.threeUtil.three
-            // }.toString(),
-            // function draw(args,origin,self){
+        window.workers.runWorkerFunction('initThree',
+        // [
+        //     // function setup(args,origin,self){
+        //     //     //let three = self.threeUtil.three
+        //     // }.toString(),
+        //     // function draw(args,origin,self){
                 
-            // }.toString(),
-            // function clear(args,origin,self){
+        //     // }.toString(),
+        //     // function clear(args,origin,self){
                 
-            // }.toString(),
-        ],this.origin,this.canvasWorkerId);
+        //     // }.toString(),
+        // ]
+        undefined,
+        this.origin,this.canvasWorkerId);
             
         //once the render completes release the input
         window.workers.events.subEvent('render',(res)=>{
@@ -333,7 +336,7 @@ export class MultithreadedApplet {
             }
         };
 
-        this.canvasWorker.startAnimation(); //run animationFrame loop on the worker
+        //this.canvasWorker.startAnimation(); //run animationFrame loop on the worker
     }
 
     animate() {
