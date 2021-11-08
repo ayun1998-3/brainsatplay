@@ -28,16 +28,20 @@ export class BarChart {
                 input: {type: Object},
                 output: {type: null},
                 onUpdate: (user) => {
+                    // console.log(user)
+                    console.log(user.data)
                     if (Array.isArray(user.data)) if (user.data.length > 15) this.props.helper.showvalues = false
                     this.props.helper.setData(user.data)
                     this.props.helper.draw();
+
                 }
             },
             element: {
                 data: this.props.canvas,
                 input: {type: null},
                 output: {type: Element}
-            }
+            },
+
         }
     }
 
