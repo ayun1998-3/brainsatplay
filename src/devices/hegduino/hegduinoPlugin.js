@@ -3,7 +3,7 @@
 import {BiquadChannelFilterer} from '../../utils/signal_processing/BiquadFilters'
 import {DataAtlas} from '../../DataAtlas'
 import {hegduino} from './hegduino'
-import {DOMFragment} from '../../ui/DOMFragment'
+import {DOMFragment} from '../../utils/DOMFragment'
 
 export class hegduinoPlugin {
     constructor(mode='hegduino_usb', onconnect=this.onconnect, ondisconnect=this.ondisconnect) {

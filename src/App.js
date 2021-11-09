@@ -1,6 +1,6 @@
 import {Session} from './Session.js'
-import {DOMFragment} from './ui/DOMFragment.js'
-import {StateManager} from './ui/StateManager.js'
+import {DOMFragment} from './utils/DOMFragment.js'
+import {StateManager} from './utils/StateManager.js'
 import {Graph} from './graph/Graph.js'
 
 // Utilities

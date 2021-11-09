@@ -4,7 +4,7 @@
 import {DataAtlas} from '../../DataAtlas'
 import {cyton} from './cyton'
 import {BiquadChannelFilterer, makeNotchFilter} from '../../utils/signal_processing/BiquadFilters'
-import { DOMFragment } from '../../ui/DOMFragment';
+import { DOMFragment } from '../../utils/DOMFragment';
 
 export class cytonPlugin {
     constructor(mode='cyton_daisy', onconnect=this.onconnect, ondisconnect=this.ondisconnect) {

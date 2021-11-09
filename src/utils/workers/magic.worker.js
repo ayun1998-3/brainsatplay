@@ -20,7 +20,10 @@ self.onmessage = async (event) => {
   let dict;
   let output = undefined;
   let emitted = false;
-  if(typeof input === 'object'){
+  if(event.data.eventName) { //pipe events to the event manager system
+    manager.EVENTS.workerCallback(input);
+  }
+  else if(typeof input === 'object'){
     if(input.canvas !== undefined) { //if a new canvas is sent (event.data.canvas = htmlCanvasElement.transferControlToOffscreen()).
       manager.canvas = input.canvas; 
       canvas = manager.canvas;
@@ -31,15 +34,34 @@ self.onmessage = async (event) => {
       ctx = manager.ctx;
       context = manager.ctx;
     } 
+
     let eventSetting = manager.checkEvents(input.foo,input.origin);
     //console.log(event)
 
     output = await manager.checkCallbacks(event);  // output some results!
     counter++; //just tracks the number of calls made to the worker
-    dict = {output: output, foo: input.foo, origin: input.origin, id:id, counter:counter};
-    if(eventSetting) {manager.EVENTS.emit(eventSetting.eventName,dict); emitted = true;} //if the origin and foo match an event setting on the thread, this emits output as an event
+
+    //we are gonna assume typedarrays are to be transferred for speed so throw those all into the transfer array
+    let transfer = undefined;
+    if(output) {
+      if(output.__proto__?.__proto__?.constructor.name === 'TypedArray') { 
+        transfer = [output.buffer];
+      } else if (typeof output === 'Object') {
+          for(const key in output) {
+              if(output[key].__proto__?.__proto__?.constructor.name === 'TypedArray') {
+                  if(!transfer) transfer = output[key].buffer;
+                  else transfer.push(output[key].buffer);
+              }
+          }
+      }
+    }
+    //if(input.foo === 'particleStep') console.log(output, transfer);
+
+    dict = {output: output, foo: input.foo, origin: input.origin, counter:counter};
+    
+    if(eventSetting) {manager.EVENTS.emit(eventSetting.eventName,dict,transfer,eventSetting.port); emitted = true;} //if the origin and foo match an event setting on the thread, this emits output as an event
     else if (typeof WorkerGlobalScope !== 'undefined' && self instanceof WorkerGlobalScope) {
-        self.postMessage(dict);
+        self.postMessage(dict,undefined,transfer);
     } 
   }
   /*
@@ -51,8 +73,6 @@ self.onmessage = async (event) => {
       ctx.strokeRect(50, 50, 50, 50);
     }`]);
   */
-  //if(event.data.eventName) console.log("event sent to thread", event.data)
-  if(!emitted) manager.EVENTS.workerCallback(event.data); //checks for eventName tag
 
   // console.timeEnd("worker");
   return dict;

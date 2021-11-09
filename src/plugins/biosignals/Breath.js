@@ -1,5 +1,5 @@
 import {BreathCapture} from '../../utils/signal_processing/BreathCapture'
-import {StateManager} from '../../ui/StateManager'
+import {StateManager} from '../../utils/StateManager'
 
 
 export class Breath {

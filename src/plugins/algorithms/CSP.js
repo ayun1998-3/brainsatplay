@@ -1,5 +1,5 @@
 import bci from 'bcijs/browser.js'
-import {Math2} from '../../utils/mathUtils/Math2';
+import {Math2} from '../../utils/Math2';
 
 
 export class CSP {

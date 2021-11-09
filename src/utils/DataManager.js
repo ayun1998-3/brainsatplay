@@ -1,6 +1,6 @@
 //Load and save CSV data
 import { Session } from '../Session.js';
-import { StateManager } from '../ui/StateManager.js';
+import { StateManager } from '../utils/StateManager.js';
 import {CSV} from './general/csv.js'
 
 let fsInited = false

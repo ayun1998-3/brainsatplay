@@ -36,10 +36,10 @@ Frontend Execution
 */
 
 // UI
-import { DOMFragment } from './ui/DOMFragment.js';
+import { DOMFragment } from './utils/DOMFragment.js';
 
 // Managers
-import { StateManager } from './ui/StateManager.js'
+import { StateManager } from './utils/StateManager.js'
 import { DataAtlas } from './DataAtlas.js'
 
 // Device Plugins

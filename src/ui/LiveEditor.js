@@ -1,6 +1,6 @@
 
 
-import { DOMFragment } from './DOMFragment';
+import { DOMFragment } from '../utils/DOMFragment';
 
 /*
     Language Support

@@ -2,7 +2,7 @@
 //Joshua Brewster - MIT License
 
 import {SoundJS} from '../general/Sound'
-import { StateManager } from '../../ui/StateManager';
+import { StateManager } from '../StateManager';
 /* How to use
 
 let Capture = new BreathCapture();

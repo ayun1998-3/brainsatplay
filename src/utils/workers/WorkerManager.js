@@ -2,13 +2,16 @@
 
 import {CallbackManager} from './workerCallbacks' 
 
-import worker from './magic.worker.js' // works when exporting self
+// Snowpack
+import './magic.worker.js' // works when exporting self
+
+// // Webpack
+// import worker from './magic.worker.js' // works when exporting self
 
 import { Events } from './Event';
 
-let defaultWorkerThreads = 0
 export class WorkerManager {
-    constructor(workerURL= new URL('./magic.worker.js', import.meta.url, defaultWorkerThreads)){
+    constructor(workerURL= new URL('./magic.worker.js', import.meta.url), defaultWorkerThreads=0){
         this.workerURL = workerURL;
         this.workerResponses = [];
         this.workers = [];
@@ -16,6 +19,9 @@ export class WorkerManager {
         this.workerThreadrot = 0;
 
         this.events = new Events(this); //window.workers.events.subEvent('abc',(output)=>{do someting})
+        this.subEvent = (eventName, result=(res)=>{})=>{this.events.subEvent(eventName,result);}
+        this.unsubEvent = (eventName, sub) => {this.events.unsubEvent(eventName,sub)};
+        this.addEvent = (eventName, origin, foo, workerId) => {this.events.addEvent(eventName, origin, foo, workerId)};
 
         for(var i = 0; i < defaultWorkerThreads; i++){
           this.addWorker()
@@ -77,6 +83,7 @@ export class WorkerManager {
       }
     }
 
+    //add a callback to a worker
     addWorkerFunction(functionName,fstring,origin,id) {
       if(functionName && fstring) {
         if(typeof fstring === 'function') fstring = fstring.toString();
@@ -86,6 +93,7 @@ export class WorkerManager {
       }
     }
 
+    //run from the list of callbacks on an available worker
     runWorkerFunction(functionName,args=[],origin,id,transfer=undefined) {
         if(functionName) {
           if(functionName === 'transferClassObject') {
@@ -98,6 +106,56 @@ export class WorkerManager {
           let dict = {foo:functionName, args:args, origin:origin};
           this.postToWorker(dict,id,transfer);
         }
+    }
+
+    //a way to set variables on a thread
+    setValues(values={},origin,id,transfer=undefined) {
+      this.runWorkerFunction('setValues',values,origin,id,transfer);
+    }
+
+    //this creates a message port so particular event outputs can directly message another worker and save overhead on the main thread
+    establishMessageChannel(
+      eventName,
+      worker1Id,
+      worker2Id,
+      onEvent=undefined, //onEvent=(self,args,origin)=>{} //args will be the output
+      foo,
+      origin) {
+      let channel = new MessageChannel();
+      let port1 = channel.port1;
+      let port2 = channel.port2;
+
+      this.runWorkerFunction(
+        'addevent',
+        [
+          eventName,
+          foo,
+          port1
+        ],
+        origin,
+        worker1Id,
+        [port1]
+      );
+
+      this.runWorkerFunction(
+        'addport',
+        [port2],
+        origin,
+        worker2Id,
+        [port2]
+      );
+
+      if(typeof onEvent === 'function')
+        this.runWorkerFunction(
+          'subevent',
+          [
+            'eventName',
+            onEvent.toString()
+          ],
+          origin,
+          worker2Id
+        );
+
     }
 
     postToWorker = (input, id = null, transfer=undefined) => {

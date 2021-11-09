@@ -3,7 +3,7 @@
 import {eeg32} from './eeg32'
 import {BiquadChannelFilterer} from '../../utils/signal_processing/BiquadFilters'
 import {DataAtlas} from '../../DataAtlas'
-import {DOMFragment} from '../../ui/DOMFragment'
+import {DOMFragment} from '../../utils/DOMFragment'
 
 export class eeg32Plugin {
     constructor(mode="freeeeg32_2", onconnect=this.onconnect, ondisconnect=this.ondisconnect) {
