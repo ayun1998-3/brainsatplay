@@ -2,11 +2,11 @@
 
 import {CallbackManager} from './workerCallbacks' 
 
-// Snowpack
-import './magic.worker.js' // works when exporting self
-
 // // Webpack
-// import worker from './magic.worker.js' // works when exporting self
+// import './magic.worker.js' // works when exporting self
+
+// Snowpack
+import worker from './magic.worker.js' // works when exporting self
 
 import { Events } from './Event';
 
