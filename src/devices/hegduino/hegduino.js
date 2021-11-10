@@ -56,20 +56,20 @@ export class hegduino {
         }
     }
 
-    connect(path) { //chrome serial requires a path be specified (e.g. 'COM3')
+    async connect(path) { //chrome serial requires a path be specified (e.g. 'COM3')
         if(this.mode === 'usb' || this.mode === 'serial') {
-            if(navigator.serial) this.interface.setupSerialAsync();
-            else if(chrome.serial) this.interface.connectSelected(true,path);
+            if(navigator.serial) await this.interface.setupSerialAsync();
+            else if(chrome.serial) await this.interface.connectSelected(true,path);
             else {
                 console.error("ERROR: Cannot locate navigator.serial. Enable #experimental-web-platform-features in chrome://flags");
                 alert("Serial support not found. Enable #experimental-web-platform-features in chrome://flags or use a chrome extension")
             }
         }
         else if(this.mode === 'ble' || this.mode === 'bt') {
-            this.interface.connect();
+            await this.interface.connect();
         }
         else if(this.mode === 'wifi' || this.mode === 'events' || this.mode === 'sse') {
-            this.interface.open();
+            await this.interface.open();
         }
     }
 
@@ -174,6 +174,8 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
     //Typical web BLE calls
     connect = async (serviceUUID = this.serviceUUID, rxUUID = this.rxUUID, txUUID = this.txUUID) => { //Must be run by button press or user-initiated call
         let err = false;
+
+    return new Promise(async resolve => {
      await navigator.bluetooth.requestDevice({   
     //    acceptAllDevices: true,
         filters: [{ services: [serviceUUID] }, { namePrefix: 'HEG' }],
@@ -207,6 +209,8 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
        .then(sleeper(100)).then(characteristic => {
            characteristic.addEventListener('characteristicvaluechanged',
                                            this.onNotificationCallback) //Update page with each notification
+
+            resolve(true)
        }).then(sleeper(100))
        .catch(err => {console.error(err); this.onErrorCallback(err); err = true;});
        
@@ -215,6 +219,7 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
                return new Promise(resolve => setTimeout(() => resolve(x), ms));
            };
        }
+    })
     }
  
     onNotificationCallback = (e) => { //Customize this with the UI (e.g. have it call the handleScore function)

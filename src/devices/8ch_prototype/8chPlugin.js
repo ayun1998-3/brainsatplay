@@ -8,7 +8,7 @@ import {industryKiller} from './8ch_prototype'
 export class Prototype8Plugin {
     constructor(mode, onconnect=this.onconnect, ondisconnect=this.ondisconnect) {
         this.atlas = null;
-        this.mode = mode;
+        this.mode = mode.toLowerCase();
 
         this.device = null; //Invoke a device class here if needed
         this.filters = [];
@@ -18,13 +18,17 @@ export class Prototype8Plugin {
     }
 
     init = async (info,pipeToAtlas) => {
+
+        this.info = info
+        this.pipeToAtlas = pipeToAtlas
+
         return new Promise(resolve => {
 
-        info.sps = 500;
-        info.deviceType = 'eeg';
+        this.info.sps = 500;
+        this.info.deviceType = 'eeg';
         //this._onConnected = () => { this.setupAtlas(info,pipeToAtlas); }
 
-        info.eegChannelTags = [
+        this.info.eegChannelTags = [
             {ch: 0,  tag: "FP1",  analyze:true},
             {ch: 1,  tag: "FP2",  analyze:true},
             {ch: 2,  tag: "FZ",   analyze:true},
@@ -69,25 +73,13 @@ export class Prototype8Plugin {
                     });
                 }
             },
-            async ()=>{
-                await this.setupAtlas(info, pipeToAtlas);
-                if(info.useAtlas === true){			
-                    this.atlas.data.eegshared.startTime = Date.now();
-                    if(this.atlas.settings.analyzing !== true && info.analysis.length > 0) {
-                        this.atlas.settings.analyzing = true;
-                        this.atlas.settings.deviceConnected = true;
-                        setTimeout(() => {this.atlas.analyzer();},1200);		
-                    }
-                    this.onconnect();
-                }
-
-                resolve(true)
-            },
+            async ()=>{},
             ()=>{
                 this.atlas.settings.analyzing = false;
                 this.ondisconnect();
             }
         );
+        resolve(true)
         })
     }
 
@@ -139,6 +131,16 @@ export class Prototype8Plugin {
     connect = async () => {
         //Insert connection protocols here...
         await this.device.setupSerialAsync(1000000);
+        await this.setupAtlas(this.info, this.pipeToAtlas);
+        if(info.useAtlas === true){			
+            this.atlas.data.eegshared.startTime = Date.now();
+            if(this.atlas.settings.analyzing !== true && info.analysis.length > 0) {
+                this.atlas.settings.analyzing = true;
+                this.atlas.settings.deviceConnected = true;
+                setTimeout(() => {this.atlas.analyzer();},1200);		
+            }
+            this.onconnect();
+        }
         //Setup Atlas via this callback AFTER connection is confirmed, you may need to move this or create an additional callback
         //this._onConnected();
         //run callbacks

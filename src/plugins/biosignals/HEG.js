@@ -41,17 +41,18 @@ export class HEG {
             },
 
             // Relative Flow Direction
-             flow: {
-                onUpdate: () => {user.data.heg.find((o,i) => {
-                        if (i == 0){
-                            if (o.count > 0){
-                                user.value = o.ratio[o.count-1] - this.session.atlas.mean(o.ratio.slice(o.count-20,o.count-1))
-                                return true
-                            }
-                        }
-                    })
-                }
-             }
+            //  flow: {
+            //     onUpdate: (user) => {                    
+            //         user.data.heg.find((o,i) => {
+            //             if (i == 0){
+            //                 if (o.count > 0){
+            //                     user.value = o.ratio[o.count-1] - this.session.atlas.mean(o.ratio.slice(o.count-20,o.count-1))
+            //                     return true
+            //                 }
+            //             }
+            //         })
+            //     }
+            //  }
         }
 
         let keys = ['times','red', 'ir', 'ambient', 'ratio', 'temp']
