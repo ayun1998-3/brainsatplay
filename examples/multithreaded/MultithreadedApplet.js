@@ -60,7 +60,7 @@ export class MultithreadedApplet {
         //HTML render function, can also just be a plain template string, add the random ID to named divs so they don't cause conflicts with other UI elements
         let HTMLtemplate = (props=this.props) => { 
             return `
-            <div id=${props.id}>
+            <div id=${props.id} style="width: 100%; height: 100%;">
                 <div style='position:absolute;'>
                     <button id='${props.id}input'>Increment</button>
                     <div id='${props.id}res' style='display:none;'>${this.res}</div>
