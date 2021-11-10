@@ -7,7 +7,6 @@ import { initElementProxy } from '../../src/utils/workers/ProxyElement.js';
 //WIP WIP WIP WIP WIP WIP WIP
 export class MultithreadedApplet {
 
-   
     constructor(
         parent=document.body,
         bci=new brainastplay.Session(),
@@ -61,7 +60,7 @@ export class MultithreadedApplet {
         //HTML render function, can also just be a plain template string, add the random ID to named divs so they don't cause conflicts with other UI elements
         let HTMLtemplate = (props=this.props) => { 
             return `
-            <div id=${props.id} style="width: 100%; height: 100%;">
+            <div id=${props.id}>
                 <div style='position:absolute;'>
                     <button id='${props.id}input'>Increment</button>
                     <div id='${props.id}res' style='display:none;'>${this.res}</div>
@@ -76,10 +75,10 @@ export class MultithreadedApplet {
                             <option value=1>1</option>   
                             <option value=2>2</option>             
                         </select></td></tr>
-                        <tr><td>Cohesion:</td><td><input type='range' id='`+props.id+`cohesion' min="0" max="0.1" value="0.003" step="0.0001"></td><td><button id='`+props.id+`cohesionreset'>Reset</button></td></tr>
+                        <tr><td>Cohesion:</td><td><input type='range' id='`+props.id+`cohesion' min="0" max="0.01" value="0.00001" step="0.00001"></td><td><button id='`+props.id+`cohesionreset'>Reset</button></td></tr>
                         <tr><td>Separation:</td><td><input type='range' id='`+props.id+`separation' min="0" max="1" value="0.0001" step="0.0001"></td><td><button id='`+props.id+`separationreset'>Reset</button></td></tr>
                         <tr><td>Alignment:</td><td><input type='range' id='`+props.id+`align' min="0" max="1" value="0.006" step="0.001"></td><td><button id='`+props.id+`alignreset'>Reset</button></td></tr>
-                        <tr><td>Swirl:</td><td><input type='range' id='`+props.id+`swirl' min="0" max="0.01" value="0.002" step="0.0001" ></td><td><button id='`+props.id+`swirlreset'>Reset</button></td></tr>
+                        <tr><td>Swirl:</td><td><input type='range' id='`+props.id+`swirl' min="0" max="0.01" value="0.006" step="0.0001" ></td><td><button id='`+props.id+`swirlreset'>Reset</button></td></tr>
                         <tr><td>Anchor:</td><td><input type='range' id='`+props.id+`anchor' min="0" max="0.05" value="0.003" step="0.001" ></td><td><button id='`+props.id+`anchorreset'>Reset</button></td></tr>
                         <tr><td>Max Speed:</td><td><input type='range' id='`+props.id+`speed' min="0" max="100" value="40" step="1" ></td><td><button id='`+props.id+`speedreset'>Reset</button></td></tr>
                         <tr><td>Gravity:</td><td><input type='range' id='`+props.id+`gravity' min="0" max="10" value="0" step="0.1"></td><td><button id='`+props.id+`gravityreset'>Reset</button></td></tr>
