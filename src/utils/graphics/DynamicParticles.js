@@ -14,7 +14,7 @@ export class DynamicParticles {
         this.defaultCanvas=defaultCanvas;
         this.ctx = undefined;
         this.looping = false;
-        this.currFrame = 0; this.lastFrame = performance.now();
+        this.currFrame = performance.now()*0.001; 
         this.frameOffset = undefined;
         this.ticks = 0;
 
@@ -69,11 +69,11 @@ export class DynamicParticles {
             boundingBox:{left:0,right:1,bot:1,top:0,front:0,back:1}, //bounding box, 1 = max height/width of render window
             boid:{
                 boundingBox:{left:0,right:1,bot:1,top:0,front:0,back:1}, //bounding box, 1 = max height/width of render window
-                cohesion:0.003,
+                cohesion:0.001,
                 separation:0.0001,
                 alignment:0.006,
-                swirl:{x:0.5,y:0.5,z:0.5,mul:0.002},
-                attractor:{x:0.5,y:0.5,z:0.5,mul:0.003},
+                swirl:{x:0.5,y:0.5,z:0.5,mul:0.003},
+                attractor:{x:0.5,y:0.5,z:0.5,mul:0.002},
                 avoidance:{groups:[],mul:0.1},
                 useCohesion:true,
                 useSeparation:true,
@@ -120,7 +120,7 @@ export class DynamicParticles {
         this.startingRules = rules;
 
         if(!this.looping) {
-            this.currFrame = performance.now();
+            this.currFrame = performance.now()*0.001;
             this.looping = true;
             this.loop();
         }
@@ -360,7 +360,7 @@ export class DynamicParticles {
                 p.position.z += p.velocity.z*timeStep;
             }
 
-            if(i === 0) console.log(p.velocity,p.position,timeStep);
+            //if(i === 0) console.log(p.velocity,p.position,timeStep);
 
             this.checkParticleBounds(p);
 
@@ -745,8 +745,7 @@ export class DynamicParticles {
     frame = (lastFrame) => {
         if(!this.frameOffset) this.frameOffset = lastFrame;
         this.currFrame = performance.now()*0.001+this.frameOffset;
-        let timeStep = this.currFrame - lastFrame;
-        console.log(this.currFrame,lastFrame,timeStep);
+        let timeStep = (this.currFrame - lastFrame);
 
         if(this.defaultCanvas) {
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -769,6 +768,7 @@ export class DynamicParticles {
         //     );
 
         this.ticks++;
+        //console.log('frame time (s)', (performance.now()*0.001+this.frameOffset) - this.currFrame)
         return this.currFrame;
     }
 
