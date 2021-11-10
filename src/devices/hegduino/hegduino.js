@@ -1,4 +1,4 @@
-//Joshua Brewster, MIT License
+//Joshua Brewster, AGPL v3.0 License
 
 export class hegduino {
     constructor(mode='usb',ondata=(newline)=>{},onconnect=()=>{},ondisconnect=()=>{},hostURL='http://192.168.4.1/') {
