@@ -16,7 +16,7 @@ export const settings = {
       nodes: [
         {name:'eeg', class: 'EEG'},
         {name:'neurofeedback', class: 'Neurofeedback'},
-        {name:'math', class: 'Arithmetic', params: {modifier: 1}},
+        {name:'math', class: 'Arithmetic', params: {modifier: 0}},
         // {name:'sine', class: 'Sine', params: {amplitude: 0.2, frequency: 1/3}},
 
         // two
@@ -72,10 +72,10 @@ export const settings = {
         //   source: 'sphere:add',
         //   target: 'scene:add'
         // },
-        {
-          source: 'scene:element',
-          target: 'dom:content'
-        }
+        // {
+        //   source: 'scene:element',
+        //   target: 'dom:content'
+        // }
     ]
     }],
 

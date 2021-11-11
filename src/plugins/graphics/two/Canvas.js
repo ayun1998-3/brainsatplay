@@ -48,7 +48,7 @@ export class Canvas {
                     return {data: this.ports.element.data}
                 }
             },
-            animate: {data: false}
+            animate: {data: false, onUpdate: (user) => {this.ports.animate.data = user.data; this._animate()}}
         }
     }
 
@@ -61,22 +61,21 @@ export class Canvas {
 
         // Set Looping
         this.props.looping = true
+        this._animate()
+    }
 
-        const animate = () => {
+    _animate = () => {
+        if (this.props.looping && this.ports.animate.data){
+            this._clearCanvas()
 
-            if (this.props.looping && this.ports.animate.data){
-                this._clearCanvas()
-
-                // Manage Draw Objects
-                for (let i = this.props.drawObjects.length - 1; i >= 0; i--){
-                    let o = this.props.drawObjects[i]
-                    if (o.active) o.function(this.props.context)
-                    else this.props.drawObjects.splice(i,1)
-                }
-                setTimeout(animate, 1000/60)
+            // Manage Draw Objects
+            for (let i = this.props.drawObjects.length - 1; i >= 0; i--){
+                let o = this.props.drawObjects[i]
+                if (o.active) o.function(this.props.context)
+                else this.props.drawObjects.splice(i,1)
             }
+            setTimeout(this._animate, 1000/60)
         }
-        animate()
     }
 
     deinit = () => {

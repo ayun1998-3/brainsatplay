@@ -79,7 +79,6 @@ import {OSC} from './networking/OSC.js'
 import {WebRTC} from './networking/WebRTC.js'
 import {Websocket} from './networking/Websocket.js'
 
-
 // Transforms
 import {Arithmetic} from './transforms/Arithmetic.js'
 import {Buffer} from './transforms/Buffer.js'
@@ -97,7 +96,9 @@ import {Storage} from './utilities/Storage.js'
 import {Thread} from './utilities/Thread.js'
 import {Unity} from './utilities/Unity.js'
 
-
+// Webcam
+import {Webcam} from './webcam/Webcam.js'
+import {CSSFilters} from './webcam/CSSFilters.js'
 
 export {
     Blank,
@@ -193,6 +194,10 @@ export {
     Scheduler,
     Storage,
     Thread,
-    Unity
+    Unity,
+
+    // Webcam
+    Webcam,
+    CSSFilters,
 
 }
