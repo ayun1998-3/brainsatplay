@@ -16,7 +16,7 @@ export class DOM {
             fragment: null,
             onload: [],
             onresize: {},
-            portsAdded: []
+            portsAdded: new Map()
         }
 
         this.ports = {
@@ -83,33 +83,36 @@ export class DOM {
                     if (node.id && descendentHasId != true){
 
                         currentIds.push(node.id)
+                        if (this.props.portsAdded.has(node.id)) this.props.portsAdded.set(node.id, node)
 
-                        if (!this.props.portsAdded.includes(node.id) && isPassed != true){
+                        if (!this.props.portsAdded.has(node.id) && isPassed != true){
 
-                            this.props.portsAdded.push(node.id)
+                            this.props.portsAdded.set(node.id, node)
 
                             this.addPort(node.id, {
                                 edit: false,
                                 input: {type: undefined},
                                 output: {type: null},
                                 onUpdate: (user) => {
+
+                                   let nodeRef = this.props.portsAdded.get(node.id) // current node (not when port was created)
                                     let data = user.data
                                     if (data instanceof Function) data = data()
 
-                                    node.innerHTML = ''
+                                    nodeRef.innerHTML = ''
                                     if (
                                         typeof data === "object" ? data instanceof HTMLElement : //DOM2
                                         data && typeof data === "object" && data !== null && data.nodeType === 1 && typeof data.nodeName==="string"
                                     ) {
-                                        node.insertAdjacentElement('beforeend', data)
-                                        node.setAttribute('data-active', true)
+                                        nodeRef.insertAdjacentElement('beforeend', data)
+                                        nodeRef.setAttribute('data-active', true)
 
-                                        let regex = new RegExp(`\n\n[^#].+#${node.id} {([^}]+)}`)
+                                        let regex = new RegExp(`\n\n[^#].+#${nodeRef.id} {([^}]+)}`)
                                         let match = regex.exec(this.ports.style.data)
                                         let def = '\n\twidth: 100%;\n\theight: 100%;\n'
                                         if (!match || match[1] === `\n\t\n` || match[1] === def) {
                                             let newStr = this.ports.style.data.replace(regex, ``)
-                                            this.update( 'style', {data: newStr + `\n\n#${node.id} {${def}}`})
+                                            this.update( 'style', {data: newStr + `\n\n#${nodeRef.id} {${def}}`})
                                         }
 
                                         setTimeout(() => {
@@ -138,9 +141,10 @@ export class DOM {
                 }
                 
                 // Remove Extraneous Ports
-                this.props.portsAdded = this.props.portsAdded.filter(id => {
+                Object.keys(this.props.portsAdded).map(arr => arr[1]).filter(id => {
                     if (!currentIds.includes(id)) {
                         this.removePort(id)
+                        this.props.portsAdded.delete(id)
                         return false
                     } return true
                 })

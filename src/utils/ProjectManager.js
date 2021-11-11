@@ -47,7 +47,7 @@ export class ProjectManager {
         projectUtils.getLibraryVersion('experimental')
 
         // TODO GF: Must test better. Pretty sure this resulted in some breaking behaviors on the last push to app.brainsatplay.com because session longer has this.projects
-        // if (!this.local && this.platform) projectUtils.getLibraryVersion(this.version)
+        if (!this.local && this.platform) projectUtils.getLibraryVersion(this.version)
     }
 
     // ---------------------- Interaction Macros ----------------------
