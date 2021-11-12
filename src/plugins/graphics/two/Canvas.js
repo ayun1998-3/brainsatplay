@@ -48,7 +48,11 @@ export class Canvas {
                     return {data: this.ports.element.data}
                 }
             },
-            animate: {data: false, onUpdate: (user) => {this.ports.animate.data = user.data; this._animate()}}
+            canvas: {
+                data: this.props.canvas,
+                output: {type: Element}
+            },
+            animate: {data: true, onUpdate: (user) => {this.ports.animate.data = user.data; this._animate()}}
         }
     }
 

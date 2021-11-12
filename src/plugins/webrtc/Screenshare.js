@@ -1,7 +1,8 @@
-export class Webcam {
+export class Screenshare {
 
     static id = String(Math.floor(Math.random()*1000000))
-    static category = 'webcam'
+    static category = 'webrtc'
+    static hidden = true
 
     constructor() {
 
@@ -36,12 +37,7 @@ export class Webcam {
         this.props.audioSelect.onchange = this._getStream;
         this.props.videoSelect.onchange = this._getStream;
 
-
-        navigator.mediaDevices
-        .enumerateDevices()
-        .then(this._gotDevices)
-        .then(this._getStream)
-        .catch(this._handleError);
+        this._getDevices()
     }
 
     deinit = () => {
@@ -49,11 +45,18 @@ export class Webcam {
         this.props.container.remove()
     }
 
+    _getDevices = () => {
+
+        this._getStream()
+    }
+
     _gotDevices = (deviceInfos) => {
   for (let i = 0; i !== deviceInfos.length; ++i) {
     const deviceInfo = deviceInfos[i];
     const option = document.createElement("option");
     option.value = deviceInfo.deviceId;
+
+    console.log(deviceInfo)
     if (deviceInfo.kind === "audioinput") {
       option.text =
         deviceInfo.label || "microphone " + (audioSelect.length + 1);
@@ -78,20 +81,7 @@ _deinit = () => {
 _getStream = () => {
   this._deinit()
 
-  const constraints = {
-    // audio: {
-    //   deviceId: { exact: audioSelect.value },
-    // },
-    video: true,
-    //   video: { width: { min: 1280 }, height: { min: 720 } }, // HD
-    // video: { width: { exact: 640 }, height: { exact: 480 } }, // VGA
-    // video: {
-    //   deviceId: { exact: videoSelect.value },
-    // },
-  };
-
-  navigator.mediaDevices
-    .getUserMedia(constraints)
+    navigator.mediaDevices.getDisplayMedia({video: true}) // NEW THING FOR SCREENSHARE
     .then(this._gotStream)
     .catch(this._handleError);
 }

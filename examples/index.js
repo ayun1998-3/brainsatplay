@@ -1,5 +1,5 @@
-// import {settings} from './blank/settings.js' // blank demo
-import {settings} from './webcam/settings.js' // webcam demo
+import {settings} from './blank/settings.js' // blank demo
+// import {settings} from './webcam/settings.js' // webcam demo
 // import {settings} from './app/settings.js' // breath garden
 
 

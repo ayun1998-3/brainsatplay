@@ -21,7 +21,7 @@ export const settings = {
 
         // two
         {name:'circle', class: 'Circle', params: {radius: 0.2}},
-        {name:'canvas', class: 'Canvas', params: {animate: true}},
+        {name:'canvas', class: 'Canvas'},
 
         // // three
         // {name:'geometry', class: 'Geometry'},
@@ -29,6 +29,10 @@ export const settings = {
         // {name:'sphere', class: 'Object3D'},
         // {name:'scene', class: 'Scene'},
 
+        // Recorder
+        {name:'recorder', class: 'RecordCanvas'},
+
+        // DOM
         {name:'dom', class: 'DOM'},
       ],
       edges: [
@@ -57,6 +61,11 @@ export const settings = {
         {
           source: 'canvas:element',
           target: 'dom:content'
+        },
+
+        {
+          source: 'canvas:canvas',
+          target: 'recorder:canvas'
         },
 
         // // three

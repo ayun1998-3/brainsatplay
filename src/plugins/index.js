@@ -97,8 +97,10 @@ import {Thread} from './utilities/Thread.js'
 import {Unity} from './utilities/Unity.js'
 
 // Webcam
-import {Webcam} from './webcam/Webcam.js'
-import {CSSFilters} from './webcam/CSSFilters.js'
+import {Webcam} from './webrtc/Webcam.js'
+import {CSSFilters} from './webrtc/CSSFilters.js'
+import {Screenshare} from './webrtc/Screenshare.js'
+import {RecordCanvas} from './webrtc/RecordCanvas.js'
 
 export {
     Blank,
@@ -199,5 +201,7 @@ export {
     // Webcam
     Webcam,
     CSSFilters,
+    Screenshare,
+    RecordCanvas
 
 }

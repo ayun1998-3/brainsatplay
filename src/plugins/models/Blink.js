@@ -13,7 +13,7 @@ export class Blink {
                     name: 'blinkgraph',
                     nodes: [
                         {name: 'dataquality', class: 'DataQuality', params: {method: 'Mean Amplitude'}},
-                        {name: 'canvas', class: 'Canvas'},
+                        {name: 'canvas', class: 'Canvas', params: {animate: false}},
                     ]
                 }
             ]
