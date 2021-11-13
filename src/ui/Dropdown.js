@@ -28,12 +28,11 @@ export class Dropdown {
                 bottom: 0;
                 right: 0;
                 transform: translateY(100%);
-                padding: 10px 10px;
+                padding: 5px;
                 text-align: right;
                 border-bottom: 1px solid white;
                 border-left: 1px solid white;
                 border-right: 1px solid white;
-                border-radius: 4px;
                 cursor:pointer;
                 background: rgba(0,0,0,0.6);
                 margin-right: 10px;

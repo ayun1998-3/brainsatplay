@@ -470,22 +470,7 @@ export class Session {
 				insertionDiv.querySelector('.devices').insertAdjacentElement('beforeend', deviceDiv)
 			});
 
-			if (toggleButton == null) {
-				toggleButton = document.createElement('div')
-				toggleButton.id = 'deviceManagerOpen'
-				toggleButton.classList.add('brainsatplay-default-button')
-				toggleButton.style = `
-						position: absolute; 
-						bottom: 25px; 
-						left: 25px;
-						z-index: 100;
-					`
-				toggleButton.innerHTML = 'Open Device Manager'
-				if (!shortcut) document.body.insertAdjacentElement('afterbegin', toggleButton)
-				toggleButton.onclick = () => {
-					this.toggleDeviceSelectionMenu(deviceFilter)
-				}
-			} else {
+			if (toggleButton != null) {
 				toggleButton.onclick = () => {
 					this.toggleDeviceSelectionMenu(deviceFilter)
 				}
