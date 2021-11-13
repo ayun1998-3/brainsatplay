@@ -4,122 +4,6 @@ import {
     ColorRGBA,
     } from "webgl-plot";
 
-
-export class WebglPlotUtils {
-    constructor(canvas) {
-        
-        this.canvas = canvas;
-        this.plot = new WebglPlot(canvas);
-        
-        this.lines = [];
-        this.lineProperties = []; // {sps: }
-        this.axes = [];
-        this.dividers = [];
-        this.scalar = 1; // chart scalar
-
-        this.nSecGraph = 10;
-        this.nMaxPointsPerSec = 128;
-
-    }
-
-    //averages values when downsampling.
-    static downsample(array,fitCount, normalize=1) {
-
-        if(array.length > fitCount) {        
-            let output = new Array(fitCount);
-            let incr = array.length/fitCount;
-            let lastIdx = array.length-1;
-            let last = 0;
-            let counter = 0;
-            for(let i = incr; i < array.length; i+=incr) {
-                let rounded = Math.round(i);
-                if(rounded > lastIdx) rounded = lastIdx;
-                for(let j = last; j < rounded; j++) {
-                    output[counter] += array[j];
-                }
-                output[counter] /= (rounded-last)*normalize;
-                counter++;
-                last = rounded;
-            }
-            return output;
-        } else return array; //can't downsample
-    }
-
-    //Linear interpolation from https://stackoverflow.com/questions/26941168/javascript-interpolate-an-array-of-numbers. Input array and number of samples to fit the data to
-	static upsample(array, fitCount, normalize=1) {
-
-		var norm = normalize;
-
-		var linearInterpolate = function (before, after, atPoint) {
-			return (before + (after - before) * atPoint)*norm;
-		};
-
-		var newData = new Array();
-		var springFactor = new Number((array.length - 1) / (fitCount - 1));
-		newData[0] = array[0]; // for new allocation
-		for ( var i = 1; i < fitCount - 1; i++) {
-			var tmp = i * springFactor;
-			var before = new Number(Math.floor(tmp)).toFixed();
-			var after = new Number(Math.ceil(tmp)).toFixed();
-			var atPoint = tmp - before;
-			newData[i] = linearInterpolate(array[before], array[after], atPoint);
-		}
-		newData[fitCount - 1] = array[array.length - 1]; // for new allocation
-		return newData;
-	};
-
-    initPlot(nLines = 1, properties=[{sps:this.nSecGraph*this.nMaxPointsPerSec}]) {
-
-        let xaxisColor = new ColorRGBA(1,1,1,0.1);
-        let dividerColor = new ColorRGBA(1,1,1,1);
-
-        this.lineProperties = properties;
-        this.scalar = this.canvas.height/nLines;
-        for(let i = 0; i < nLines; i++) {
-            let color = new ColorRGBA(
-                Math.random()*.5+.5,
-                Math.random()*.5+.5,
-                Math.random()*.5+.5,
-                1
-            );
-            this.colors.push(color);
-            let numX = this.nSecGraph*this.nMaxPointsPerSec;
-            if(properties[i].sps < numX) numX = properties.sps*this.nSecGraph;
-            let line = new WebglLine(color,numX);
-            line.arrangeX();
-
-            this.plot.addDataLine(line);
-
-            let xaxisY = i*this.scalar*.5+i*this.scalar;
-            let xaxis = new WebglLine(xaxisColor,2);
-            xaxis.constY(xaxisY);
-            this.plot.addAuxLine(xaxis);
-
-            if(i !== nLines-1) {
-                let dividerY = this.scalar*i;
-                let divider = new WebglLine(dividerColor,2);
-                divider.constY(dividerY);
-                this.plot.addAuxLine(divider);
-            }
-
-        }
-
-    }
-
-    setSecondsGraphed(nSec=10){
-        this.nSecGraph = nSec;
-    }
-
-    update(newAmplitudes=[],lineIdx=undefined) {
-        if(lineIdx) {
-
-        } else {
-
-        }
-    }
-
-}
-
 /**
  * importnat WebglPlot functions
  * addLine(line)
@@ -143,3 +27,282 @@ export class WebglPlotUtils {
  * arrangeX()
  * linSpaceX(start, stepsize);
  */
+
+export class WebglLinePlotUtils {
+    constructor(canvas) {
+        if(!canvas) throw new Error('Supply a canvas to the webgl plot!')
+        this.canvas = canvas;
+        this.plot = new WebglPlotBundle.WebglPlot(canvas);
+        
+        this.lines = []; //array of WebglLine objects
+        this.linesY = []; //raw data arrays
+        this.linesSPS = []; // [];
+        this.axes = [];
+        this.dividers = [];
+        this.colors = [];
+        this.axisscalar = 1; // chart axis scalar
+        this.nLines = 0;
+
+        this.nSecGraph = 10; //default
+        this.nMaxPointsPerSec = 128;
+
+        this.animationSpeed = 6.9; //ms
+
+    }
+
+    //autoscale array to -1 and 1
+    static autoscale(array,lineIdx=0,nLines=1) {
+        let max = Math.max(Math.abs(Math.min(...array)),Math.max(...array));
+        let _max = 1/max;
+        let _lines = 1/nLines;
+        let scalar = _max*_lines//; 
+        return array.map(y => (y*scalar+(_lines*(lineIdx+1)*2-1-_lines))); //scaled array
+    }
+
+    //absolute value maximum of array (for a +/- valued array)
+    static absmax(array) {
+        return Math.max(Math.abs(Math.min(...array)),Math.max(...array));
+    }
+
+    //averages values when downsampling.
+    static downsample(array, fitCount, scalar=1) {
+
+        if(array.length > fitCount) {        
+            let output = new Array(fitCount);
+            let incr = array.length/fitCount;
+            let lastIdx = array.length-1;
+            let last = 0;
+            let counter = 0;
+            for(let i = incr; i < array.length; i+=incr) {
+                let rounded = Math.round(i);
+                if(rounded > lastIdx) rounded = lastIdx;
+                for(let j = last; j < rounded; j++) {
+                    output[counter] += array[j];
+                }
+                output[counter] /= (rounded-last)*scalar;
+                counter++;
+                last = rounded;
+            }
+            return output;
+        } else return array; //can't downsample a smaller array
+    }
+
+    //Linear upscaling interpolation from https://stackoverflow.com/questions/26941168/javascript-interpolate-an-array-of-numbers. Input array and number of samples to fit the data to
+	static upsample(array, fitCount, scalar=1) {
+
+		var linearInterpolate = function (before, after, atPoint) {
+			return (before + (after - before) * atPoint)*scalar;
+		};
+
+		var newData = new Array(fitCount);
+		var springFactor = new Number((array.length - 1) / (fitCount - 1));
+		newData[0] = array[0]; // for new allocation
+		for ( var i = 1; i < fitCount - 1; i++) {
+			var tmp = i * springFactor;
+			var before = new Number(Math.floor(tmp)).toFixed();
+			var after = new Number(Math.ceil(tmp)).toFixed();
+			var atPoint = tmp - before;
+			newData[i] = linearInterpolate(array[before], array[after], atPoint);
+		}
+		newData[fitCount - 1] = array[array.length - 1]; // for new allocation
+		return newData;
+	};
+
+    deinitPlot() {
+        this.plot?.clear();
+        this.plot?.removeAllLines();
+    }
+
+    //charts. need to set sample rate and number of seconds, this creates lines with set numbers of coordinates you can update data into
+    initPlot(nLines = 1, linesSPS=[], nSecGraph=this.nSecGraph, nMaxPointsPerSec=this.nMaxPointsPerSec) {
+
+        this.nSecGraph = nSecGraph;
+        this.nMaxPointsPerSec = nMaxPointsPerSec;
+
+        let xaxisColor = new WebglPlotBundle.ColorRGBA(1,1,1,0.3);
+        let dividerColor = new WebglPlotBundle.ColorRGBA(1,1,1,1);
+
+        //scale line heights with number of lines
+        let axisscalar = 1/nLines;
+        this.nLines = nLines;
+        
+        this.lines = [];
+        this.linesSPS = linesSPS;
+        for(let i = 0; i < nLines; i++) {
+            let color = new WebglPlotBundle.ColorRGBA(
+                Math.random()*.5+.5,
+                Math.random()*.5+.5,
+                Math.random()*.5+.5,
+                1
+            );
+            this.colors.push(color);
+
+            let numX = 10;
+            if(linesSPS[i] > nMaxPointsPerSec) 
+                numX = nSecGraph*nMaxPointsPerSec;
+            else numX = linesSPS[i]*nSecGraph;
+            
+            
+            let line = new WebglPlotBundle.WebglLine(color,numX);
+            line.arrangeX();
+
+            this.lines.push(line);
+            if(this.linesY.length < this.lines.length) {
+                this.linesY.push(new Array(numX));
+            }
+
+            
+            this.plot.addDataLine(line);
+
+            let xaxisY = axisscalar*(i+1)*2-1-axisscalar;
+
+            console.log('lineidx',i);
+            let xaxis = new WebglPlotBundle.WebglLine(xaxisColor,2);
+            xaxis.constY(xaxisY);
+            xaxis.arrangeX();
+            xaxis.xy[2] = 1;
+            console.log('xaxisY',xaxisY,xaxis)
+            this.plot.addAuxLine(xaxis);
+            this.axes.push(xaxis);
+
+            if(i !== nLines-1) {
+                let dividerY = axisscalar*(i+1)*2-1;
+                let divider = new WebglPlotBundle.WebglLine(dividerColor,2);
+                divider.constY(dividerY);
+                divider.arrangeX();
+                divider.xy[2] = 1;
+                //console.log('dividerY',dividerY,divider)
+                this.plot.addAuxLine(divider);
+                this.dividers.push(divider);
+            }
+            //console.log(i,xaxisY,xaxis)
+
+        }
+
+        while(this.linesY.length > this.lines.length) this.linesY.pop();
+        console.log('plot setup', this.lines,this.linesY, this.axes,this.dividers);
+        return true;
+
+    }
+
+    updateAllLines = (newAmplitudes=[],linesSPS=[],autoscale=true) => {
+        let passed = true;
+        newAmplitudes.forEach((arr,i) => {
+            if(arr.length !== this.linesY[i]?.length) {
+                let absmax = WebglLinePlotUtils.absmax(arr);
+                if(arr.length > this.linesY[i]?.length) {
+                    this.linesY[i] = WebglLinePlotUtils.downsample(arr,this.linesY[i].length);
+                } else this.linesY[i] = WebglLinePlotUtils.upsample(arr,this.linesY[i]);
+
+                if(autoscale) this.linesY[i] = WebglLinePlotUtils.autoscale(arr,i,this.nLines); //autoscale the array to -1,+1
+                passed = false;
+            } else {
+                if(autoscale) this.linesY[i] = WebglLinePlotUtils.autoscale(arr,i,this.nLines); //autoscale the array to -1,+1
+                else this.linesY[i] = arr; //
+                //console.log('line set')
+            }
+            
+        });
+        if(!passed) {
+            this.deinitPlot();
+            this.initPlot(newAmplitudes.length, linesSPS);
+            console.log('reinit');
+        }
+
+        this.linesY.forEach((arr,i) => {
+            for(let j = 0; j < arr.length; j++) {
+                this.lines[i].setY(j,arr[j]);
+            }
+        });
+        //console.log('lines updated')
+        
+    }
+
+    //supply any line and it'll get crunched to the right spread, assuming it is the correct time length set in this.nSecGraph, nom nom. 
+    //Providing what it expects is better for performance i.e. correct line length and -1:+1 scale
+    updateLine = (newAmplitudes=[],linesSPS=500,lineIdx=0,autoscale=true) => {
+        
+        if(newAmplitudes.length !== linesSPS*this.nSecGraph){
+            this.linesSPS[lineIdx] = linesSPS;
+            this.deinitPlot();
+            this.initPlot(this.lines.length, this.linesSPS);
+            console.log('reinit');
+        }
+        
+        //console.log(this.linesY[lineIdx])
+        if(newAmplitudes.length !== this.linesY[lineIdx].length) {
+            if(newAmplitudes.length > this.linesY[lineIdx].length) {
+                this.linesY[lineIdx] = WebglLinePlotUtils.downsample(newAmplitudes,this.linesY[lineIdx].length); //downsample and autoscale the array to -1,+1
+            } else this.linesY[lineIdx] = WebglLinePlotUtils.upsample(newAmplitudes,this.linesY[lineIdx]); //upsample and autoscale the array to -1,+1
+            if(autoscale) this.linesY[lineIdx] = WebglLinePlotUtils.autoscale(newAmplitudes,lineIdx,this.nLines); //autoscale the array to -1,+1
+            //console.log('resampled', this.linesY[lineIdx]);
+        } else {
+            if(autoscale) this.linesY[lineIdx] = WebglLinePlotUtils.autoscale(newAmplitudes,lineIdx,this.nLines); //autoscale the array to -1,+1
+            else this.linesY[lineIdx] = newAmplitudes;
+            //console.log('set lineY[i]', this.linesY[lineIdx]);
+        }
+        for(let i = 0; i < this.linesY[lineIdx].length; i++) {
+            this.lines[lineIdx].setY(i,this.linesY[lineIdx][i]);
+        }
+        //console.log('line updated', lineIdx);
+    }
+
+    update() { //draw
+        this.plot.update();
+    }
+
+    animate() {
+        this.update();
+        setTimeout(()=>{requestAnimationFrame(this.animate);},this.animationSpeed)
+    }
+    
+    static test(canvasId) {
+    
+        const canvas = document.getElementById(canvasId);
+        const devicePixelRatio = window.devicePixelRatio || 1;
+        canvas.width = canvas.clientWidth * devicePixelRatio;
+        canvas.height = canvas.clientHeight * devicePixelRatio;
+    
+    
+        let sps = 512;
+        let sps2 = 256;
+        let nSec = 3;
+        let nPointsRenderedPerSec = 512;
+    
+        const freq = 1;
+        const amp = 0.5;
+        const noise = 0.5;
+    
+        let line = new Array(sps*nSec);
+        let line2 = new Array(sps2*nSec);
+    
+    
+        let plotutil = new WebglLinePlotUtils(canvas);
+        plotutil.initPlot(2,[sps,sps2],nSec,nPointsRenderedPerSec);
+    
+        function update(line=[],sps=512,sec=10) {
+            let len = sps*sec;
+            let tincr = sec/len;
+            let time = 0;
+            for (let i = 0; i < sps*sec; i++) {
+                const ySin = Math.sin(Math.PI * time * freq * Math.PI * 2 + (performance.now()*0.001));
+                const yNoise = Math.random() - 0.5;
+                line[i] = ySin * amp + yNoise * noise;
+                time += tincr;
+            }
+        }
+    
+        let  newFrame = () => {
+            update(line,sps,nSec);
+            update(line2,sps2,nSec);
+            //console.log(line);
+            plotutil.updateAllLines([line,line2],[sps,sps2],true);
+            plotutil.update();
+    
+            requestAnimationFrame(newFrame);
+        }
+        requestAnimationFrame(newFrame);
+                
+    }
+}
+
