@@ -1,6 +1,7 @@
 // import Worker from 'web-worker'
 
 import {CallbackManager} from './workerCallbacks' 
+import 'regenerator-runtime/runtime' // must include or webpack breaks
 
 // Snowpack
 import './magic.worker.js'

@@ -5,8 +5,6 @@
 
  import 'regenerator-runtime/runtime' // must include or webpack breaks
 
- console.log('THIS IS DECLARED', regeneratorRuntime)
-
 // Default CSS Stylesheet
 import './ui/styles/defaults.css' 
 

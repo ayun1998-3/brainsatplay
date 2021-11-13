@@ -2,6 +2,7 @@ import { gpuUtils } from './gpu/gpuUtils';
 import { Math2 } from '../Math2';
 import { Events } from './Event.js';
 import { ProxyManager } from './ProxyListener.js';
+import 'regenerator-runtime/runtime' // must include or webpack breaks
 
 let dynamicImport = async (url) => {
   let module = await import(url);
