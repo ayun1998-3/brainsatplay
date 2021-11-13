@@ -78,6 +78,12 @@ export class App {
         }
     }
 
+    // ------------------- NEW API STUFF -------------------
+
+    enumerateGraphs = async () => { // App is really just a glorified graph collection
+        return Array.from(this.graphs).map(arr => arr[1])
+    }
+
     // ------------------- START THE APPLICATION -------------------
 
     init = async () => {

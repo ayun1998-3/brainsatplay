@@ -65,6 +65,14 @@ export class Graph {
         if (this.app.editor && !(this.parent instanceof Graph) && edit) this.app.editor.addGraph(this) // place top-level graph as a tab
     }
 
+    // ------------------- NEW API STUFF -------------------
+
+    enumerateNodes = async () => {
+        console.log(this.nodes)
+        return Array.from(this.nodes).map(arr => arr[1])
+    }
+
+    // ------------------- GRAPH CORE -------------------
 
     init = async (o) => {
 

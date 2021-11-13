@@ -10,7 +10,13 @@ export class Edge {
 
             // Interface
             this.parentNode = null
-            this.element = null
+
+            this.element = () => {
+              let svg = this._createUI()
+              this.init()
+              return svg
+            },
+
             this.svg = {
                 element: null,
                 size: 500,
@@ -26,9 +32,7 @@ export class Edge {
             this.subscription
             
             // Create UI
-            if (this.parent.app.editor){
-                this._createUI()
-            }
+            if (this.parent.app.editor) this._createUI()
 
             this.onstart = []
     }
@@ -37,9 +41,7 @@ export class Edge {
     init = async () => {
 
         let res = await this._activateUI()
-        if (res === true){
-          await this._activate()
-        }
+        if (res === true) await this._activate()
         return res
     }
 
@@ -95,7 +97,7 @@ export class Edge {
         if (this.parent.edges.get(this.uuid)) this.parent.edges.delete(this.uuid)
 
         // Remove Edge from UI
-        if (this.element) this.element.remove()
+        if (!(this.element instanceof Function)) this.element.remove()
 
     }
 
@@ -134,6 +136,10 @@ export class Edge {
 
     resizeElement = () => {
 
+
+        // Only Update SVG if Element Exists
+        if (this.element instanceof Function) this.element()
+
         // Grab Elements
         let arr = [
             {type: 'source', port: 'output', node: 'p1'}, 
@@ -146,18 +152,19 @@ export class Edge {
             if (port){
                 let portElement = port.ui[o.port]
                 let portDim = portElement.getBoundingClientRect()
-                let svgPort = this.svgPoint(this.svg.element, portDim.left + portDim.width / 2, portDim.top + portDim.height / 2)
 
-                // Update Edge Anchor
-                this.updateElement(
-                    this.node[o.node],
-                    {
-                        cx: svgPort.x,
-                        cy: svgPort.y
-                    }
-                );
-                return svgPort
-            }
+                  let svgPort = this.svgPoint(this.svg.element, portDim.left + portDim.width / 2, portDim.top + portDim.height / 2)
+                  
+                  // Update Edge Anchor
+                  this.updateElement(
+                      this.node[o.node],
+                      {
+                          cx: svgPort.x,
+                          cy: svgPort.y
+                      }
+                  );
+                  return svgPort
+                }
         })
 
         svgPorts = svgPorts.filter(s => s != undefined)
@@ -254,6 +261,8 @@ _createUI = () => {
       this.node[s] = this.svg.element.getElementsByClassName(s)[0];
       
     });
+
+    return this.svg.element
 }
 
 _activateUI = async () => {
