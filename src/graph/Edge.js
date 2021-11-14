@@ -51,8 +51,7 @@ export class Edge {
       let tP = this.target.port
 
       // Activate Functionality
-      this.parent.app.state.data[this.uuid] = this.value
-
+      // this.parent.app.state.data[this.uuid] = this.value
       // this.subscription = this.parent.app.state.subscribeTrigger(this.uuid, this.onchange)
 
       // Register Edge in Ports

@@ -29,6 +29,7 @@ export class Webcam {
       stream: {
         edit: false,
         input: { type: null },
+        output: {type: MediaStream}
       }
     }
   }
@@ -109,6 +110,7 @@ export class Webcam {
   }
 
   _gotStream = (stream) => {
+    console.log(stream)
     this.update('stream', { data: stream }); // make stream available to console
     this.props.videoElement.srcObject = stream;
   }

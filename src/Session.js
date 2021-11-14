@@ -61,9 +61,6 @@ import { StorageManager } from './StorageManager.js'
 import { LoginWithGoogle, LoginWithRealm } from './ui/login.js';
 import * as Realm from "realm-web";
 
-// APIs
-import Biosensors from './biosensors-api/Biosensors'
-
 /**
  * ```javascript
  * import {Session} from 'brainsatplay.js'
@@ -95,9 +92,6 @@ export class Session {
 
 		// Media Capture and Streams API
 		this.mediaDevices = navigator.MediaDevices
-
-		// Biosensor Capture and Streams API
-		this.biosensors = new Biosensors()
 
 		this.deviceStreams = [];
 		this.state = new StateManager({

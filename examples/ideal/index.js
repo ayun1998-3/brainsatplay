@@ -33,28 +33,12 @@ These Async Callbacks allow users to access any point on Apps on-demand.
 
 ------------------------------------------------------------------------------- */
 
-session.biosensors.enumerateDevices().then(arr => arr.forEach(d => console.log(d)))
-.catch(e => console.error(e));
-
 app.enumerateGraphs().then((arr) => {
     arr.forEach(g => {
         g.enumerateNodes().then(arr => arr.forEach(d => console.log(d)))
     })
 })
 .catch(e => console.error(e));
-
-// navigator.mediaDevices
-// .enumerateDevices()
-// .then(this._gotDevices)
-// .then(_getStream)
-// .catch(this._handleError);
-
-// let _getStream = () => {
-//     navigator.mediaDevices
-//     .getUserMedia(constraints)
-//     .then(this._gotStream)
-//     .catch(this._handleError);
-// }
 
 /* ------------------------------- Editor -------------------------------
 

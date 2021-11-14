@@ -1,3 +1,5 @@
+import {UI} from './UI.js'
+
 export const settings = {
     name: "Ideal Project",
     devices: ["EEG", "HEG"],
@@ -16,7 +18,6 @@ export const settings = {
         {name:'eeg', class: 'EEG'},
         {name:'neurofeedback', class: 'Neurofeedback'},
         {name:'event', class: 'Event'},
-
       ],
       edges: [
         {
