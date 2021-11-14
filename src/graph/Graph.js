@@ -262,12 +262,19 @@ export class Graph {
                             // NOTE: Import required for three.js. Not sure if it works for others...
                            
                             try {
+                                console.log("importing " + name)
 
-                                let module = await import(o.instance.dependencies[name])
+                                // Trick Webpack
+                                let getImportFunc = `async (url) => {return await import(url)}`
+                                let getImport = eval(`(${getImportFunc})`);
+                                let module = await getImport(o.instance.dependencies[name])
                                 window[name] = o.instance.dependencies[name] = module
+                                console.log(name, window[name])
                                 resolve()
 
-                            } catch {
+                            } catch (e){
+
+                                console.error(e)
 
                                 let script = document.createElement('script')
                                 script.src = o.instance.dependencies[name]
@@ -275,7 +282,9 @@ export class Graph {
                                 script.onload = async () => {
 
                                     // Normal
+                                    console.log("script importing " + name)
                                     if (window[name]) o.instance.dependencies[name] = window[name]
+                                    console.log(name, window[name])
                                     script.remove()
                                     resolve()
                                 }

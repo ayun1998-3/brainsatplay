@@ -10,7 +10,7 @@ export class Focus {
             {
                 name: 'focusgraph',
                 nodes: [
-                    {name: 'canvas', class: 'Canvas'},
+                    {name: 'canvas', class: 'Canvas', params: {animate: false}},
                 ]
             }
         ]

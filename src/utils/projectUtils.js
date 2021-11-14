@@ -57,6 +57,7 @@ let libraries = {}
                     script.async = true;
                     script.onload = () => {
                         if (window.brainsatplay) resolve(window.brainsatplay)
+                        window.brainsatplay = experimental // always keep the latest on window
                         script.remove()
                     }
                     document.body.appendChild(script);

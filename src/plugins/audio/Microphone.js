@@ -1,5 +1,5 @@
 import {SoundJS} from '../../utils/general/Sound'
-import {Math2} from '../../utils/mathUtils/Math2'
+import {Math2} from '../../utils/Math2'
 
 
 

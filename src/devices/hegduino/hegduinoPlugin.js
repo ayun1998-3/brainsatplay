@@ -3,12 +3,12 @@
 import {BiquadChannelFilterer} from '../../utils/signal_processing/BiquadFilters'
 import {DataAtlas} from '../../DataAtlas'
 import {hegduino} from './hegduino'
-import {DOMFragment} from '../../ui/DOMFragment'
+import {DOMFragment} from '../../utils/DOMFragment'
 
 export class hegduinoPlugin {
     constructor(mode='hegduino_usb', onconnect=this.onconnect, ondisconnect=this.ondisconnect) {
         this.atlas = null;
-        this.mode = mode;
+        this.mode = mode.toLowerCase();
 
         this.device = null; //Invoke a device class here if needed
         this.filters = [];
@@ -29,6 +29,9 @@ export class hegduinoPlugin {
     }
 
     init = async (info,pipeToAtlas) => {
+
+        this.pipeToAtlas = pipeToAtlas
+
         return new Promise(resolve => {
         this.info = info
 		this.info.sps = 32;
@@ -86,48 +89,22 @@ export class hegduinoPlugin {
         if(this.mode === 'hegduino_wifi' || this.mode === 'hegduino_sse') {
             this.info.sps = 20; //20sps incoming rate fixed for wifi
             this.device = new hegduino('wifi',ondata,
-            async ()=>{
-                await this.setupAtlas(pipeToAtlas);
-                if(this.atlas.settings.analyzing !== true && this.info.analysis.length > 0) {
-                    this.atlas.settings.analyzing = true;
-                    setTimeout(() => {this.atlas.analyzer();},1200);		
-                }
-                this.atlas.settings.deviceConnected = true;
-                this.device.sendCommand('t');
-                this.onconnect();
-                resolve(true)
-            },
+            async ()=>{},
             ()=>{ this.atlas.settings.analyzing = false; this.atlas.settings.deviceConnected = false; this.ondisconnect();});
+            resolve(true)
         }
-        else if (this.mode === 'hegduino_Bluetooth') {
+        else if (this.mode === 'hegduino_bluetooth') {
+            console.log(this.device)
             this.device= new hegduino('ble',ondata,
-            async ()=>{
-                await this.setupAtlas(pipeToAtlas);
-                if(this.atlas.settings.analyzing !== true && this.info.analysis.length > 0) {
-                    this.atlas.settings.analyzing = true;
-                    setTimeout(() => {this.atlas.analyzer();},1200);		
-                }
-                this.atlas.settings.deviceConnected = true;
-                this.device.sendCommand('t');
-                this.onconnect();
-                resolve(true)
-            },
+            async ()=>{ },
             ()=>{ this.atlas.settings.analyzing = false; this.atlas.settings.deviceConnected = false; this.ondisconnect();});
+            resolve(true)
         }
-        else if (this.mode === 'hegduino_USB') {
+        else if (this.mode === 'hegduino_usb') {
             this.device= new hegduino('usb',ondata,
-            async ()=>{
-                await this.setupAtlas(pipeToAtlas);
-                if(this.atlas.settings.analyzing !== true && this.info.analysis.length > 0) {
-                    this.atlas.settings.analyzing = true;
-                    setTimeout(() => {this.atlas.analyzer();},1200);		
-                }
-                this.atlas.settings.deviceConnected = true;
-                this.device.sendCommand('t');
-                this.onconnect();
-                resolve(true)
-            },
+            async ()=>{},
             ()=>{ this.atlas.settings.analyzing = false; this.atlas.settings.deviceConnected = false; this.ondisconnect();});
+            resolve(true)
         }
     })
     }
@@ -165,6 +142,14 @@ export class hegduinoPlugin {
 
     connect = async () => {
         await this.device.connect();
+        await this.setupAtlas(this.pipeToAtlas);
+        if(this.atlas.settings.analyzing !== true && this.info.analysis.length > 0) {
+            this.atlas.settings.analyzing = true;
+            setTimeout(() => {this.atlas.analyzer();},1200);		
+        }
+        this.atlas.settings.deviceConnected = true;
+        this.device.sendCommand('t');
+        this.onconnect();
     }
 
     disconnect = () => {

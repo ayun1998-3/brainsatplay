@@ -140,7 +140,6 @@ export const settings = {
         {name: 'particlesgeo', class: 'Geometry', params:{type: 'BufferGeometry', attributes: particleattributes}},
         {name: 'particlesmat', class: 'Material', params:{type: 'ShaderMaterial',wireframe: false, transparent:true, depthWrite: false}},
         {name: 'particles', class: 'Object3D', params:{type: 'Points', x: -terrainLength/4, y:0, z:-terrainLength/4,scalex:terrainLength/2, scaley: 5, scalez: terrainLength/2}},
-        {name: 'sine', class: 'Event'},//, params: {center: 0.5, scale: 0.5, frequency: 0.1}},
         {name: 'html', class: 'DOM', params:{
           html: `
           <div style='background: transparent; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;'>

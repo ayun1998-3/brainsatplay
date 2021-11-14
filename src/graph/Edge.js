@@ -75,6 +75,7 @@ export class Edge {
       let isHTML = sP.output?.type === 'HTML'
       let isCSS = sP.output?.type === 'CSS'
 
+
       if (brainstormTarget || isElement || isFunction  || isObject || isGLSL || isHTML || isCSS) {
         this.onstart.push(this.update) // Pass on applicadtion start
       }
@@ -100,6 +101,7 @@ export class Edge {
 
     // Pass Information from Source to Target
      update = async (port=this.source.port) => {
+
          if (port.value !== undefined){
             let returned = await this.target.port.set(port)
 

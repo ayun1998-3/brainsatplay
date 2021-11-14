@@ -1,6 +1,6 @@
 //Template system to feed into the deviceStream class for creating possible configurations. 
 //Just fill out the template functions accordingly and add this class (with a unique name) to the list of usable devices.
-import { DOMFragment } from '../../ui/DOMFragment';
+import { DOMFragment } from '../../utils/DOMFragment';
 import {DataAtlas} from '../../DataAtlas'
 import {BiquadChannelFilterer} from '../../utils/signal_processing/BiquadFilters'
 

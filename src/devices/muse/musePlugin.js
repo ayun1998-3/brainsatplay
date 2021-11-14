@@ -3,7 +3,7 @@
 import {BiquadChannelFilterer} from '../../utils/signal_processing/BiquadFilters'
 import {DataAtlas} from '../../DataAtlas'
 import {MuseClient} from 'muse-js'
-import { DOMFragment } from '../../ui/DOMFragment';
+import { DOMFragment } from '../../utils/DOMFragment';
 
 export class musePlugin {
     constructor(mode, onconnect=this.onconnect, ondisconnect=this.ondisconnect) {

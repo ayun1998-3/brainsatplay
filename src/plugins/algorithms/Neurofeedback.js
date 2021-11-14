@@ -154,7 +154,7 @@ export class Neurofeedback {
 
         this.ports.default = {
             analysis: ['eegcoherence'],
-            data: 1,
+            data: 0,
             meta: {label: this.ports.metric.data},
             input: {type: Object, name: 'DataAtlas'},
             output: {type: undefined},

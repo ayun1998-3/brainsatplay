@@ -1,4 +1,4 @@
-import {StateManager} from '../../../ui/StateManager'
+import {StateManager} from '../../../utils/StateManager'
 export class Object3D {
 
     static id = String(Math.floor(Math.random()*1000000))

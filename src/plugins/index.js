@@ -79,7 +79,6 @@ import {OSC} from './networking/OSC.js'
 import {WebRTC} from './networking/WebRTC.js'
 import {Websocket} from './networking/Websocket.js'
 
-
 // Transforms
 import {Arithmetic} from './transforms/Arithmetic.js'
 import {Buffer} from './transforms/Buffer.js'
@@ -97,7 +96,11 @@ import {Storage} from './utilities/Storage.js'
 import {Thread} from './utilities/Thread.js'
 import {Unity} from './utilities/Unity.js'
 
-
+// Webcam
+import {Webcam} from './webrtc/Webcam.js'
+import {CSSFilters} from './webrtc/CSSFilters.js'
+import {Screenshare} from './webrtc/Screenshare.js'
+import {RecordCanvas} from './webrtc/RecordCanvas.js'
 
 export {
     Blank,
@@ -193,6 +196,12 @@ export {
     Scheduler,
     Storage,
     Thread,
-    Unity
+    Unity,
+
+    // Webcam
+    Webcam,
+    CSSFilters,
+    Screenshare,
+    RecordCanvas
 
 }

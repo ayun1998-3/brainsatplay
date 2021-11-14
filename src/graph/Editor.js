@@ -1,4 +1,4 @@
-import { StateManager } from '../ui/StateManager.js'
+import { StateManager } from '../utils/StateManager.js'
 
 // Project Selection
 // import {appletManifest} from '../../../../platform/appletManifest' // MUST REMOVE LINKS TO PLATFORM

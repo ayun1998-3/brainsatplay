@@ -1,6 +1,6 @@
 
-import { StateManager } from './ui/StateManager'
-import { DOMFragment } from './ui/DOMFragment';
+import { StateManager } from './utils/StateManager'
+import { DOMFragment } from './utils/DOMFragment';
 
 export class EventRouter{
     constructor(){

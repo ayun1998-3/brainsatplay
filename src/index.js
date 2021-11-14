@@ -3,7 +3,7 @@
  * @module brainsatplay
  */
 
-import 'regenerator-runtime/runtime' 
+ import 'regenerator-runtime/runtime' // must include or webpack breaks
 
 // Default CSS Stylesheet
 import './ui/styles/defaults.css' 

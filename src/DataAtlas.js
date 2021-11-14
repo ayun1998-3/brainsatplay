@@ -1,7 +1,7 @@
 //relies on eegworker (see implementation in public/index.html)
 //Joshua Brewster, Garrett Flynn GPL (copyleft)
 
-import { StateManager } from "./ui/StateManager";
+import { StateManager } from "./utils/StateManager";
 
 import { WorkerManager } from "./utils/workers/WorkerManager"
 import { Graph } from "./graph/Graph"

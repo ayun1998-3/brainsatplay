@@ -45,11 +45,9 @@ export class ProjectManager {
     init = async () => {
         this.version = this.latest
         projectUtils.getLibraryVersion('experimental')
-        if (!this.local && this.platform) projectUtils.getLibraryVersion(this.version)
 
-        // WAITING TAKES TOO DANG LONG
-        // await projectUtils.getLibraryVersion('experimental')
-        // if (!this.local && this.platform) await projectUtils.getLibraryVersion(this.version)
+        // TODO GF: Must test better. Pretty sure this resulted in some breaking behaviors on the last push to app.brainsatplay.com because session longer has this.projects
+        if (!this.local && this.platform) projectUtils.getLibraryVersion(this.version)
     }
 
     // ---------------------- Interaction Macros ----------------------
