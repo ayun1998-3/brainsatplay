@@ -24,7 +24,7 @@ export function makeKrnl(gpu, f, opts = {
   return k;
 }
 
-export function makeCanvasKrnl(appendToId, gpu, f, opts = {
+export function makeCanvasKrnl(toAppend, gpu, f, opts = {
   setDynamicOutput: true,
   setDynamicArguments: true,
   setPipeline: true,
@@ -38,7 +38,8 @@ export function makeCanvasKrnl(appendToId, gpu, f, opts = {
 
   const canvas = k.canvas; 
 
-  document.getElementById(appendToId).appendChild(canvas);
+  if (typeof toAppend === 'string') document.getElementById(toAppend).appendChild(canvas);
+  else toAppend.appendChild(canvas);
 
   return k; //run k() with the input arguments in an animation loop, get graphical output.
 }
@@ -131,15 +132,16 @@ export class gpuUtils {
     
   }
 
-  addCanvasKernel(name, f, appendToId) {
+  addCanvasKernel(name, f, toAppend) {
     let found = this.canvaskernels.find((o)=> {
       if(o.name === name) {
         return true;
       }
     });
     if(!found) {
-      this.kernels.push({name:name,krnl:makeCanvasKrnl(appendToId,this.gpu,f)});
-      return true;
+      let krnl = makeCanvasKrnl(toAppend,this.gpu,f)
+      this.kernels.push({name,krnl});
+      return krnl;
     } else { 
       console.error('Kernel already exists'); 
       return false;
@@ -183,7 +185,7 @@ export class gpuUtils {
 
   callKernel(name="",args=[]) {
     let result;
-    let found = this.customFunctions.find((o)=> {
+    let found = this.kernels.find((o)=> {
       if(o.name === name) {
         result = o.krnl(...args);
         return true;
@@ -196,7 +198,7 @@ export class gpuUtils {
   }
 
   hasKernel(name="") {
-    let found = this.customFunctions.find((o)=> {
+    let found = this.kernels.find((o)=> {
       if(o.name === name) {
         return true;
       }

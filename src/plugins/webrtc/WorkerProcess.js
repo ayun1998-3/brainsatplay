@@ -1,4 +1,6 @@
 import '../../utils/workers/gpu/gpu-browser.min.js'
+import { makeCanvasKrnl, gpuUtils } from '../../utils/workers/gpu/gpuUtils.js'
+import { addGpuFunctions, createGpuKernels as krnl } from '../../utils/workers/gpu/gpuUtils-functs';
 
 export class WorkerProcess {
 
@@ -11,67 +13,86 @@ export class WorkerProcess {
 
     this.props = {
       container: document.createElement('div'),
+      canvas: document.createElement('canvas'),
       videoElement: document.createElement('video'),
       worker: {},
       looping: false,
       kernels: {
         edgeDetection: [
           -1, -1, -1,
-          -1, 5.05, -1,
+          -1,  8, -1,
           -1, -1, -1
         ],
         boxBlur: [
-          1 / 9, 1 / 9, 1 / 9,
-          1 / 9, 1 / 9, 1 / 9,
-          1 / 9, 1 / 9, 1 / 9
+          1/9, 1/9, 1/9,
+          1/9, 1/9, 1/9,
+          1/9, 1/9, 1/9
         ],
+        sobelLeft: [
+            1,  0, -1,
+            2,  0, -2,
+            1,  0, -1
+        ],
+        sobelRight: [
+            -1, 0, 1,
+            -2, 0, 2,
+            -1, 0, 1
+        ],
+        sobelTop: [
+            1,  2,  1,
+            0,  0,  0,
+           -1, -2, -1  
+        ],
+        sobelBottom: [
+            -1, 2, 1,
+             0, 0, 0,
+             1, 2, 1
+        ],
+        identity: [
+            0, 0, 0, 
+            0, 1, 0, 
+            0, 0, 0
+        ],
+        gaussian3x3: [
+            1,  2,  1, 
+            2,  4,  2, 
+            1,  2,  1
+        ],
+        emboss: [
+            -2, -1,  0, 
+            -1,  1,  1, 
+             0,  1,  2
+        ],
+        sharpen: [
+            0, -1,  0,
+           -1,  5, -1,
+            0, -1,  0
+        ]
       },
-      gpu: new GPU(),
+      gpu: null,
+      gpuUtils: null,
       convolution: null
     }
 
-    this.props.convolution = this.props.gpu.createKernel(function (src, width, height, kernel, kernelRadius) {
-      const kSize = 2 * kernelRadius + 1;
-      let r = 0, g = 0, b = 0;
-
-      let i = -kernelRadius;
-      let imgOffset = 0, kernelOffset = 0;
-      while (i <= kernelRadius) {
-        if (this.thread.x + i < 0 || this.thread.x + i >= width) {
-          i++;
-          continue;
-        }
-
-        let j = -kernelRadius;
-        while (j <= kernelRadius) {
-          if (this.thread.y + j < 0 || this.thread.y + j >= height) {
-            j++;
-            continue;
-          }
-
-          kernelOffset = (j + kernelRadius) * kSize + i + kernelRadius;
-          const weights = kernel[kernelOffset];
-          const pixel = src[this.thread.y + i][this.thread.x + j];
-          r += pixel.r * weights;
-          g += pixel.g * weights;
-          b += pixel.b * weights;
-          j++;
-        }
-        i++;
-      }
-      this.color(r, g, b);
-    })
-      .setOutput([400, 200])
-      .setGraphical(true)
-
+    // Size Video
     this.props.videoElement.autoplay = true
     this.props.videoElement.style.width = '100%'
     this.props.videoElement.style.height = '100%'
 
+    this.props.container.style.display = 'flex'
     this.props.container.style.width = '100%'
     this.props.container.style.height = '100%'
-    this.props.container.insertAdjacentElement('beforeend', this.props.videoElement)
+    // this.props.container.insertAdjacentElement('beforeend', this.props.videoElement)
+    this.props.container.onresize = this.responsive
 
+    // Create GPU Instance
+    this.props.gpu = new GPU({})
+    this.props.gpuUtils = new gpuUtils(this.props.gpu)
+    let kernel = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container)
+    this.props.canvas = kernel.canvas
+
+    // Add GPU Display
+    this.props.container.insertAdjacentElement('beforeend', this.props.canvas)
 
     this.ports = {
       debug: {
@@ -85,33 +106,37 @@ export class WorkerProcess {
         onUpdate: (user) => {
           if (user.data) {
             this.props.videoElement.srcObject = user.data;
-            this.start()
           }
         }
       },
+      kernel: {
+        data: 'edgeDetection',
+        options: Object.keys(this.props.kernels)
+      }
     }
+    
   }
 
+  responsive = () => {
+      let dims = this.getDimensions()
+      this.props.videoElement.width = dims.width
+      this.props.videoElement.height = dims.height
+  }
+
+  getDimensions = () => {
+    // let settings = this.props.videoElement.srcObject?.getVideoTracks()[0].getSettings()
+    return {
+      width: //settings?.width ?? 
+      this.props.container.clientWidth,
+      height: //settings?.height ?? 
+      this.props.container.clientHeight
+    }
+  }
   start = () => {
 
-    if (this.props.looping) {
 
       // Worker Stuff
       // this._grabFrame(this.props.videoElement.srcObject).then(this._passToWorker)
-
-      // GPU Stuff
-      const kernel = this.props.kernels['edgeDetection'];
-      const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
-      let render = () => {
-        this.props.convolution(this.props.videoElement, this.props.videoElement.width, this.props.videoElement.height, kernel, kernelRadius);
-        requestAnimationFrame(render);
-      }
-      render();
-
-      // Add Display
-      this.props.convolution.canvas.style = 'position: absolute; top: 0; left: 0;'
-      this.props.container.insertAdjacentElement('beforeend', this.props.convolution.canvas)
-    }
   }
 
   _grabFrame = (stream = this.props.videoElement.srcObject) => {
@@ -171,18 +196,38 @@ export class WorkerProcess {
   init = () => {
 
     this.props.looping = true
-    this.props.worker.id = window.workers.addWorker()
 
-    // Create Grayscale Image
-    window.workers.addEvent('workerprocess', this.uuid, 'process', this.props.worker.id);
-    window.workers.addWorkerFunction(
-      'process',
-      this._grayscale.toString(),
-      this.uuid,
-      this.props.worker.id
-    );
+    // // -------------------- Worker Stuff --------------------
+    // this.props.worker.id = window.workers.addWorker()
 
-    window.workers.subEvent('workerprocess', this._onWorkerResponse)
+    // // Create Grayscale Image
+    // window.workers.addEvent('workerprocess', this.uuid, 'process', this.props.worker.id);
+    // window.workers.addWorkerFunction(
+    //   'process',
+    //   this._grayscale.toString(),
+    //   this.uuid,
+    //   this.props.worker.id
+    // );
+
+    // window.workers.subEvent('workerprocess', this._onWorkerResponse)
+
+    // -------------------- GPU Stuff --------------------
+
+    // Listen for srcObject to be added
+    this.props.videoElement.addEventListener('loadeddata',()=>{
+      
+      let width = this.props.videoElement.width
+      let height = this.props.videoElement.height
+
+        let render = () => {
+          if (this.props.looping) {
+            const kernel = this.props.kernels[this.ports.kernel.data];
+            this.props.gpuUtils.callKernel('convolveImage', [this.props.videoElement, width, height, [kernel], [kernel.length], 1, true])
+            requestAnimationFrame(render);
+          }
+        }
+        render();
+    },false);
   }
 
   deinit = () => {

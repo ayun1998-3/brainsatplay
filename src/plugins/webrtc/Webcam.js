@@ -67,7 +67,7 @@ export class Webcam {
       option.value = deviceInfo.deviceId;
       if (deviceInfo.kind === "audioinput") {
         option.text =
-          deviceInfo.label || "microphone " + (audioSelect.length + 1);
+          deviceInfo.label || "microphone " + (this.props.audioSelect.length + 1);
         this.props.audioSelect.appendChild(option);
       } else if (deviceInfo.kind === "videoinput") {
         option.text = deviceInfo.label || "camera " + (this.props.videoSelect.length + 1);

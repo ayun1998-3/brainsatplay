@@ -506,12 +506,14 @@ function bulkArrayMulKern(arrays, len, n, scalar) {
 }
 
 function multiImgConv2DKern(img, width, height, kernels, kernelLengths, nKernels, graphical) {
+
+    console.log(img, width, height, kernels, kernelLengths, nKernels)
     for(var i = 0; i < nKernels; i++){
         var kernelLength = kernelLengths[i];            
         var kernelRadius = (Math.sqrt(kernelLength) - 1) / 2;
         conv2D(img, width, height, kernels[i], kernelRadius);
     }
-    if(graphical === 0){ return [this.color.r,this.color.g,this.color.b]; }
+    if(graphical == 0){ return [this.color.r,this.color.g,this.color.b]; }
 }
 
 function transpose2DKern(mat2) { //Transpose a 2D matrix, meant to be combined
