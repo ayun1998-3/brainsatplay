@@ -273,7 +273,8 @@ function iFFTlist(signals, len, freq, n, sr) { //Extract a particular frequency 
 }
 
 
-function conv2D(src, width, height, kernel, kernelRadius) {
+
+export function conv2D(src, width, height, kernel, kernelRadius) {
     const kSize = 2 * kernelRadius + 1;
     let r = 0, g = 0, b = 0;
 

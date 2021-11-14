@@ -1,6 +1,6 @@
 import '../../utils/workers/gpu/gpu-browser.min.js'
 import { makeCanvasKrnl, gpuUtils } from '../../utils/workers/gpu/gpuUtils.js'
-import { addGpuFunctions, createGpuKernels as krnl } from '../../utils/workers/gpu/gpuUtils-functs';
+import { addGpuFunctions, conv2D, createGpuKernels as krnl } from '../../utils/workers/gpu/gpuUtils-functs';
 
 export class WorkerProcess {
 
@@ -70,30 +70,32 @@ export class WorkerProcess {
         ]
       },
       gpu: null,
-      gpuUtils: null,
       convolution: null
     }
 
     // Size Video
-    this.props.videoElement.autoplay = true
-    this.props.videoElement.style.width = '100%'
-    this.props.videoElement.style.height = '100%'
+  this.props.videoElement.autoplay = true
+  this.props.videoElement.style.width = '100%'
+  this.props.videoElement.style.height = '100%'
 
-    this.props.container.style.display = 'flex'
-    this.props.container.style.width = '100%'
-    this.props.container.style.height = '100%'
-    // this.props.container.insertAdjacentElement('beforeend', this.props.videoElement)
-    this.props.container.onresize = this.responsive
+  this.props.container.style.display = 'flex'
+  this.props.container.style.width = '100%'
+  this.props.container.style.height = '100%'
+  this.props.container.onresize = this.responsive
 
+  // Comment to Keep Video Element Offscreen
+  // this.props.container.insertAdjacentElement('beforeend', this.props.videoElement)
+  
     // Create GPU Instance
-    this.props.gpu = new GPU({})
-    this.props.gpuUtils = new gpuUtils(this.props.gpu);
-    let kernel = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container,316, 778);
-    this.props.canvas = kernel.canvas;
+    this.props.gpu = new GPU({
+      canvas: this.props.canvas,
+      mode: 'gpu'
+    })
 
-    // Add GPU Display
-    this.props.container.insertAdjacentElement('beforeend', this.props.canvas)
-
+    // Create GPU Instance and Canvas
+    this.props.gpuUtils = new gpuUtils(this.props.gpu)
+   
+    
     this.ports = {
       debug: {
         data: this.props.container,
@@ -121,6 +123,8 @@ export class WorkerProcess {
       let dims = this.getDimensions()
       this.props.videoElement.width = dims.width
       this.props.videoElement.height = dims.height
+
+      console.log(dims)
   }
 
   getDimensions = () => {
@@ -216,15 +220,58 @@ export class WorkerProcess {
     // Listen for srcObject to be added
     this.props.videoElement.addEventListener('loadeddata',()=>{
       
-      let width = this.props.videoElement.width
-      let height = this.props.videoElement.height
+
+      // Create Kernel
+      
+      // Multi
+      let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container, {
+        setDynamicOutput: true,
+        setDynamicArguments: true,
+        setPipeline: false, // otherwise won't render
+        setImmutable: true,
+        setGraphical: true
+      })
+      
+      // Single
+      // let k = this.props.gpuUtils.addCanvasKernel('convolveImage', conv2D, this.props.container, {
+      //   setDynamicOutput: true,
+      //   setDynamicArguments: true,
+      //   setPipeline: false, // otherwise won't render
+      //   setImmutable: true,
+      //   setGraphical: true
+      // })
+
+      this.props.canvas = k.canvas
+      this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
 
         let render = () => {
           if (this.props.looping) {
-            const kernel = this.props.kernels[this.ports.kernel.data];
-            let args = [this.props.videoElement, width, height, [kernel], [kernel.length], 1];
-            console.log(args)
-            this.props.gpuUtils.callKernel('convolveImage', args)
+
+
+            let kernels = []
+            let kernelLengths = []
+            for (let name in this.props.kernels){
+              let kernel = this.props.kernels[name]
+              kernels.push(kernel)
+              kernelLengths.push(kernel.length)
+            }
+
+            // const kernel = this.props.kernels[this.ports.kernel.data];
+
+            // Set Canvas Size
+            let width = this.props.videoElement.width
+            let height = this.props.videoElement.height
+
+            // Multi
+            let args = [this.props.videoElement, width, height, kernels, kernelLengths, kernels.length];
+
+            // Single
+            // const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
+            // let args =  [this.props.videoElement, width, height, kernel, kernelRadius]
+                        
+
+            k.setOutput([width, height])
+            this.props.gpuUtils.callCanvasKernel('convolveImage', args)
             requestAnimationFrame(render);
           }
         }

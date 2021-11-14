@@ -10,12 +10,13 @@ export function makeKrnl(gpu, f, opts = {
   setImmutable: true,
   setGraphical: false
 }) {
+
   const k = gpu.createKernel(f);
 
   if (opts.setDynamicOutput)    k.setDynamicOutput(true);
   if (opts.output)              k.setOutput(opts.output);
   if (opts.setDynamicArguments) k.setDynamicArguments(true);
-  if (opts.setPipeline)         k.setPipeline(true);
+  // if (opts.setPipeline)         k.setPipeline(true);
   if (opts.setImmutable)        k.setImmutable(true);
   if (opts.setGraphical)        k.setGraphical(true);
 
@@ -26,11 +27,11 @@ export function makeKrnl(gpu, f, opts = {
 }
 
 export function makeCanvasKrnl(toAppend, gpu, f, opts = {
-  output: [300,300],
+  // output: [300,300],
   setDynamicArguments: true,
-  setPipeline:         true,
-  setImmutable:        true,
-  setGraphical:        true
+  setPipeline: false,
+  setImmutable: true,
+  setGraphical: true
 }) {
 
   const k = makeKrnl(gpu,f,opts);
@@ -133,21 +134,14 @@ export class gpuUtils {
     
   }
 
-  addCanvasKernel(name, f, toAppend, width=300, height=300) {
+  addCanvasKernel(name, f, toAppend, opts) {
     let found = this.canvaskernels.find((o)=> {
       if(o.name === name) {
         return true;
       }
     });
     if(!found) {
-      let krnl = makeCanvasKrnl(toAppend,this.gpu,f,{
-        output: [width,height],
-        setDynamicOutput: true,
-        setDynamicArguments: true,
-        setPipeline: true,
-        setImmutable: true,
-        setGraphical: true
-      })
+      let krnl = makeCanvasKrnl(toAppend,this.gpu,f, opts)
       this.kernels.push({name,krnl});
       return krnl;
     } else { 
@@ -206,12 +200,12 @@ export class gpuUtils {
     } else return result;
   }
 
-  callCanvasKernel(name="",args=[],width=300,height=300) {
+  callCanvasKernel(name="",args=[],outputDims=[]) {
     let result;
     let found = this.kernels.find((o)=> {
       if(o.name === name) {
         //console.log(o.krnl,args)
-        o.krnl.setOutput([width,height]);
+        if (outputDims.length === 2) o.krnl.setOutput(outputDims);
         result = o.krnl(...args);
         return true;
       }
