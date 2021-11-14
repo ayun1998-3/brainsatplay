@@ -18,16 +18,16 @@ export class WorkerProcess {
       worker: {},
       looping: false,
       kernels: {
-        sharpen: [
-          0, -1,  0,
-         -1,  5, -1,
-          0, -1,  0
-      ],
         edgeDetection: [
           -1, -1, -1,
           -1,  8, -1,
           -1, -1, -1
         ],
+        sharpen: [
+          0, -1,  0,
+         -1,  5, -1,
+          0, -1,  0
+      ],
         // boxBlur: [
         //   1/9, 1/9, 1/9,
         //   1/9, 1/9, 1/9,
@@ -75,8 +75,8 @@ export class WorkerProcess {
 
     // Size Video
   this.props.videoElement.autoplay = true
-  this.props.videoElement.style.width = '100%'
-  this.props.videoElement.style.height = '100%'
+  // this.props.videoElement.style.width = '100%'
+  // this.props.videoElement.style.height = '100%'
 
   this.props.container.style.display = 'flex'
     this.props.container.style.alignItems = 'center'
@@ -132,24 +132,18 @@ export class WorkerProcess {
 
   getDimensions = () => {
     let settings = this.props.videoElement.srcObject?.getVideoTracks()[0].getSettings()
-   let width = this.props.container.clientWidth
-   let height = this.props.container.clientHeight
+   
+    let maxWidth = this.props.container.clientWidth
+    let maxHeight = this.props.container.clientHeight
 
-   // Declare size fallbacks
-   if (!width && !height) {
-     width = settings.width
-     height = settings.height
-   } else if (!width) {
-      width = height * settings.width / settings.height
-   } else if (!height) {
-      height = width * settings.height / settings.width
+    let width = maxWidth, height = maxHeight;
+
+   // Set to Video Settings if present
+   if (settings){
+    // Base
+    width = settings.width // this.props.container.clientWidth
+    height = settings.height // this.props.container.clientHeight
    }
-
-   // Constraint to Aspect Ratio
-  //  let currentAspect = width / height
-  //  let desiredAspect = settings.width / settings.height
-  //  if (currentAspect > desiredAspect) width *= 1/desiredAspect
-  //  else height *= desiredAspect
 
     return {
       width,
@@ -198,8 +192,6 @@ export class WorkerProcess {
     // Animate with the maxumum rate (based on worker speed)
     this.start()
 
-    console.log('Processed', res.output)
-
     let pixels = new ImageData(
       new Uint8ClampedArray(res.output.pixels),
       res.output.width,
@@ -244,7 +236,7 @@ export class WorkerProcess {
         // Create Kernel
         
         // Multi
-        let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.ImgConv2DKern, this.props.container)
+        let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container)
         
         // Single
         // let k = this.props.gpuUtils.addCanvasKernel('convolveImage', conv2D, this.props.container, {
@@ -256,7 +248,6 @@ export class WorkerProcess {
         // })
 
         this.props.canvas = k.canvas
-        this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
 
         let kernels = []
         let kernelLengths = []
@@ -280,16 +271,18 @@ export class WorkerProcess {
             let width = dims.width // this.props.videoElement.width
             let height = dims.height // this.props.videoElement.height
 
+            this.props.canvas.style.width = width
+            this.props.canvas.style.height = height
+
             // Multi
             let args = [this.props.videoElement, width, height, kernels[1], kernelLengths[1]];
-            console.log(args)
+            //console.log(args)
             // Single
             // const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
             // let args =  [this.props.videoElement, width, height, kernel, kernelRadius]
                         
+            this.props.gpuUtils.callCanvasKernel('convolveImage', args, [width, height])
 
-            //k.setOutput([width, height])
-            this.props.gpuUtils.callCanvasKernel('convolveImage', args, [width,height]);
             requestAnimationFrame(render);
           }
         }
