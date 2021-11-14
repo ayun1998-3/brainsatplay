@@ -27,8 +27,9 @@ export function makeKrnl(gpu, f, opts = {
 }
 
 export function makeCanvasKrnl(toAppend, gpu, f, opts = {
-  // output: [300,300],
+  output: [300,300],
   setDynamicArguments: true,
+  setDynamicOutput: true,
   setPipeline: false,
   setImmutable: true,
   setGraphical: true
@@ -248,7 +249,6 @@ export class gpuUtils {
     this.listidft1D_windowed = makeKrnl(this.gpu, krnl.listidft1D_windowedKern);
     this.listifft1D_windowed = makeKrnl(this.gpu, krnl.listifft1D_windowedKern);
     this.bulkArrayMul = makeKrnl(this.gpu, krnl.bulkArrayMulKern);
-    this.multiConv2D = makeKrnl(this.gpu, krnl.multiImgConv2DKern);
 
     this.kernels.push(
       {name:"correlograms", krnl:this.correlograms},
@@ -267,8 +267,7 @@ export class gpuUtils {
       {name:"listfft1D_windowed", krnl:this.listfft1D_windowed},
       {name:"listidft1D_windowed", krnl:this.listidft1D_windowed},
       {name:"listifft1D_windowed", krnl:this.listifft1D_windowed},
-      {name:"bulkArrayMul", krnl:this.bulkArrayMul},
-      {name:"multiConv2D", krnl:this.multiConv2D}
+      {name:"bulkArrayMul", krnl:this.bulkArrayMul}
       );
     
     //----------------------------------- Easy gpu pipelining

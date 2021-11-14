@@ -1,6 +1,6 @@
 import '../../utils/workers/gpu/gpu-browser.min.js'
 import { makeCanvasKrnl, gpuUtils } from '../../utils/workers/gpu/gpuUtils.js'
-import { addGpuFunctions, conv2D, createGpuKernels as krnl } from '../../utils/workers/gpu/gpuUtils-functs';
+import { addGpuFunctions, createGpuKernels as krnl } from '../../utils/workers/gpu/gpuUtils-functs';
 
 export class WorkerProcess {
 
@@ -221,40 +221,36 @@ export class WorkerProcess {
     this.props.videoElement.addEventListener('loadeddata',()=>{
       
 
-      // Create Kernel
-      
-      // Multi
-      let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container, {
-        setDynamicOutput: true,
-        setDynamicArguments: true,
-        setPipeline: false, // otherwise won't render
-        setImmutable: true,
-        setGraphical: true
-      })
-      
-      // Single
-      // let k = this.props.gpuUtils.addCanvasKernel('convolveImage', conv2D, this.props.container, {
-      //   setDynamicOutput: true,
-      //   setDynamicArguments: true,
-      //   setPipeline: false, // otherwise won't render
-      //   setImmutable: true,
-      //   setGraphical: true
-      // })
+        // Create Kernel
+        
+        // Multi
+        let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.ImgConv2DKern, this.props.container)
+        
+        // Single
+        // let k = this.props.gpuUtils.addCanvasKernel('convolveImage', conv2D, this.props.container, {
+        //   setDynamicOutput: true,
+        //   setDynamicArguments: true,
+        //   setPipeline: false, // otherwise won't render
+        //   setImmutable: true,
+        //   setGraphical: true
+        // })
 
-      this.props.canvas = k.canvas
-      this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
+        this.props.canvas = k.canvas
+        this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
+
+        let kernels = []
+        let kernelLengths = []
+        for (let name in this.props.kernels){
+          let kernel = this.props.kernels[name];
+          console.log(name);
+          kernels.push(kernel);
+          kernelLengths.push(kernel.length);
+        }
 
         let render = () => {
           if (this.props.looping) {
 
 
-            let kernels = []
-            let kernelLengths = []
-            for (let name in this.props.kernels){
-              let kernel = this.props.kernels[name]
-              kernels.push(kernel)
-              kernelLengths.push(kernel.length)
-            }
 
             // const kernel = this.props.kernels[this.ports.kernel.data];
 
@@ -263,15 +259,15 @@ export class WorkerProcess {
             let height = this.props.videoElement.height
 
             // Multi
-            let args = [this.props.videoElement, width, height, kernels, kernelLengths, kernels.length];
+            let args = [this.props.videoElement, width, height, kernels[2], kernelLengths[2]];
 
             // Single
             // const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
             // let args =  [this.props.videoElement, width, height, kernel, kernelRadius]
                         
 
-            k.setOutput([width, height])
-            this.props.gpuUtils.callCanvasKernel('convolveImage', args)
+            //k.setOutput([width, height])
+            this.props.gpuUtils.callCanvasKernel('convolveImage', args, [width,height]);
             requestAnimationFrame(render);
           }
         }
