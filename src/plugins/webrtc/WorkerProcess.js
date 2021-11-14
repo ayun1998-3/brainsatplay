@@ -272,7 +272,6 @@ export class WorkerProcess {
 
 
 
-            let numKernels = kernels.length
 
             // const kernel = this.props.kernels[this.ports.kernel.data];
 
@@ -282,8 +281,8 @@ export class WorkerProcess {
             let height = dims.height // this.props.videoElement.height
 
             // Multi
-            let args = [this.props.videoElement, width, height, kernels[2], kernelLengths[2]];
-
+            let args = [this.props.videoElement, width, height, kernels[1], kernelLengths[1]];
+            console.log(args)
             // Single
             // const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
             // let args =  [this.props.videoElement, width, height, kernel, kernelRadius]
