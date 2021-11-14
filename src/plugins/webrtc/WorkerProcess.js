@@ -18,56 +18,56 @@ export class WorkerProcess {
       worker: {},
       looping: false,
       kernels: {
+        sharpen: [
+          0, -1,  0,
+         -1,  5, -1,
+          0, -1,  0
+      ],
         edgeDetection: [
           -1, -1, -1,
           -1,  8, -1,
           -1, -1, -1
         ],
-        boxBlur: [
-          1/9, 1/9, 1/9,
-          1/9, 1/9, 1/9,
-          1/9, 1/9, 1/9
-        ],
-        sobelLeft: [
-            1,  0, -1,
-            2,  0, -2,
-            1,  0, -1
-        ],
-        sobelRight: [
-            -1, 0, 1,
-            -2, 0, 2,
-            -1, 0, 1
-        ],
-        sobelTop: [
-            1,  2,  1,
-            0,  0,  0,
-           -1, -2, -1  
-        ],
-        sobelBottom: [
-            -1, 2, 1,
-             0, 0, 0,
-             1, 2, 1
-        ],
-        identity: [
-            0, 0, 0, 
-            0, 1, 0, 
-            0, 0, 0
-        ],
-        gaussian3x3: [
-            1,  2,  1, 
-            2,  4,  2, 
-            1,  2,  1
-        ],
-        emboss: [
-            -2, -1,  0, 
-            -1,  1,  1, 
-             0,  1,  2
-        ],
-        sharpen: [
-            0, -1,  0,
-           -1,  5, -1,
-            0, -1,  0
-        ]
+        // boxBlur: [
+        //   1/9, 1/9, 1/9,
+        //   1/9, 1/9, 1/9,
+        //   1/9, 1/9, 1/9
+        // ],
+        // sobelLeft: [
+        //     1,  0, -1,
+        //     2,  0, -2,
+        //     1,  0, -1
+        // ],
+        // sobelRight: [
+        //     -1, 0, 1,
+        //     -2, 0, 2,
+        //     -1, 0, 1
+        // ],
+        // sobelTop: [
+        //     1,  2,  1,
+        //     0,  0,  0,
+        //    -1, -2, -1  
+        // ],
+        // sobelBottom: [
+        //     -1, 2, 1,
+        //      0, 0, 0,
+        //      1, 2, 1
+        // ],
+        // identity: [
+        //     0, 0, 0, 
+        //     0, 1, 0, 
+        //     0, 0, 0
+        // ],
+        // gaussian3x3: [
+        //     1,  2,  1, 
+        //     2,  4,  2, 
+        //     1,  2,  1
+        // ],
+        // emboss: [
+        //     -2, -1,  0, 
+        //     -1,  1,  1, 
+        //      0,  1,  2
+        // ],
       },
       gpu: null,
       convolution: null
@@ -79,6 +79,9 @@ export class WorkerProcess {
   this.props.videoElement.style.height = '100%'
 
   this.props.container.style.display = 'flex'
+    this.props.container.style.alignItems = 'center'
+    this.props.container.style.justifyContent = 'center'
+
   this.props.container.style.width = '100%'
   this.props.container.style.height = '100%'
   this.props.container.onresize = this.responsive
@@ -128,12 +131,29 @@ export class WorkerProcess {
   }
 
   getDimensions = () => {
-    // let settings = this.props.videoElement.srcObject?.getVideoTracks()[0].getSettings()
+    let settings = this.props.videoElement.srcObject?.getVideoTracks()[0].getSettings()
+   let width = this.props.container.clientWidth
+   let height = this.props.container.clientHeight
+
+   // Declare size fallbacks
+   if (!width && !height) {
+     width = settings.width
+     height = settings.height
+   } else if (!width) {
+      width = height * settings.width / settings.height
+   } else if (!height) {
+      height = width * settings.height / settings.width
+   }
+
+   // Constraint to Aspect Ratio
+  //  let currentAspect = width / height
+  //  let desiredAspect = settings.width / settings.height
+  //  if (currentAspect > desiredAspect) width *= 1/desiredAspect
+  //  else height *= desiredAspect
+
     return {
-      width: //settings?.width ?? 
-      this.props.container.clientWidth,
-      height: //settings?.height ?? 
-      this.props.container.clientHeight
+      width,
+      height
     }
   }
   start = () => {
@@ -242,7 +262,7 @@ export class WorkerProcess {
       // })
 
       this.props.canvas = k.canvas
-      this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
+      // this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
 
         let render = () => {
           if (this.props.looping) {
@@ -250,28 +270,32 @@ export class WorkerProcess {
 
             let kernels = []
             let kernelLengths = []
+
             for (let name in this.props.kernels){
-              let kernel = this.props.kernels[name]
-              kernels.push(kernel)
-              kernelLengths.push(kernel.length)
+                let kernel = this.props.kernels[name]
+                kernels.push(kernel)
+                kernelLengths.push(kernel.length)
             }
+
+            let numKernels = kernels.length
 
             // const kernel = this.props.kernels[this.ports.kernel.data];
 
             // Set Canvas Size
-            let width = this.props.videoElement.width
-            let height = this.props.videoElement.height
+            let dims = this.getDimensions()
+            let width = dims.width // this.props.videoElement.width
+            let height = dims.height // this.props.videoElement.height
 
             // Multi
-            let args = [this.props.videoElement, width, height, kernels, kernelLengths, kernels.length];
+            let args = [this.props.videoElement, width, height, kernels, kernelLengths, numKernels];
 
             // Single
             // const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
             // let args =  [this.props.videoElement, width, height, kernel, kernelRadius]
                         
 
-            k.setOutput([width, height])
-            this.props.gpuUtils.callCanvasKernel('convolveImage', args)
+            // k.setOutput([width, height])
+            this.props.gpuUtils.callCanvasKernel('convolveImage', args, [width, height])
             requestAnimationFrame(render);
           }
         }
