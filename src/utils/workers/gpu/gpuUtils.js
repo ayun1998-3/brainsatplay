@@ -1,7 +1,7 @@
 import './gpu-browser.min.js' // becomes a window variable
 import { addGpuFunctions, createGpuKernels as krnl } from './gpuUtils-functs';
 
-//By Joshua Brewster, Dovydas Stirpeika (MIT License)
+//By Joshua Brewster, Dovydas Stirpeika (AGPL v3.0 License)
 
 export function makeKrnl(gpu, f, opts = {
   setDynamicOutput: true,
@@ -16,7 +16,7 @@ export function makeKrnl(gpu, f, opts = {
   if (opts.setDynamicOutput)    k.setDynamicOutput(true);
   if (opts.output)              k.setOutput(opts.output);
   if (opts.setDynamicArguments) k.setDynamicArguments(true);
-  // if (opts.setPipeline)         k.setPipeline(true);
+  if (opts.setPipeline)         k.setPipeline(true);
   if (opts.setImmutable)        k.setImmutable(true);
   if (opts.setGraphical)        k.setGraphical(true);
 
