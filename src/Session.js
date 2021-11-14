@@ -89,6 +89,10 @@ export class Session {
 		password = '',
 		urlToConnect = 'https://brainsatplay.azurewebsites.net',//'https://server.brainsatplay.com'
 	) {
+
+		// Media Capture and Streams API
+		this.mediaDevices = navigator.MediaDevices
+
 		this.deviceStreams = [];
 		this.state = new StateManager({
 			commandResult: {},

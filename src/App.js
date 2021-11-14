@@ -13,6 +13,9 @@ import nodeSVG from './ui/assets/network-wired-solid.svg'
 import expandSVG from './ui/assets/expand-arrows-alt-solid.svg'
 import deviceSVG from './ui/assets/wave-square-solid.svg'
 
+// Workers
+import { WorkerManager } from './utils/workers/WorkerManager.js';
+
 export class App {
     constructor(
         info = {},
@@ -30,10 +33,13 @@ export class App {
 
         this.uuid = String(Math.floor(Math.random() * 1000000)),
 
-            this.editor = null
+        // Main Properties
+        this.editor = null
         this.graphs = new Map() // graph execution
         this.devices = []
-        this.state = new StateManager({}); // app-specific state maanger
+
+        if (!window.workers) window.workers = new WorkerManager()
+        this.worker = {id: window.workers.addWorker()} // Create an app thread
 
 
         this.props = { // Changes to this can be used to auto-update the HTML and track important UI values 
@@ -76,6 +82,12 @@ export class App {
                 this.session.toggleDeviceSelectionMenu(this.info?.connect?.filter)
             }
         }
+    }
+
+    // ------------------- NEW API STUFF -------------------
+
+    enumerateGraphs = async () => { // App is really just a glorified graph collection
+        return Array.from(this.graphs).map(arr => arr[1])
     }
 
     // ------------------- START THE APPLICATION -------------------
@@ -189,6 +201,8 @@ deinit = async (soft = false) => {
             document.removeEventListener('keydown', this.shortcutManager);
             this.AppletHTML.deleteNode();
             this.AppletHTML = null
+            
+            window.workers.terminate(this.worker.id);
         }
 
         this.session.removeApp(this)

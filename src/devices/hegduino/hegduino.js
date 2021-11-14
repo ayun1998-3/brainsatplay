@@ -179,7 +179,7 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
      await navigator.bluetooth.requestDevice({   
     //    acceptAllDevices: true,
         filters: [{ services: [serviceUUID] }, { namePrefix: 'HEG' }],
-       optionalServices: [serviceUUID] 
+        optionalServices: [serviceUUID] 
        })
        .then(device => {
            //document.getElementById("device").innerHTML += device.name+ "/"+ device.id +"/"+ device.gatt.connected+"<br>";
@@ -188,10 +188,13 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
        })
        .then(sleeper(100)).then(server => server.getPrimaryService(serviceUUID))
        .then(sleeper(100)).then(service => { 
+           console.log('service', service)
          this.service = service;
          this.esp32otaService = service;
          service.getCharacteristic(rxUUID).then(sleeper(100)).then(tx => {
            this.rxchar = tx;
+           console.log('receive', this.rxchar)
+
            return tx.writeValue(this.encoder.encode("t")); // Send command to start HEG automatically (if not already started)
          });
          if(this.android == true){
@@ -203,6 +206,7 @@ export class hegBLE { //This is formatted for the way the HEG sends/receives inf
        })
        .then(sleeper(1100)).then(characteristic=>{
            this.txchar = characteristic;
+           console.log('transmit', this.txchar)
            this.onConnectedCallback();
            return characteristic.startNotifications(); // Subscribe to stream
        })
@@ -874,12 +878,18 @@ export class webSerial {
 
     async setupSerialAsync() {
 
+        let usbVendorId = 4292
+        let usbProductId = 60000
+
         const filters = [
-            { usbVendorId: 0x10c4, usbProductId: 0x0043 } //CP2102 filter
+            { 
+                usbVendorId: `0x${usbVendorId.toString(16)}`, //0x10c4, 
+                usbProductId: `0x${usbProductId.toString(16)}`
+            }
         ];
 
         
-        this.port = await navigator.serial.requestPort();
+        this.port = await navigator.serial.requestPort({ filters });
         navigator.serial.addEventListener("disconnect",(e) => {
             this.closePort();
         })
