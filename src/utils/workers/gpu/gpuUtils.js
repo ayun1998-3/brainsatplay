@@ -13,6 +13,7 @@ export function makeKrnl(gpu, f, opts = {
   const k = gpu.createKernel(f);
 
   if (opts.setDynamicOutput)    k.setDynamicOutput(true);
+  if (opts.output)              k.setOutput(opts.output);
   if (opts.setDynamicArguments) k.setDynamicArguments(true);
   if (opts.setPipeline)         k.setPipeline(true);
   if (opts.setImmutable)        k.setImmutable(true);
@@ -25,11 +26,11 @@ export function makeKrnl(gpu, f, opts = {
 }
 
 export function makeCanvasKrnl(toAppend, gpu, f, opts = {
-  setDynamicOutput: true,
+  output: [300,300],
   setDynamicArguments: true,
-  setPipeline: true,
-  setImmutable: true,
-  setGraphical: true
+  setPipeline:         true,
+  setImmutable:        true,
+  setGraphical:        true
 }) {
 
   const k = makeKrnl(gpu,f,opts);
@@ -132,14 +133,21 @@ export class gpuUtils {
     
   }
 
-  addCanvasKernel(name, f, toAppend) {
+  addCanvasKernel(name, f, toAppend, width=300, height=300) {
     let found = this.canvaskernels.find((o)=> {
       if(o.name === name) {
         return true;
       }
     });
     if(!found) {
-      let krnl = makeCanvasKrnl(toAppend,this.gpu,f)
+      let krnl = makeCanvasKrnl(toAppend,this.gpu,f,{
+        output: [width,height],
+        setDynamicOutput: true,
+        setDynamicArguments: true,
+        setPipeline: true,
+        setImmutable: true,
+        setGraphical: true
+      })
       this.kernels.push({name,krnl});
       return krnl;
     } else { 
@@ -187,6 +195,23 @@ export class gpuUtils {
     let result;
     let found = this.kernels.find((o)=> {
       if(o.name === name) {
+        //console.log(o.krnl,args)
+        result = o.krnl(...args);
+        return true;
+      }
+    });
+    if(!found) {
+      console.error('Kernel not found');
+      return false;
+    } else return result;
+  }
+
+  callCanvasKernel(name="",args=[],width=300,height=300) {
+    let result;
+    let found = this.kernels.find((o)=> {
+      if(o.name === name) {
+        //console.log(o.krnl,args)
+        o.krnl.setOutput([width,height]);
         result = o.krnl(...args);
         return true;
       }

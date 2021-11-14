@@ -87,9 +87,9 @@ export class WorkerProcess {
 
     // Create GPU Instance
     this.props.gpu = new GPU({})
-    this.props.gpuUtils = new gpuUtils(this.props.gpu)
-    let kernel = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container)
-    this.props.canvas = kernel.canvas
+    this.props.gpuUtils = new gpuUtils(this.props.gpu);
+    let kernel = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container,316, 778);
+    this.props.canvas = kernel.canvas;
 
     // Add GPU Display
     this.props.container.insertAdjacentElement('beforeend', this.props.canvas)
@@ -212,7 +212,7 @@ export class WorkerProcess {
     // window.workers.subEvent('workerprocess', this._onWorkerResponse)
 
     // -------------------- GPU Stuff --------------------
-
+    
     // Listen for srcObject to be added
     this.props.videoElement.addEventListener('loadeddata',()=>{
       
@@ -222,7 +222,9 @@ export class WorkerProcess {
         let render = () => {
           if (this.props.looping) {
             const kernel = this.props.kernels[this.ports.kernel.data];
-            this.props.gpuUtils.callKernel('convolveImage', [this.props.videoElement, width, height, [kernel], [kernel.length], 1, true])
+            let args = [this.props.videoElement, width, height, [kernel], [kernel.length], 1, 1];
+            console.log(args)
+            this.props.gpuUtils.callKernel('convolveImage', args)
             requestAnimationFrame(render);
           }
         }

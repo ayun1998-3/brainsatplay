@@ -278,7 +278,7 @@ function conv2D(src, width, height, kernel, kernelRadius) {
     let r = 0, g = 0, b = 0;
 
     let i = -kernelRadius;
-    let imgOffset = 0, kernelOffset = 0;
+    let kernelOffset = 0;
     while (i <= kernelRadius) {
     if (this.thread.x + i < 0 || this.thread.x + i >= width) {
         i++;
@@ -505,15 +505,45 @@ function bulkArrayMulKern(arrays, len, n, scalar) {
     return product*scalar;
 }
 
-function multiImgConv2DKern(img, width, height, kernels, kernelLengths, nKernels, graphical) {
-
-    console.log(img, width, height, kernels, kernelLengths, nKernels)
+function multiImgConv2DKern(img, width, height, kernels, kernelLengths, nKernels) {
+    
+    let r = 0, g = 0, b = 0;
+    
     for(var i = 0; i < nKernels; i++){
-        var kernelLength = kernelLengths[i];            
-        var kernelRadius = (Math.sqrt(kernelLength) - 1) / 2;
-        conv2D(img, width, height, kernels[i], kernelRadius);
+
+        let kernelLength = kernelLengths[i];            
+        let kernelRadius = (Math.sqrt(kernelLength) - 1) / 2;
+        //(src, width, height, kernel, kernelRadius)
+        const kSize = 2 * kernelRadius + 1;
+        
+
+        let k = -kernelRadius;
+        let kernelOffset = 0;
+        while (k <= kernelRadius) {
+            if (this.thread.x + k < 0 || this.thread.x + k >= width) {
+                k++;
+                continue;
+            }
+
+            let j = -kernelRadius;
+            while (j <= kernelRadius) {
+                if (this.thread.y + j < 0 || this.thread.y + j >= height) {
+                j++;
+                continue;
+                }
+
+                kernelOffset = (j + kernelRadius) * kSize + k + kernelRadius;
+                const weights = kernels[i][kernelOffset];
+                const pixel = img[this.thread.y + k][this.thread.x + j];
+                r += pixel.r * weights;
+                g += pixel.g * weights;
+                b += pixel.b * weights;
+                j++;
+            }
+            k++;
+        }
     }
-    if(graphical == 0){ return [this.color.r,this.color.g,this.color.b]; }
+    this.color(r, g, b);
 }
 
 function transpose2DKern(mat2) { //Transpose a 2D matrix, meant to be combined
