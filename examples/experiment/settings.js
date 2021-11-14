@@ -1,9 +1,9 @@
 
-import {Manager} from './Manager'
+import {Manager} from './Manager.js'
 // import {Results} from './Results'
 import audioCue from './audioCue.mp3'
-import {BarChart} from '../../../libraries/js/src/plugins/displays/BarChart'
-import {Lda2} from '../../../libraries/js/src/plugins/machinelearning/Lda2'
+import {BarChart} from '../../../libraries/js/src/plugins/displays/BarChart.js'
+import {Lda2} from '../../../libraries/js/src/plugins/machinelearning/Lda2.js'
 
 let button = document.createElement('button')
 button.innerHTML = 'Connect EEG'
