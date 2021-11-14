@@ -222,7 +222,7 @@ export class WorkerProcess {
         let render = () => {
           if (this.props.looping) {
             const kernel = this.props.kernels[this.ports.kernel.data];
-            let args = [this.props.videoElement, width, height, [kernel], [kernel.length], 1, 1];
+            let args = [this.props.videoElement, width, height, [kernel], [kernel.length], 1];
             console.log(args)
             this.props.gpuUtils.callKernel('convolveImage', args)
             requestAnimationFrame(render);
