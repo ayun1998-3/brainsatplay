@@ -236,7 +236,7 @@ export class WorkerProcess {
         // Create Kernel
         
         // Multi
-        let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.ImgConv2DKern, this.props.container)
+        let k = this.props.gpuUtils.addCanvasKernel('convolveImage', krnl.multiImgConv2DKern, this.props.container)
         
         // Single
         // let k = this.props.gpuUtils.addCanvasKernel('convolveImage', conv2D, this.props.container, {
@@ -248,7 +248,6 @@ export class WorkerProcess {
         // })
 
         this.props.canvas = k.canvas
-        this.props.canvas.style = `position: absolute; top: 0; left: 0;`      
 
         let kernels = []
         let kernelLengths = []
@@ -264,6 +263,17 @@ export class WorkerProcess {
 
 
 
+
+
+            let kernels = []
+            let kernelLengths = []
+
+            for (let name in this.props.kernels){
+                let kernel = this.props.kernels[name]
+                kernels.push(kernel)
+                kernelLengths.push(kernel.length)
+            }
+
             let numKernels = 1; //kernels.length
 
             // const kernel = this.props.kernels[this.ports.kernel.data];
@@ -277,7 +287,7 @@ export class WorkerProcess {
             this.props.canvas.style.height = height
 
             // Multi
-            let args = [this.props.videoElement, width, height, kernels[2], kernelLengths[2]];
+            let args = [this.props.videoElement, width, height, kernels, kernelLengths, numKernels];
 
             // Single
             // const kernelRadius = (Math.sqrt(kernel.length) - 1) / 2;
