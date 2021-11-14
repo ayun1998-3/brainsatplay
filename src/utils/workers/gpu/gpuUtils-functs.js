@@ -273,7 +273,6 @@ function iFFTlist(signals, len, freq, n, sr) { //Extract a particular frequency 
 }
 
 
-
 export function conv2D(src, width, height, kernel, kernelRadius) {
     const kSize = 2 * kernelRadius + 1;
     let r = 0, g = 0, b = 0;
@@ -536,18 +535,25 @@ function multiImgConv2DKern(img, width, height, kernels, kernelLengths, nKernels
                 kernelOffset = (j + kernelRadius) * kSize + k + kernelRadius;
                 const weights = kernels[i][kernelOffset];
                 const pixel = img[this.thread.y + k][this.thread.x + j];
-            
-                r += pixel.r * weights;
-                g += pixel.g * weights;
-                b += pixel.b * weights;
-                
+        
+                if(i === 0) { //mutate
+                    r += pixel.r * weights;
+                    g += pixel.g * weights;
+                    b += pixel.b * weights;
+                }
+                else {
+                    r *= pixel.r * weights;
+                    g *= pixel.g * weights;
+                    b *= pixel.b * weights;
+                }
+                    
+                    
                 j++;
             }
             k++;
         }
     }
-    let _n = 1/nKernels;
-    this.color(r*_n, g*_n, b*_n);
+    this.color(r,g,b);
 }
 
 function transpose2DKern(mat2) { //Transpose a 2D matrix, meant to be combined
