@@ -536,15 +536,18 @@ function multiImgConv2DKern(img, width, height, kernels, kernelLengths, nKernels
                 kernelOffset = (j + kernelRadius) * kSize + k + kernelRadius;
                 const weights = kernels[i][kernelOffset];
                 const pixel = img[this.thread.y + k][this.thread.x + j];
+            
                 r += pixel.r * weights;
                 g += pixel.g * weights;
                 b += pixel.b * weights;
+                
                 j++;
             }
             k++;
         }
     }
-    this.color(r, g, b);
+    let _n = 1/nKernels;
+    this.color(r*_n, g*_n, b*_n);
 }
 
 function transpose2DKern(mat2) { //Transpose a 2D matrix, meant to be combined
