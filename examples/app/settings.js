@@ -95,6 +95,8 @@ export const settings = {
     // },
     
     // App Logic
+    // threads: 'auto',
+    
     graph:
       {
       nodes: [

@@ -96,11 +96,12 @@ import {Storage} from './utilities/Storage.js'
 import {Thread} from './utilities/Thread.js'
 import {Unity} from './utilities/Unity.js'
 
-// Webcam
+// WebRTC
 import {Webcam} from './webrtc/Webcam.js'
 import {CSSFilters} from './webrtc/CSSFilters.js'
 import {Screenshare} from './webrtc/Screenshare.js'
 import {RecordCanvas} from './webrtc/RecordCanvas.js'
+import {WorkerProcess} from './webrtc/WorkerProcess.js'
 
 export {
     Blank,
@@ -202,6 +203,6 @@ export {
     Webcam,
     CSSFilters,
     Screenshare,
-    RecordCanvas
-
+    RecordCanvas,
+    WorkerProcess
 }

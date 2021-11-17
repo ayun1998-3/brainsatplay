@@ -1,5 +1,7 @@
+import {UI} from './UI.js'
+
 export const settings = {
-    name: "Blank Project",
+    name: "Ideal Project",
     devices: ["EEG", "HEG"],
     author: "Brains@Play",
     description: "Start from scratch with a new project using brainsatplay.js!",
@@ -11,26 +13,17 @@ export const settings = {
     },
 
     // App Logic
-    graphs:
-    [{
+    graphs: [{
       nodes: [
-        {name:'webcam', class: 'Webcam'},
-        {name:'process', class: 'WorkerProcess'},
-        {name:'dom', class: 'DOM'},
+        {name:'eeg', class: 'EEG'},
+        {name:'neurofeedback', class: 'Neurofeedback'},
+        {name:'event', class: 'Event'},
       ],
       edges: [
         {
-          source: 'webcam:stream',
-          target: 'process:stream'
-        },
-        // {
-        //   source: 'webcam:debug',
-        //   target: 'dom:content'
-        // },
-        {
-          source: 'process:debug',
-          target: 'dom:content'
-        },
+          source: 'eeg:atlas',
+          target: 'neurofeedback'
+        }
       ]
     }],
 

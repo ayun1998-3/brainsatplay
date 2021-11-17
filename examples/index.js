@@ -1,5 +1,7 @@
 // import {settings} from './blank/settings.js' // blank demo
 import {settings} from './experiment/settings.js' // breath garden
+// import {settings} from './webcam/settings.js' // webcam demo
+// import {settings} from './app/settings.js' // breath garden
 
 
 import * as brainsatplay from './src/index.js'
