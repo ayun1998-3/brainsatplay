@@ -1,7 +1,7 @@
-import bci from 'bcijs/browser.js'
-import { Plugin } from '../../../libraries/js/src/plugins/Plugin'
+// import bci from 'bcijs/browser.js'
+// import { Plugin } from '../../../libraries/js/src/plugins/Plugin'
 
-export class Manager extends Plugin {
+export class Manager {
 
     static id = String(Math.floor(Math.random() * 1000000))
 
