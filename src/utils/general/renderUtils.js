@@ -83,8 +83,8 @@ class Math3D { //some stuff for doing math in 3D
     }
 
     static dot(vec1,vec2) { //nDimensional vector dot product
-        var dot=0;
-        for(var i=0; i<vec1.length; i++) {
+        let dot=0;
+        for(let i=0; i<vec1.length; i++) {
             dot += vec1[i]*vec2[i];
         }
         return dot;
@@ -99,7 +99,7 @@ class Math3D { //some stuff for doing math in 3D
     }
 
     static magnitude(vec) { //nDimensional magnitude
-        var sqrd = 0;
+        let sqrd = 0;
         vec.forEach((c) => {
             sqrd+=c*c;
         })
@@ -107,7 +107,7 @@ class Math3D { //some stuff for doing math in 3D
     }
 
     static distance(point1, point2) { //nDimensional vector distance function
-        var dsqrd = 0;
+        let dsqrd = 0;
         point1.forEach((c,i) => {
             dsqrd += (point2[i] - c)*(point2[i] - c);
         })
@@ -115,12 +115,62 @@ class Math3D { //some stuff for doing math in 3D
     }
 
     static makeVec(point1,point2) {  //Make vector from two nDimensional points (arrays)
-        var vec = [];
+        var vec = new Array(point1.length);
         point1.forEach((c,i) => {
             vec.push(point2[i]-c);
         })
         return vec;
     }
+
+    static normalize(vec) { //nDimensional normalization
+        let _mag = 1/this.magnitude(vec);
+        let vecn = new Array(vec.length);
+        vec.forEach((c,i) => {
+            vecn[i] = c*_mag;
+        })
+        return vecn;
+    }
+    
+    //arbitrary vector operations
+    static vecsub(vec,subvec) {
+        let res = new Array(vec.length);
+        for(let i = 0; i < vec.length; i++) {
+            res[i] = vec[i] - subvec[i];
+        }
+        return res;
+    } 
+
+    static vecadd(vec1,vec2) {
+        let res = new Array(vec1.length);
+        for(let i = 0; i < vec1.length; i++) {
+            res[i] = vec1[i] + vec2[i];
+        }
+        return res;
+    } 
+
+    static vecmul(vec1,vec2) {
+        let res = new Array(vec1.length);
+        for(let i = 0; i < vec1.length; i++) {
+            res[i] = vec1[i] * vec2[i];
+        }
+        return res;
+    } 
+    
+    static vecdiv(numvec,denvec) {
+        let res = new Array(numvec.length);
+        for(let i = 0; i < numvec.length; i++) {
+            res[i] = numvec[i] / denvec[i];
+        }
+        return res;
+    } 
+
+    static vecscale(vec1,scalar) {
+        let res = new Array(vec1.length);
+        for(let i = 0; i < vec1.length; i++) {
+            res[i] = vec1[i] * scalar;
+        }
+        return res;
+    } 
 
     //Find normal to a plane define by points (v(1to2) cross v(1to3)), can set to return the reverse normal (v(1to3) cross v(1to2)). Use to calculate triangle normals
     static calcNormal(point1,point2,point3,pos=true) {
@@ -128,16 +178,17 @@ class Math3D { //some stuff for doing math in 3D
         var QS = makeVec(point1,point3);
 
         if(pos === true){
-            return this.cross3D(QR,QS);
+            return Math3D.normalize(this.cross3D(QR,QS));
         }
         else {
-            return this.cross3D(QS,QR);
+            return Math3D.normalize(this.cross3D(QS,QR));
         }
     }
 
+    //generate normals from a triangle poly mesh (assuming each triangle supplied follows the right hand rule)
     static calcNormalMesh(mesh){
-        var normalMesh = [...mesh];
-        for(var i = 0; i<mesh.length; i+=9){
+        var normalMesh = new Array(mesh.length);
+        for(var i = 0; i < mesh.length; i+=9) {
             var normal = this.calcNormal([mesh[i],mesh[i+1],mesh[i+2]],[mesh[i+3],mesh[i+4],mesh[i+5]],[mesh[i+6],mesh[i+7],mesh[i+8]]);
             normalMesh[ i ] = normal[0];
             normalMesh[i+1] = normal[1];
@@ -152,17 +203,6 @@ class Math3D { //some stuff for doing math in 3D
 
         return normalMesh;
     }
-
-    static normalize(vec) { //nDimensional normalization
-        var norm = 0;
-        norm = this.magnitude(vec);
-        var vecn = [];
-        vec.forEach((c,i) => {
-            vecn.push(c*norm);
-        })
-        return vecn;
-    }
-
 
     //Rotates a list of 3D vectors about the origin. Usually better to supply transforms as matrices for the GPU to multiply
     static rotateMesh(mesh, pitch, roll, yaw) {
@@ -824,6 +864,7 @@ class Physics {
             dynamic: true, //Does this object move? Changes objects added to the dynamic bounding volume
 
             position: [0,0,0], //[x,y,z] or [i,j,k]
+            rotation: [0,0,0],
             velocity: [0,0,0],
             acceleration: [0,0,0],
             forceImpulse: [0,0,0], //Instantaneous force (resets after applying)
@@ -1313,8 +1354,66 @@ class Physics {
 
     }
 
-    //Plane collision
+    //Closest point on a line from a test point
+    closestPointOnLine(testpoint,point1,point2) {
+        let a = [point2[0]-point1[0],point2[1]-point1[1],point2[2]-point1[2]];
+        let b = [point1[0]-testpoint[0],point1[1]-testpoint[1],point1[2]-testpoint[2]];
+        let c = [point2[0]-testpoint[0],point2[1]-testpoint[1],point2[2]-testpoint[2]];
+        let bdota = Math3D.dot(b,a);
+        if(bdota <= 0) return point1;
+        let cdota = Math3D.dot(c,a);
+        if(cdota <= 0) return point2;
+        let _bdotapluscdota = 1/(bdota+cdota);
+        return [
+            point1[0] + ((point2[0]-point1[0])*bdota)*_bdotapluscdota,
+            point1[1] + ((point2[1]-point1[1])*bdota)*_bdotapluscdota,
+            point1[2] + ((point2[2]-point1[2])*bdota)*_bdotapluscdota
+        ];
 
+    }
+
+    //point a,b,c of triangle (following right hand rule for the orientation)
+    closestPointOnPolygon(point, a,b,c) {
+        //Find the normal of the polygon
+        let n = Math3D.calcNormal(a,b,c);
+        //Find the distance from point to the plane given the normal
+        let dist = Math3D.dot(point,n) - Math3D.dot(a,n);
+        //project p onto the plane by stepping from p to the plane
+        let projection = Math3D.vecadd(p,Math3D.vecscale(n,-dist));
+        
+        //compute edge vectors
+        let v0x = c[0] - a[0];
+        let v0y = c[1] - a[1];
+        let v0z = c[2] - a[2];
+        let v1x = b[0] - a[0];
+        let v1y = b[1] - a[1];
+        let v1z = b[2] - a[2];
+        let v2x = projection[0] - a[0];
+        let v2y = projection[1] - a[1];
+        let v2z = projection[2] - a[2];
+
+        //compute dots
+        let dot00 = v0x*v0x+v0y*v0y+v0z*v0z;
+        let dot01 = v0x*v1x+v0y*v1y+v0z*v1z;
+        let dot02 = v0x*v2x+v0y*v2y+v0z*v2z;
+        let dot11 = v1x*v1x+v1y*v1y+v1z*v1z;
+        let dot12 = v1x*v2x+v1y*v2y+v1z*v2z;
+
+        //compute barycentric coords (uvs) of projection point
+        let denom = dot00*dot11 - dot01*dot01;
+        if(Math.abs(denom) < 1e-30) {
+            return undefined; //unusable
+        }
+        let _denom = 1/denom;
+        let u = (dot11*dot02 - dot01*dot12)*_denom;
+        let v = (dot00*dot12 - dot01*dot02)*_denom;
+
+        //check uv coordinates for validity
+        if((u >= 0) && (v >= 0) && (u+v<1)) {
+            return projection;
+        } else return undefined; //nearest orthogonal point is outside triangle
+
+    }
 }
 
 
