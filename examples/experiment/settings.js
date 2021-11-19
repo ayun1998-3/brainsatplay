@@ -1,10 +1,11 @@
 
 import {Manager} from './Manager.js'
 // import {Results} from './Results'
-import audioCue from './audioCue.mp3'
-import {BarChart} from '../../src/plugins/displays/BarChart.js'
+// import audioCue from './audioCue.mp3'
+// import {BarChart} from '../../src/plugins/displays/BarChart'
 import {Lda2} from '../../src/plugins/machinelearning/Lda2.js'
 
+let audioCue = document.getElementById('audioCue')
 let button = document.createElement('button')
 button.innerHTML = 'Connect EEG'
 
@@ -32,7 +33,7 @@ export const settings = {
 
         button.innerHTML = 'Start Experiment'
         button.onclick = () => {
-            let n = settings.graph.nodes.find(n => n.id === 'manager')
+            let n = settings.graph.nodes.find(n => n.name === 'manager')
             n.instance.update('start', {data: true})
         }
 
@@ -43,11 +44,11 @@ export const settings = {
     graph:
     {
       nodes: [
-        {name: 'eeg', class: brainsatplay.plugins.biosignals.EEG},
+        {name: 'eeg', class: 'brainsatplay.src.plugins.EEG'},
         {name: 'manager', class: Manager, params: {button}},
         {
           name: 'scheduler', 
-          class: brainsatplay.plugins.utilities.Scheduler, 
+          class: 'brainsatplay.src.plugins.Scheduler', 
           params:{
             trialTypes: ['Eyes Open', 'Eyes Closed'],
             trialCount: 2,
@@ -57,25 +58,25 @@ export const settings = {
             start: false
           }},
 
-        {id:'barchart', class: BarChart},
-        {id:'lda', class: Lda2},
+        {name:'barchart', class: 'BarChart'},
+        {name:'lda', class: 'Lda2'},
 
-        {id: 'audioCue', class: brainsatplay.plugins.audio.Audio, params: {file: audioCue}},
-        {id: 'data', class: brainsatplay.plugins.utilities.DataManager},
-        // {id: 'spacebar', class: brainsatplay.plugins.controls.Event, params: {keycode: 'Space'}},
-        // {id: 'results', class: Results},
+        {name: 'audioCue', class: 'brainsatplay.plugins.Audio', params: {file: audioCue}},
+        {name: 'data', class: 'brainsatplay.plugins.DataManager'},
+        // {name: 'spacebar', class: 'brainsatplay.plugins.controls.Event', params: {keycode: 'Space'}},
+        // {name: 'results', class: Results},
 
         // UI
-        {name:'ui', class: brainsatplay.plugins.interfaces.DOM, params: {
-          html: `<div id="experiment"></div>`,
+        {name:'ui', class: 'brainsatplay.plugins.DOM', params: {
+          html: `<div name="experiment"></div>`,
           style: `
           .brainsatplay-ui-container {
-            width: 100%;
+            wnameth: 100%;
             height: 100%;
           }
 
           #experiment {
-            width: 100%;
+            wnameth: 100%;
             height: 100%;
 
             position: absolute;
@@ -91,7 +92,7 @@ export const settings = {
         }
       },
 
-      {name: 'debug', class: brainsatplay.plugins.debug.Debug},
+      {name: 'debug', class: 'brainsatplay.plugins.Debug'},
       ],
 
       edges: [
